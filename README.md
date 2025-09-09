@@ -39,6 +39,6 @@ This view corrects an over simplification in the basic view. Years actually have
 
 ## Thank You 🙏
 
-If you like this plugin and would like to buy me a coffee, you can!
+If you like this plugin, a coffee is always appreciated!
 
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/szuc)
+[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/szuc)
