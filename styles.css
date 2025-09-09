@@ -1,0 +1,42 @@
+/*
+    Custom properties for Life in Weeks Calendar (lc) plugin UI components
+*/
+
+.life-in-weeks-calendar-plugin {
+	/* Week block configuration */
+	--lc-week-size: 0.95rem;
+	--lc-week-border-radius: 0;
+	--lc-week-border-width: 1px;
+	--lc-week-dot-size: 4px;
+	--lc-color-week-default-bg: var(--canvas-color-1, #fafafa);
+	--lc-color-week-default-border: var(--color-base-60, #aaa);
+	--lc-color-week-current-bg: var(--color-accent, deepSkyBlue);
+	--lc-color-week-current-text: var(--color-base-00, white);
+	--lc-color-week-past-bg: var(--color-base-100, #333);
+	--lc-color-week-past-text: var(--color-base-25, #ddd);
+	--lc-color-week-past-border: var(--color-base-100, #333);
+
+	/* Calendar grid configuration */
+	--lc-calendar-grid-gap-row: 2px;
+	--lc-calendar-grid-gap-column: 1px;
+	--lc-calendar-margin-bottom: 10px;
+	--lc-calendar-padding-bottom: 30px;
+	--lc-calendar-max-weeks: 52;
+	--lc-calendar-max-weeks-alt: 53;
+	--lc-calendar-alt-group-gap: 8px;
+	--lc-calendar-group-spacing: calc(
+		var(--lc-week-size) + var(--lc-calendar-grid-gap-row) * 2
+	);
+
+	/* Calculated widths */
+	--lc-calendar-max-width: calc(
+		var(--lc-calendar-max-weeks) * var(--lc-week-size) +
+			var(--lc-calendar-grid-gap-column) *
+			(var(--lc-calendar-max-weeks) - 1)
+	);
+	--lc-calendar-max-width-alt: calc(
+		var(--lc-calendar-max-weeks-alt) * var(--lc-week-size) +
+			var(--lc-calendar-grid-gap-column) *
+			(var(--lc-calendar-max-weeks-alt) - 1)
+	);
+}

@@ -1,0 +1,14 @@
+{
+	"id": "life-in-weeks-calendar",
+	"name": "Life in Weeks Calendar",
+	"version": "1.0.0",
+	"minAppVersion": "1.9.0",
+	"description": "Display your life in weeks calendar with weekly Periodic Notes plugin integration. Includes options for the traditional Memento Mori/Stoic style calendar, as well as a Gregorian calendar accurate version.",
+	"author": "Jeff Szuc",
+	"authorUrl": "https://jeffszuc.com",
+	"fundingUrl": {
+		"Buy Me a Coffee": "https://buymeacoffee.com/szuc",
+		"GitHub Sponsor": "https://github.com/sponsors/szuc"
+	},
+	"isDesktopOnly": false
+}
