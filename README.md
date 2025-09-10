@@ -25,13 +25,13 @@ If you have Periodic Notes installed and the weekly notes feature enabled, Life 
 
 ## Calendar Modes
 
-### Basic view
+### Basic View
 
 ![Logo](./assets/life_in_weeks-basic.png)
 
 Displays your life in a grid with each cell representing a week in your life. Each week you've been alive is filled in. Each row is fifty weeks long representing a year in your life. This view mode is responsive and collapses to shorted row lengths in smaller screens or sidebar panels. This is the traditional view for a life in weeks style calendar.
 
-### Calendar view
+### Yearly View
 
 ![Logo](./assets/life_in_weeks-yearly.png)
 
