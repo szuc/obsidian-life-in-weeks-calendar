@@ -3,21 +3,21 @@
 		message?: string;
 	}
 
-	let { message = "Unable to calculate calendar" }: Props = $props();
+	let { message = 'Unable to calculate calendar' }: Props = $props();
 </script>
 
 <span class="error-message">{message}</span>
 
 <style>
 	.error-message {
-		color: #d32f2f;
+		color: var(--lc-color-danger);
 		font-style: italic;
 		text-align: center;
 		grid-column: 1 / -1;
 		padding: 1rem;
-		background-color: #ffeaea;
-		border: 1px solid #ffcdd2;
-		border-radius: 4px;
+		background-color: var(--lc-color-danger-bg);
+		border: 1px solid var(--lc-color-danger-border);
+		border-radius: var(--lc-week-border-radius);
 		margin: 0.5rem 0;
 	}
 </style>

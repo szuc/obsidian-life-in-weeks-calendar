@@ -66,9 +66,10 @@
 	.birthDate-label {
 		margin: 0 auto;
 	}
+	.birthDate-label,
 	.deathDate-label {
-		font-size: var(--lc-week-size);
-		line-height: 1;
+		font-size: var(--lc-label-font-size);
+		line-height: var(--lc-week-size);
 	}
 	.calendar {
 		display: grid;

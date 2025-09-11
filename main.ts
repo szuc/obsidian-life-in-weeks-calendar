@@ -44,7 +44,7 @@ export default class LifeCalendarPlugin extends Plugin {
 		// Add a command to open the Life in Weeks Calendar view
 		this.addCommand({
 			id: 'open-life-in-weeks-calendar',
-			name: 'Open Life in Weeks Calendar',
+			name: 'Open calendar',
 			callback: () => {
 				this.activateView();
 			},

@@ -165,6 +165,8 @@
 	}
 	.year-label {
 		text-align: right;
+		font-size: var(--lc-label-font-size);
+		line-height: var(--lc-week-size);
 	}
 	.calendar__grid {
 		display: grid;

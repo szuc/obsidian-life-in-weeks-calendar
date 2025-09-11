@@ -39,6 +39,7 @@
 	}
 	.week--present {
 		background-color: var(--lc-color-week-current-bg);
+		border-color: var(--lc-color-week-current-border);
 		color: var(--lc-color-week-current-text);
 	}
 	.week--past {
@@ -47,7 +48,7 @@
 		border-color: var(--lc-color-week-past-border);
 	}
 	.dot {
-		background-color: currentColor;
+		background-color: var(--lc-color-week-dot);
 		height: var(--lc-week-dot-size);
 		width: var(--lc-week-dot-size);
 		border-radius: 50%;

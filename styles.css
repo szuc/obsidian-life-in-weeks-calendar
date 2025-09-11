@@ -1,5 +1,6 @@
 /*
-    Custom properties for Life in Weeks Calendar (lc) plugin UI components
+    Custom CSS properties for Life in Weeks Calendar (lc) plugin UI components
+	Change these in your Obsidian CSS to customize the appearance
 */
 
 .life-in-weeks-calendar-plugin {
@@ -8,13 +9,20 @@
 	--lc-week-border-radius: 0;
 	--lc-week-border-width: 1px;
 	--lc-week-dot-size: 4px;
+	--lc-color-week-dot: currentColor;
 	--lc-color-week-default-bg: var(--canvas-color-1, #fafafa);
-	--lc-color-week-default-border: var(--color-base-60, #aaa);
-	--lc-color-week-current-bg: var(--color-accent, deepSkyBlue);
+	--lc-color-week-default-border: var(--color-base-50, #aaa);
+	/* Current week colors */
+	--lc-color-week-current-bg: var(--color-accent-1, deepSkyBlue);
+	--lc-color-week-current-border: var(--color-accent-1, deepSkyBlue);
 	--lc-color-week-current-text: var(--color-base-00, white);
-	--lc-color-week-past-bg: var(--color-base-100, #333);
+	/* Past week colors */
+	--lc-color-week-past-bg: var(--color-accent-2, #333);
 	--lc-color-week-past-text: var(--color-base-25, #ddd);
-	--lc-color-week-past-border: var(--color-base-100, #333);
+	--lc-color-week-past-border: var(--color-accent-1, #333);
+
+	/* Date and decade label configuration */
+	--lc-label-font-size: 0.85rem;
 
 	/* Calendar grid configuration */
 	--lc-calendar-grid-gap-row: 2px;
@@ -39,4 +47,9 @@
 			var(--lc-calendar-grid-gap-column) *
 			(var(--lc-calendar-max-weeks-alt) - 1)
 	);
+
+	/* Error message configuration */
+	--lc-color-danger: var(--text-error, #d32f2f);
+	--lc-color-danger-bg: #ffeaea;
+	--lc-color-danger-border: #ffcdd2;
 }

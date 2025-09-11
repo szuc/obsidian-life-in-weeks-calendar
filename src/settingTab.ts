@@ -51,7 +51,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Birth Date')
+			.setName('Birth date')
 			.setDesc('Your date of birth')
 			.addText((text) => {
 				text.inputEl.type = 'date';
@@ -91,7 +91,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Projected Lifespan')
+			.setName('Projected lifespan')
 			.setDesc('Your projected lifespan in years (1 to 200)')
 			.addText((text) => {
 				text.inputEl.type = 'number';
@@ -129,7 +129,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Calendar Mode')
+			.setName('Calendar mode')
 			.setDesc('Basic mode is better for sidebar or mobile views.')
 			.addDropdown((dropdown) =>
 				dropdown
@@ -144,7 +144,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('View Location')
+			.setName('View location')
 			.setDesc(
 				'Close any existing views for location changes to take effect.',
 			)
@@ -162,7 +162,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Integrate with Weekly Notes')
+			.setName('Integrate with weekly notes')
 			.setDesc(
 				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note.',
 			)
@@ -177,7 +177,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Confirm Before Creating Weekly Note')
+			.setName('Confirm before creating weekly note')
 			.setDesc('Require confirmation before creating a new weekly note.')
 			.addToggle((toggle) =>
 				toggle

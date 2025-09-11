@@ -7,17 +7,12 @@ export class CreateFileModal extends Modal {
 		super(app);
 		this.message = message;
 		this.cb = cb;
-		this.setTitle('Create New Weekly Note');
+		this.setTitle('Create new weekly note');
 	}
 
 	override onOpen() {
 		const { contentEl } = this;
-
-		const messageEl = contentEl
-			.createDiv()
-			.appendChild(document.createElement('p'));
-		messageEl.innerHTML = this.message;
-
+		contentEl.textContent = this.message;
 		new Setting(contentEl)
 			.addButton((btn) => {
 				btn.setButtonText('Create');
