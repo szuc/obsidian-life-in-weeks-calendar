@@ -26,60 +26,40 @@
 
 <CalendarBase {birthDate} {lifespan} componentName="CalendarBasic">
 	{#snippet children(data)}
-		<div class="life-in-weeks-calendar-basic">
-			<div class="birthDate-label">
-				{data.validatedBirthDate.toLocaleDateString()}
+		{#if !data}
+			<CalendarError />
+		{:else}
+			<div class="lwc__calendar--basic">
+				<div class="lwc__birthDate-label">
+					{data.validatedBirthDate.toLocaleDateString()}
+				</div>
+				<div class="lwc__calendar">
+					{#each data.weeks as week}
+						<WeekBlock
+							title={week.startDate.toLocaleDateString()}
+							mode={setWeekStatus(week.startDate)}
+							showDot={syncWithWeeklyNotes &&
+								!!allWeeklyNotes?.[
+									dateToDailyNoteFormatRecordKey(
+										week.startDate,
+									)
+								]}
+							onClick={() => {
+								syncWithWeeklyNotes &&
+									openWeeklyNoteFunction(
+										week.startDate,
+										modalFn,
+									);
+							}}
+						/>
+					{/each}
+					{#if data.hasWeeks}
+						<span class="lwc__deathDate-label"
+							>{data.deathDate.toLocaleDateString()}</span
+						>
+					{/if}
+				</div>
 			</div>
-			<div class="calendar">
-				{#each data.weeks as week}
-					<WeekBlock
-						title={week.startDate.toLocaleDateString()}
-						mode={setWeekStatus(week.startDate)}
-						showDot={syncWithWeeklyNotes &&
-							!!allWeeklyNotes?.[
-								dateToDailyNoteFormatRecordKey(week.startDate)
-							]}
-						onClick={() => {
-							syncWithWeeklyNotes &&
-								openWeeklyNoteFunction(week.startDate, modalFn);
-						}}
-					/>
-				{/each}
-				{#if data.hasWeeks}
-					<span class="deathDate-label"
-						>{data.deathDate.toLocaleDateString()}</span
-					>
-				{:else}
-					<CalendarError />
-				{/if}
-			</div>
-		</div>
+		{/if}
 	{/snippet}
 </CalendarBase>
-
-<style>
-	.life-in-weeks-calendar-basic {
-		margin: 0 auto var(--lc-calendar-margin-bottom);
-		max-width: var(--lc-calendar-max-width);
-		padding-bottom: var(--lc-calendar-padding-bottom);
-	}
-	.birthDate-label {
-		margin: 0 auto;
-	}
-	.birthDate-label,
-	.deathDate-label {
-		font-size: var(--lc-label-font-size);
-		line-height: var(--lc-week-size);
-	}
-	.calendar {
-		display: grid;
-		grid-template-columns: repeat(
-			auto-fit,
-			minmax(var(--lc-week-size), 1fr)
-		);
-		max-width: var(--lc-calendar-max-width);
-		gap: var(--lc-calendar-grid-gap-row) var(--lc-calendar-grid-gap-column);
-		margin: 0 auto var(--lc-calendar-margin-bottom);
-		align-items: center;
-	}
-</style>

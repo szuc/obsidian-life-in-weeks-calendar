@@ -1,55 +1,165 @@
 /*
-    Custom CSS properties for Life in Weeks Calendar (lc) plugin UI components
-	Change these in your Obsidian CSS to customize the appearance
+ * Custom CSS properties for Life in Weeks Calendar (lc) plugin UI components
+ * Change these in your Obsidian CSS to customize the appearance
 */
 
 .life-in-weeks-calendar-plugin {
 	/* Week block configuration */
-	--lc-week-size: 0.95rem;
-	--lc-week-border-radius: 0;
-	--lc-week-border-width: 1px;
-	--lc-week-dot-size: 4px;
-	--lc-color-week-dot: currentColor;
-	--lc-color-week-default-bg: var(--canvas-color-1, #fafafa);
-	--lc-color-week-default-border: var(--color-base-50, #aaa);
+	--lwc-week-size: 0.95rem;
+	--lwc-week-border-radius: 0;
+	--lwc-week-border-width: 1px;
+	--lwc-week-dot-size: 4px;
+
+	--lwc-color-week-dot: currentColor;
+	--lwc-color-week-default-bg: var(--color-base-35, #fafafa);
+	--lwc-color-week-default-border: var(--color-base-35, #aaa);
 	/* Current week colors */
-	--lc-color-week-current-bg: var(--color-accent-1, deepSkyBlue);
-	--lc-color-week-current-border: var(--color-accent-1, deepSkyBlue);
-	--lc-color-week-current-text: var(--color-base-00, white);
+	--lwc-color-week-current-bg: var(--color-accent-1, deepSkyBlue);
+	--lwc-color-week-current-border: var(--color-accent-1, deepSkyBlue);
+	--lwc-color-week-current-text: var(--color-base-00, white);
 	/* Past week colors */
-	--lc-color-week-past-bg: var(--color-accent-2, #333);
-	--lc-color-week-past-text: var(--color-base-25, #ddd);
-	--lc-color-week-past-border: var(--color-accent-1, #333);
+	--lwc-color-week-past-bg: var(--color-accent-2, #333);
+	--lwc-color-week-past-text: var(--color-base-25, #ddd);
+	--lwc-color-week-past-border: var(--color-accent-1, #333);
 
 	/* Date and decade label configuration */
-	--lc-label-font-size: 0.85rem;
+	--lwc-label-font-size: 0.85rem;
 
 	/* Calendar grid configuration */
-	--lc-calendar-grid-gap-row: 2px;
-	--lc-calendar-grid-gap-column: 1px;
-	--lc-calendar-margin-bottom: 10px;
-	--lc-calendar-padding-bottom: 30px;
-	--lc-calendar-max-weeks: 52;
-	--lc-calendar-max-weeks-alt: 53;
-	--lc-calendar-alt-group-gap: 8px;
-	--lc-calendar-group-spacing: calc(
-		var(--lc-week-size) + var(--lc-calendar-grid-gap-row) * 2
+	--lwc-calendar-grid-gap-row: 2px;
+	--lwc-calendar-grid-gap-column: 1px;
+	--lwc-calendar-margin-bottom: 10px;
+	--lwc-calendar-padding-bottom: 30px;
+	--lwc-calendar-max-weeks: 52;
+	--lwc-calendar-max-weeks-alt: 53;
+	--lwc-calendar-alt-group-gap: 8px;
+	--lwc-calendar-group-spacing: calc(
+		var(--lwc-week-size) + var(--lwc-calendar-grid-gap-row) * 2
 	);
 
 	/* Calculated widths */
-	--lc-calendar-max-width: calc(
-		var(--lc-calendar-max-weeks) * var(--lc-week-size) +
-			var(--lc-calendar-grid-gap-column) *
-			(var(--lc-calendar-max-weeks) - 1)
+	--lwc-calendar-max-width: calc(
+		var(--lwc-calendar-max-weeks) * var(--lwc-week-size) +
+			var(--lwc-calendar-grid-gap-column) *
+			(var(--lwc-calendar-max-weeks) - 1)
 	);
-	--lc-calendar-max-width-alt: calc(
-		var(--lc-calendar-max-weeks-alt) * var(--lc-week-size) +
-			var(--lc-calendar-grid-gap-column) *
-			(var(--lc-calendar-max-weeks-alt) - 1)
+	--lwc-calendar-max-width-alt: calc(
+		var(--lwc-calendar-max-weeks-alt) * var(--lwc-week-size) +
+			var(--lwc-calendar-grid-gap-column) *
+			(var(--lwc-calendar-max-weeks-alt) - 1)
 	);
 
 	/* Error message configuration */
-	--lc-color-danger: var(--text-error, #d32f2f);
-	--lc-color-danger-bg: #ffeaea;
-	--lc-color-danger-border: #ffcdd2;
+	--lwc-color-danger: var(--text-error, #d32f2f);
+	--lwc-color-danger-bg: #ffeaea;
+	--lwc-color-danger-border: #ffcdd2;
+}
+
+/*
+ * Component styles derived from custom variables
+*/
+
+/* Shared Week component */
+.lwc__week {
+	padding: unset;
+	box-shadow: unset;
+	font-weight: unset;
+	cursor: unset;
+	font-family: inherit;
+	outline: none;
+	user-select: none;
+	white-space: nowrap;
+	width: var(--lwc-week-size);
+	height: var(--lwc-week-size);
+	display: inline-flex;
+	background-color: var(--lwc-color-week-default-bg);
+	border: var(--lwc-week-border-width) solid
+		var(--lwc-color-week-default-border);
+	overflow: hidden;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--lwc-week-border-radius);
+}
+.lwc__week.lwc__week--present {
+	background-color: var(--lwc-color-week-current-bg);
+	border-color: var(--lwc-color-week-current-border);
+	color: var(--lwc-color-week-current-text);
+}
+.lwc__week.lwc__week--past {
+	background-color: var(--lwc-color-week-past-bg);
+	color: var(--lwc-color-week-past-text);
+	border-color: var(--lwc-color-week-past-border);
+}
+.lwc__week__dot {
+	background-color: var(--lwc-color-week-dot);
+	height: var(--lwc-week-dot-size);
+	width: var(--lwc-week-dot-size);
+	border-radius: 50%;
+}
+
+/* Basic Calendar component */
+.lwc__calendar--basic {
+	margin: 0 auto var(--lwc-calendar-margin-bottom);
+	max-width: var(--lwc-calendar-max-width);
+	padding-bottom: var(--lwc-calendar-padding-bottom);
+}
+.lwc__calendar--basic .lwc__birthDate-label {
+	margin: 0 auto;
+}
+.lwc__calendar--basic .lwc__birthDate-label,
+.lwc__calendar--basic .lwc__deathDate-label {
+	font-size: var(--lwc-label-font-size);
+	line-height: var(--lwc-week-size);
+}
+.lwc__calendar--basic .lwc__calendar {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(var(--lwc-week-size), 1fr));
+	max-width: var(--lwc-calendar-max-width);
+	gap: var(--lwc-calendar-grid-gap-row) var(--lwc-calendar-grid-gap-column);
+	margin: 0 auto var(--lwc-calendar-margin-bottom);
+	align-items: center;
+}
+
+/* Yearly Calendar component */
+.lwc__calendar-yearly {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	max-width: 100%;
+	overflow-x: auto;
+	padding-bottom: var(--lwc-calendar-padding-bottom);
+}
+.lwc__calendar-yearly .lwc__group {
+	display: flex;
+	gap: var(--lwc-calendar-alt-group-gap);
+	margin: 0 auto var(--lwc-calendar-group-spacing);
+}
+.lwc__calendar-yearly .lwc__year-label {
+	text-align: right;
+	font-size: var(--lwc-label-font-size);
+	line-height: var(--lwc-week-size);
+}
+.lwc__calendar-yearly .lwc__calendar__grid {
+	display: grid;
+	grid-template-columns: repeat(
+		var(--lwc-calendar-max-weeks-alt),
+		var(--lwc-week-size)
+	);
+	width: var(--lwc-calendar-max-width-alt);
+	max-width: 100%;
+	gap: var(--lwc-calendar-grid-gap-row) var(--lwc-calendar-grid-gap-column);
+	align-items: center;
+}
+
+/* Error message component */
+.lwc__error-message {
+	color: var(--lwc-color-danger);
+	font-style: italic;
+	text-align: center;
+	grid-column: 1 / -1;
+	padding: 1rem;
+	background-color: var(--lwc-color-danger-bg);
+	border: 1px solid var(--lwc-color-danger-border);
+	border-radius: var(--lwc-week-border-radius);
+	margin: 0.5rem 0;
 }

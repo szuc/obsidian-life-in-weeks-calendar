@@ -105,78 +105,47 @@
 
 <CalendarBase {birthDate} {lifespan} componentName="CalendarYearly">
 	{#snippet children(data)}
-		{@const yearGroups = createYearGroups(
-			data.validatedBirthDate,
-			data.validatedLifespan,
-			data.birthWeek,
-		)}
-		<div class="life-in-weeks-calendar-yearly">
-			{#each yearGroups as section, index}
-				<div class="group">
-					<div class="year-label">
-						{String(
-							index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE,
-						).padStart(2, '0')}
+		{#if !data}
+			<CalendarError />
+		{:else}
+			{@const yearGroups = createYearGroups(
+				data.validatedBirthDate,
+				data.validatedLifespan,
+				data.birthWeek,
+			)}
+			<div class="lwc__calendar-yearly">
+				{#each yearGroups as section, index}
+					<div class="lwc__group">
+						<div class="lwc__year-label">
+							{String(
+								index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE,
+							).padStart(2, '0')}
+						</div>
+						<div class="lwc__calendar__grid">
+							{#each section as week}
+								<WeekBlock
+									title={week.startDate.toLocaleDateString()}
+									mode={setWeekStatus(week.startDate)}
+									showDot={syncWithWeeklyNotes &&
+										!!allWeeklyNotes?.[
+											dateToDailyNoteFormatRecordKey(
+												week.startDate,
+											)
+										]}
+									style={`grid-column: ${getWeek(week.startDate)}`}
+									onClick={() => {
+										syncWithWeeklyNotes &&
+											openWeeklyNoteFunction(
+												week.startDate,
+												modalFn,
+											);
+									}}
+								/>
+							{/each}
+						</div>
 					</div>
-					<div class="calendar__grid">
-						{#each section as week}
-							<WeekBlock
-								title={week.startDate.toLocaleDateString()}
-								mode={setWeekStatus(week.startDate)}
-								showDot={syncWithWeeklyNotes &&
-									!!allWeeklyNotes?.[
-										dateToDailyNoteFormatRecordKey(
-											week.startDate,
-										)
-									]}
-								style={`grid-column: ${getWeek(week.startDate)}`}
-								onClick={() => {
-									syncWithWeeklyNotes &&
-										openWeeklyNoteFunction(
-											week.startDate,
-											modalFn,
-										);
-								}}
-							/>
-						{/each}
-					</div>
-				</div>
-			{/each}
-			{#if yearGroups.length === 0}
-				<CalendarError />
-			{/if}
-		</div>
+				{/each}
+			</div>
+		{/if}
 	{/snippet}
 </CalendarBase>
-
-<style>
-	.life-in-weeks-calendar-yearly {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		max-width: 100%;
-		overflow-x: auto;
-		padding-bottom: var(--lc-calendar-padding-bottom);
-	}
-	.group {
-		display: flex;
-		gap: var(--lc-calendar-alt-group-gap);
-		margin: 0 auto var(--lc-calendar-group-spacing);
-	}
-	.year-label {
-		text-align: right;
-		font-size: var(--lc-label-font-size);
-		line-height: var(--lc-week-size);
-	}
-	.calendar__grid {
-		display: grid;
-		grid-template-columns: repeat(
-			var(--lc-calendar-max-weeks-alt),
-			var(--lc-week-size)
-		);
-		width: var(--lc-calendar-max-width-alt);
-		max-width: 100%;
-		gap: var(--lc-calendar-grid-gap-row) var(--lc-calendar-grid-gap-column);
-		align-items: center;
-	}
-</style>
