@@ -24,6 +24,11 @@
 		syncWithWeeklyNotes: boolean;
 		weekStartsOn: string | undefined;
 	} = $props();
+
+	$effect(() => {
+		console.log(allWeeklyNotes);
+		console.log(weekStartsOn);
+	});
 </script>
 
 <CalendarBase
@@ -46,7 +51,7 @@
 							title={week.startDate.toLocaleDateString()}
 							mode={setWeekStatus(
 								week.startDate,
-								data.validatedWeekStart,
+								data.validatedWeekStartsOn,
 							)}
 							showDot={syncWithWeeklyNotes &&
 								!!allWeeklyNotes?.[

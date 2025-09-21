@@ -125,7 +125,7 @@
 				data.validatedBirthDate,
 				data.validatedLifespan,
 				data.birthWeek,
-				data.validatedWeekStart,
+				data.validatedWeekStartsOn,
 			)}
 			<div class="lwc__calendar-yearly">
 				{#each yearGroups as section, index}
@@ -141,7 +141,7 @@
 									title={week.startDate.toLocaleDateString()}
 									mode={setWeekStatus(
 										week.startDate,
-										data.validatedWeekStart,
+										data.validatedWeekStartsOn,
 									)}
 									showDot={syncWithWeeklyNotes &&
 										!!allWeeklyNotes?.[

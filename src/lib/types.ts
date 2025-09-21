@@ -9,10 +9,9 @@ export interface CalendarData {
 	birthWeek: Date;
 	deathDate: Date;
 	deathWeek: Date;
-	weekIntervals: Date[];
 	weeks: Week[];
 	hasWeeks: boolean;
-	validatedWeekStart: WeekStartsOn;
+	validatedWeekStartsOn: WeekStartsOn;
 }
 
 export enum CalendarMode {

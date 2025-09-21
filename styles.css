@@ -60,7 +60,7 @@
 */
 
 /* Shared Week component */
-.lwc__week {
+.life-in-weeks-calendar-plugin .lwc__week {
 	padding: 0 !important;
 	box-shadow: unset;
 	font-weight: unset;

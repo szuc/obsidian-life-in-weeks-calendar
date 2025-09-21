@@ -12,7 +12,7 @@ function createCalendarValidation(componentName: string): {
 	isValidLifespan: (lifespan: number) => boolean;
 	getValidatedBirthDate: (date: Date) => Date;
 	getValidatedLifespan: (lifespan: number) => number;
-	getValidatedWeekStart: (weekStartsOn?: string) => WeekStartsOn;
+	getValidatedWeekStartsOn: (weekStartsOn?: string) => WeekStartsOn;
 } {
 	if (
 		!componentName ||
@@ -63,7 +63,7 @@ function createCalendarValidation(componentName: string): {
 			);
 			return CALENDAR_VALIDATION.DEFAULT_LIFESPAN;
 		},
-		getValidatedWeekStart: (weekStartsOn?: string): WeekStartsOn => {
+		getValidatedWeekStartsOn: (weekStartsOn?: string): WeekStartsOn => {
 			switch (weekStartsOn?.toLocaleLowerCase()) {
 				case 'sunday':
 					return 0;
@@ -95,7 +95,7 @@ function createCalendarValidation(componentName: string): {
 function calculateCalendarDates(
 	validatedBirthDate: Date,
 	validatedLifespan: number,
-	validatedWeekStart: WeekStartsOn,
+	validatedWeekStartsOn: WeekStartsOn,
 ) {
 	if (
 		!validatedBirthDate ||
@@ -119,18 +119,18 @@ function calculateCalendarDates(
 
 	const birthWeek = startOfWeek(
 		validatedBirthDate,
-		validatedWeekStart !== undefined
+		validatedWeekStartsOn !== undefined
 			? {
-					weekStartsOn: validatedWeekStart,
+					weekStartsOn: validatedWeekStartsOn,
 				}
 			: undefined,
 	);
 	const deathDate = addYears(validatedBirthDate, validatedLifespan);
 	const deathWeek = startOfWeek(
 		deathDate,
-		validatedWeekStart !== undefined
+		validatedWeekStartsOn !== undefined
 			? {
-					weekStartsOn: validatedWeekStart,
+					weekStartsOn: validatedWeekStartsOn,
 				}
 			: undefined,
 	);
@@ -147,14 +147,14 @@ function calculateCalendarDates(
  * @param startWeek - Starting week date
  * @param endWeek - Ending week date
  * @param componentName - Component name for error messages
- * @param validatedWeekStart - Index of first day or week (0 = Sunday, 6 = Saturday). Undefined defaults to locale
+ * @param validatedWeekStartsOn - Index of first day or week (0 = Sunday, 6 = Saturday). Undefined defaults to locale
  * @returns Array of week start dates or empty array on error
  */
 function generateWeekIntervals(
 	startWeek: Date,
 	endWeek: Date,
 	componentName: string,
-	validatedWeekStart: WeekStartsOn,
+	validatedWeekStartsOn: WeekStartsOn,
 ): Date[] {
 	try {
 		return eachWeekOfInterval(
@@ -162,9 +162,9 @@ function generateWeekIntervals(
 				start: startWeek,
 				end: endWeek,
 			},
-			validatedWeekStart !== undefined
+			validatedWeekStartsOn !== undefined
 				? {
-						weekStartsOn: validatedWeekStart,
+						weekStartsOn: validatedWeekStartsOn,
 					}
 				: undefined,
 		);
@@ -189,7 +189,10 @@ function createWeekObjects(weekIntervals: Date[]): Week[] {
 		);
 	}
 
-	return weekIntervals.map((startDate, index) => ({ index, startDate }));
+	return weekIntervals.map((startDate, index) => ({
+		index,
+		startDate,
+	}));
 }
 
 /**
@@ -232,13 +235,14 @@ export default function generateCalendarData(
 	// Validate inputs
 	const validatedBirthDate = validation.getValidatedBirthDate(birthDate);
 	const validatedLifespan = validation.getValidatedLifespan(lifespan);
-	const validatedWeekStart = validation.getValidatedWeekStart(weekStartsOn);
+	const validatedWeekStartsOn =
+		validation.getValidatedWeekStartsOn(weekStartsOn);
 
 	// Calculate dates
 	const { birthWeek, deathDate, deathWeek } = calculateCalendarDates(
 		validatedBirthDate,
 		validatedLifespan,
-		validatedWeekStart,
+		validatedWeekStartsOn,
 	);
 
 	// Generate week intervals
@@ -246,7 +250,7 @@ export default function generateCalendarData(
 		birthWeek,
 		deathWeek,
 		componentName,
-		validatedWeekStart,
+		validatedWeekStartsOn,
 	);
 
 	// Create week objects
@@ -255,11 +259,10 @@ export default function generateCalendarData(
 	return {
 		validatedBirthDate,
 		validatedLifespan,
-		validatedWeekStart,
+		validatedWeekStartsOn,
 		birthWeek,
 		deathDate,
 		deathWeek,
-		weekIntervals,
 		weeks,
 		hasWeeks: weeks.length > 0,
 	};

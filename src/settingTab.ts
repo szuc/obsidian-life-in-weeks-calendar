@@ -10,6 +10,7 @@ export interface LifeCalendarSettings {
 	viewLocation: string;
 	confirmBeforeCreatingWeeklyNote: boolean;
 	syncWithWeeklyNotes: boolean;
+	// weekStartsOn: string;
 }
 
 export const DEFAULT_SETTINGS: LifeCalendarSettings = {
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: LifeCalendarSettings = {
 	viewLocation: 'main',
 	confirmBeforeCreatingWeeklyNote: true,
 	syncWithWeeklyNotes: true,
+	// weekStartsOn: 'locale',
 };
 
 const createErrorMessageElement = (
@@ -39,16 +41,24 @@ const createErrorMessageElement = (
 
 export class LifeCalendarSettingTab extends PluginSettingTab {
 	plugin: LifeCalendarPlugin;
+	calendarPluginWeekStartsOn: string | undefined;
 
 	constructor(app: App, plugin: LifeCalendarPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+		this.calendarPluginWeekStartsOn =
+			this.plugin.getWeekStartsOnOptionFromCalendar();
 	}
 
 	display(): void {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
+		containerEl.createEl('h1', { text: 'General Settings' });
+		containerEl.createEl('p', {
+			text: 'Note: Settings related to weekly note integrations might require a restart of Obsidian to take effect.',
+		});
 
 		new Setting(containerEl)
 			.setName('Birth date')
@@ -91,7 +101,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Projected lifespan')
+			.setName('Projected lifespan (years)')
 			.setDesc('Your projected lifespan in years (1 to 200)')
 			.addText((text) => {
 				text.inputEl.type = 'number';
@@ -129,7 +139,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Calendar mode')
+			.setName('Calendar view mode')
 			.setDesc('Basic mode is better for sidebar or mobile views.')
 			.addDropdown((dropdown) =>
 				dropdown
@@ -161,10 +171,40 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		// new Setting(containerEl)
+		// 	.setName('Start week on')
+		// 	.setDesc(
+		// 		this.calendarPluginWeekStartsOn
+		// 			? 'Disabled: Using settings from Calendar plugin'
+		// 			: 'Choose what day of the week to start on.',
+		// 	)
+		// 	.addDropdown((dropdown) => {
+		// 		console.log(this.calendarPluginWeekStartsOn);
+		// 		dropdown
+		// 			.addOption('locale', 'Default')
+		// 			.addOption('sunday', 'Sunday')
+		// 			.addOption('monday', 'Monday')
+		// 			.addOption('tuesday', 'Tuesday')
+		// 			.addOption('wednesday', 'Wednesday')
+		// 			.addOption('thursday', 'Thursday')
+		// 			.addOption('friday', 'Friday')
+		// 			.addOption('saturday', 'Saturday')
+		// 			.setValue(
+		// 				this.calendarPluginWeekStartsOn ||
+		// 					this.plugin.settings.weekStartsOn,
+		// 			)
+		// 			.onChange(async (value) => {
+		// 				this.plugin.settings.weekStartsOn = value;
+		// 				await this.plugin.saveSettings();
+		// 				this.plugin.onSettingsChanged();
+		// 			})
+		// 			.setDisabled(this.calendarPluginWeekStartsOn !== undefined);
+		// 	});
+
 		new Setting(containerEl)
-			.setName('Integrate with weekly notes')
+			.setName("Integrate with Periodic Notes plugin's weekly notes")
 			.setDesc(
-				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note.',
+				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note. Requires Periodic Notes plugin to be installed.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -178,7 +218,9 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')
-			.setDesc('Require confirmation before creating a new weekly note.')
+			.setDesc(
+				'Require confirmation before creating a new weekly note. Requires Periodic Notes plugin to be installed.',
+			)
 			.addToggle((toggle) =>
 				toggle
 					.setValue(

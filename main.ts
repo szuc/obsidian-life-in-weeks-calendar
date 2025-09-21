@@ -121,6 +121,12 @@ export default class LifeCalendarPlugin extends Plugin {
 		});
 	}
 
+	getWeekStartsOnOptionFromCalendar(): string | undefined {
+		// @ts-ignore
+		const calendarPlugin = this.app.plugins.getPlugin('calendar');
+		return calendarPlugin?.options?.weekStart;
+	}
+
 	async activateView(): Promise<void> {
 		const { workspace } = this.app;
 

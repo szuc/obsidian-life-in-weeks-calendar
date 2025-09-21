@@ -5,7 +5,7 @@ import type { WeekStartsOn } from './types';
 const TODAY = new Date();
 export const setWeekStatus = (
 	weekStartDate: Date,
-	validatedWeekStart: WeekStartsOn,
+	validatedWeekStartsOn: WeekStartsOn,
 ) => {
 	if (
 		!weekStartDate ||
@@ -20,8 +20,8 @@ export const setWeekStatus = (
 	if (
 		isThisWeek(
 			weekStartDate,
-			validatedWeekStart !== undefined
-				? { weekStartsOn: validatedWeekStart }
+			validatedWeekStartsOn !== undefined
+				? { weekStartsOn: validatedWeekStartsOn }
 				: undefined,
 		)
 	)
