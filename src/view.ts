@@ -48,6 +48,10 @@ export class LifeCalendarView extends ItemView {
 	}
 
 	private buildComponentProps() {
+		// @ts-ignore
+		const calendarPlugin = this.app.plugins.getPlugin('calendar');
+		const weekStartsOn = calendarPlugin?.options?.weekStart;
+
 		const settings = this.plugin.settings;
 		return {
 			birthdate: settings.birthdate || DEFAULT_SETTINGS.birthdate,
@@ -66,6 +70,7 @@ export class LifeCalendarView extends ItemView {
 			syncWithWeeklyNotes:
 				settings.syncWithWeeklyNotes ??
 				DEFAULT_SETTINGS.syncWithWeeklyNotes,
+			weekStartsOn: weekStartsOn,
 		};
 	}
 

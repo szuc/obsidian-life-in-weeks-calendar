@@ -1,8 +1,12 @@
 import { isThisWeek } from 'date-fns';
+import type { WeekStartsOn } from './types';
 
 /** Helper for determining Week class name */
 const TODAY = new Date();
-export const setWeekStatus = (weekStartDate: Date) => {
+export const setWeekStatus = (
+	weekStartDate: Date,
+	validatedWeekStart: WeekStartsOn,
+) => {
 	if (
 		!weekStartDate ||
 		!(weekStartDate instanceof Date) ||
@@ -13,7 +17,15 @@ export const setWeekStatus = (weekStartDate: Date) => {
 		);
 	}
 
-	if (isThisWeek(weekStartDate)) return 'present';
+	if (
+		isThisWeek(
+			weekStartDate,
+			validatedWeekStart !== undefined
+				? { weekStartsOn: validatedWeekStart }
+				: undefined,
+		)
+	)
+		return 'present';
 	if (weekStartDate < TODAY) return 'past';
 	return 'future';
 };

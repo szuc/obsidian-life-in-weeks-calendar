@@ -15,16 +15,23 @@
 		allWeeklyNotes,
 		modalFn,
 		syncWithWeeklyNotes,
+		weekStartsOn,
 	}: {
 		birthDate: Date;
 		lifespan: number;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
+		weekStartsOn: string | undefined;
 	} = $props();
 </script>
 
-<CalendarBase {birthDate} {lifespan} componentName="CalendarBasic">
+<CalendarBase
+	{birthDate}
+	{lifespan}
+	{weekStartsOn}
+	componentName="CalendarBasic"
+>
 	{#snippet children(data)}
 		{#if !data}
 			<CalendarError />
@@ -37,7 +44,10 @@
 					{#each data.weeks as week}
 						<WeekBlock
 							title={week.startDate.toLocaleDateString()}
-							mode={setWeekStatus(week.startDate)}
+							mode={setWeekStatus(
+								week.startDate,
+								data.validatedWeekStart,
+							)}
 							showDot={syncWithWeeklyNotes &&
 								!!allWeeklyNotes?.[
 									dateToDailyNoteFormatRecordKey(

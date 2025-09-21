@@ -61,7 +61,7 @@
 
 /* Shared Week component */
 .lwc__week {
-	padding: unset;
+	padding: 0 !important;
 	box-shadow: unset;
 	font-weight: unset;
 	cursor: unset;

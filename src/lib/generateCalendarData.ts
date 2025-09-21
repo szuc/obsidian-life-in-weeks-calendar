@@ -1,6 +1,6 @@
-import { eachWeekOfInterval, addYears, startOfWeek } from "date-fns";
-import type { Week, CalendarData } from "src/lib/types";
-import { CALENDAR_VALIDATION } from "src/lib/calendar-constants";
+import { eachWeekOfInterval, addYears, startOfWeek } from 'date-fns';
+import type { Week, CalendarData, WeekStartsOn } from 'src/lib/types';
+import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
 
 /**
  * Creates validation functions for a calendar component
@@ -12,9 +12,16 @@ function createCalendarValidation(componentName: string): {
 	isValidLifespan: (lifespan: number) => boolean;
 	getValidatedBirthDate: (date: Date) => Date;
 	getValidatedLifespan: (lifespan: number) => number;
+	getValidatedWeekStart: (weekStartsOn?: string) => WeekStartsOn;
 } {
-	if (!componentName || typeof componentName !== 'string' || componentName.trim() === '') {
-		throw new Error('createCalendarValidation: componentName must be a non-empty string');
+	if (
+		!componentName ||
+		typeof componentName !== 'string' ||
+		componentName.trim() === ''
+	) {
+		throw new Error(
+			'createCalendarValidation: componentName must be a non-empty string',
+		);
 	}
 	return {
 		isValidDate: (date: Date): boolean => {
@@ -23,7 +30,7 @@ function createCalendarValidation(componentName: string): {
 
 		isValidLifespan: (lifespan: number): boolean => {
 			return (
-				typeof lifespan === "number" &&
+				typeof lifespan === 'number' &&
 				lifespan >= CALENDAR_VALIDATION.MIN_LIFESPAN &&
 				lifespan <= CALENDAR_VALIDATION.MAX_LIFESPAN
 			);
@@ -45,7 +52,7 @@ function createCalendarValidation(componentName: string): {
 
 		getValidatedLifespan: (lifespan: number): number => {
 			if (
-				typeof lifespan === "number" &&
+				typeof lifespan === 'number' &&
 				lifespan >= CALENDAR_VALIDATION.MIN_LIFESPAN &&
 				lifespan <= CALENDAR_VALIDATION.MAX_LIFESPAN
 			) {
@@ -55,6 +62,26 @@ function createCalendarValidation(componentName: string): {
 				`${componentName}: Invalid lifespan provided, using fallback of ${CALENDAR_VALIDATION.DEFAULT_LIFESPAN} years`,
 			);
 			return CALENDAR_VALIDATION.DEFAULT_LIFESPAN;
+		},
+		getValidatedWeekStart: (weekStartsOn?: string): WeekStartsOn => {
+			switch (weekStartsOn?.toLocaleLowerCase()) {
+				case 'sunday':
+					return 0;
+				case 'monday':
+					return 1;
+				case 'tuesday':
+					return 2;
+				case 'wednesday':
+					return 3;
+				case 'thursday':
+					return 4;
+				case 'friday':
+					return 5;
+				case 'saturday':
+					return 6;
+				default:
+					return undefined;
+			}
 		},
 	};
 }
@@ -68,18 +95,45 @@ function createCalendarValidation(componentName: string): {
 function calculateCalendarDates(
 	validatedBirthDate: Date,
 	validatedLifespan: number,
+	validatedWeekStart: WeekStartsOn,
 ) {
-	if (!validatedBirthDate || !(validatedBirthDate instanceof Date) || isNaN(validatedBirthDate.getTime())) {
-		throw new Error('calculateCalendarDates: validatedBirthDate must be a valid Date object');
-	}
-	
-	if (typeof validatedLifespan !== 'number' || isNaN(validatedLifespan) || validatedLifespan <= 0) {
-		throw new Error('calculateCalendarDates: validatedLifespan must be a positive number');
+	if (
+		!validatedBirthDate ||
+		!(validatedBirthDate instanceof Date) ||
+		isNaN(validatedBirthDate.getTime())
+	) {
+		throw new Error(
+			'calculateCalendarDates: validatedBirthDate must be a valid Date object',
+		);
 	}
 
-	const birthWeek = startOfWeek(validatedBirthDate);
+	if (
+		typeof validatedLifespan !== 'number' ||
+		isNaN(validatedLifespan) ||
+		validatedLifespan <= 0
+	) {
+		throw new Error(
+			'calculateCalendarDates: validatedLifespan must be a positive number',
+		);
+	}
+
+	const birthWeek = startOfWeek(
+		validatedBirthDate,
+		validatedWeekStart !== undefined
+			? {
+					weekStartsOn: validatedWeekStart,
+				}
+			: undefined,
+	);
 	const deathDate = addYears(validatedBirthDate, validatedLifespan);
-	const deathWeek = startOfWeek(deathDate);
+	const deathWeek = startOfWeek(
+		deathDate,
+		validatedWeekStart !== undefined
+			? {
+					weekStartsOn: validatedWeekStart,
+				}
+			: undefined,
+	);
 
 	return {
 		birthWeek,
@@ -93,18 +147,27 @@ function calculateCalendarDates(
  * @param startWeek - Starting week date
  * @param endWeek - Ending week date
  * @param componentName - Component name for error messages
+ * @param validatedWeekStart - Index of first day or week (0 = Sunday, 6 = Saturday). Undefined defaults to locale
  * @returns Array of week start dates or empty array on error
  */
 function generateWeekIntervals(
 	startWeek: Date,
 	endWeek: Date,
 	componentName: string,
+	validatedWeekStart: WeekStartsOn,
 ): Date[] {
 	try {
-		return eachWeekOfInterval({
-			start: startWeek,
-			end: endWeek,
-		});
+		return eachWeekOfInterval(
+			{
+				start: startWeek,
+				end: endWeek,
+			},
+			validatedWeekStart !== undefined
+				? {
+						weekStartsOn: validatedWeekStart,
+					}
+				: undefined,
+		);
 	} catch (error) {
 		console.error(
 			`${componentName}: Error calculating week intervals:`,
@@ -121,9 +184,11 @@ function generateWeekIntervals(
  */
 function createWeekObjects(weekIntervals: Date[]): Week[] {
 	if (!weekIntervals || !Array.isArray(weekIntervals)) {
-		throw new Error('createWeekObjects: weekIntervals must be a valid array');
+		throw new Error(
+			'createWeekObjects: weekIntervals must be a valid array',
+		);
 	}
-	
+
 	return weekIntervals.map((startDate, index) => ({ index, startDate }));
 }
 
@@ -133,23 +198,33 @@ function createWeekObjects(weekIntervals: Date[]): Week[] {
  * @param birthDate - Raw birth date input
  * @param lifespan - Raw lifespan input
  * @param componentName - Component name for error messages
+ * @param weekStartsOn - first day of week or "locale"
  * @returns Complete calendar data object
  */
 export default function generateCalendarData(
 	birthDate: Date,
 	lifespan: number,
 	componentName: string,
+	weekStartsOn?: string,
 ): CalendarData {
 	if (!birthDate || !(birthDate instanceof Date)) {
-		throw new Error('generateCalendarData: birthDate must be a Date object');
+		throw new Error(
+			'generateCalendarData: birthDate must be a Date object',
+		);
 	}
-	
+
 	if (typeof lifespan !== 'number' || isNaN(lifespan)) {
 		throw new Error('generateCalendarData: lifespan must be a number');
 	}
-	
-	if (!componentName || typeof componentName !== 'string' || componentName.trim() === '') {
-		throw new Error('generateCalendarData: componentName must be a non-empty string');
+
+	if (
+		!componentName ||
+		typeof componentName !== 'string' ||
+		componentName.trim() === ''
+	) {
+		throw new Error(
+			'generateCalendarData: componentName must be a non-empty string',
+		);
 	}
 
 	const validation = createCalendarValidation(componentName);
@@ -157,11 +232,13 @@ export default function generateCalendarData(
 	// Validate inputs
 	const validatedBirthDate = validation.getValidatedBirthDate(birthDate);
 	const validatedLifespan = validation.getValidatedLifespan(lifespan);
+	const validatedWeekStart = validation.getValidatedWeekStart(weekStartsOn);
 
 	// Calculate dates
 	const { birthWeek, deathDate, deathWeek } = calculateCalendarDates(
 		validatedBirthDate,
 		validatedLifespan,
+		validatedWeekStart,
 	);
 
 	// Generate week intervals
@@ -169,6 +246,7 @@ export default function generateCalendarData(
 		birthWeek,
 		deathWeek,
 		componentName,
+		validatedWeekStart,
 	);
 
 	// Create week objects
@@ -177,6 +255,7 @@ export default function generateCalendarData(
 	return {
 		validatedBirthDate,
 		validatedLifespan,
+		validatedWeekStart,
 		birthWeek,
 		deathDate,
 		deathWeek,

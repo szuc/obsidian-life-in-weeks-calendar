@@ -15,12 +15,14 @@
 		calendarMode,
 		modalFn,
 		syncWithWeeklyNotes,
+		weekStartsOn,
 	}: {
 		birthdate: string;
 		projectedLifespan: string;
 		calendarMode: string;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
+		weekStartsOn: string | undefined;
 	} = $props();
 
 	let mode: CalendarMode = $state(calendarMode as CalendarMode);
@@ -56,6 +58,7 @@
 			{allWeeklyNotes}
 			{modalFn}
 			{syncWithWeeklyNotes}
+			{weekStartsOn}
 		/>
 	{:else}
 		<CalendarBasic
@@ -64,6 +67,7 @@
 			{allWeeklyNotes}
 			{modalFn}
 			{syncWithWeeklyNotes}
+			{weekStartsOn}
 		/>
 	{/if}
 </div>

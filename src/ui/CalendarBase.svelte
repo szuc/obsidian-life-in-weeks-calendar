@@ -7,15 +7,22 @@
 		birthDate: Date;
 		lifespan: number;
 		componentName: string;
+		weekStartsOn: string | undefined;
 		children: Snippet<[CalendarData | null]>;
 	}
 
-	let { birthDate, lifespan, componentName, children }: Props = $props();
+	let { birthDate, lifespan, componentName, weekStartsOn, children }: Props =
+		$props();
 
 	// Generate all calendar data using shared utilities
 	const calendarData = $derived.by(() => {
 		try {
-			return generateCalendarData(birthDate, lifespan, componentName);
+			return generateCalendarData(
+				birthDate,
+				lifespan,
+				componentName,
+				weekStartsOn,
+			);
 		} catch (err) {
 			console.error(err);
 			return null;

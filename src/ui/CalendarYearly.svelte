@@ -15,7 +15,7 @@
 		dateToDailyNoteFormatRecordKey,
 		setWeekStatus,
 	} from '../lib/utils';
-	import type { Week } from 'src/lib/types';
+	import type { Week, WeekStartsOn } from 'src/lib/types';
 	import { CALENDAR_LAYOUT } from 'src/lib/calendar-constants';
 
 	let {
@@ -24,12 +24,14 @@
 		allWeeklyNotes,
 		modalFn,
 		syncWithWeeklyNotes,
+		weekStartsOn,
 	}: {
 		birthDate: Date;
 		lifespan: number;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
+		weekStartsOn: string | undefined;
 	} = $props();
 
 	/**
@@ -40,6 +42,7 @@
 		validatedBirthDate: Date,
 		validatedLifespan: number,
 		birthWeek: Date,
+		validatedWeekStartsOn: WeekStartsOn,
 	): Week[][] {
 		const yearsPerGroup = CALENDAR_LAYOUT.YEAR_GROUP_SIZE;
 
@@ -74,10 +77,15 @@
 				);
 
 				try {
-					const weekIntervals = eachWeekOfInterval({
-						start: currentStartDate,
-						end: currentEndDate,
-					});
+					const weekIntervals = eachWeekOfInterval(
+						{
+							start: currentStartDate,
+							end: currentEndDate,
+						},
+						validatedWeekStartsOn
+							? { weekStartsOn: validatedWeekStartsOn }
+							: undefined,
+					);
 					yearGroups.push(
 						weekIntervals.map((weekStartDate, index) => ({
 							index,
@@ -103,7 +111,12 @@
 	}
 </script>
 
-<CalendarBase {birthDate} {lifespan} componentName="CalendarYearly">
+<CalendarBase
+	{birthDate}
+	{lifespan}
+	{weekStartsOn}
+	componentName="CalendarYearly"
+>
 	{#snippet children(data)}
 		{#if !data}
 			<CalendarError />
@@ -112,6 +125,7 @@
 				data.validatedBirthDate,
 				data.validatedLifespan,
 				data.birthWeek,
+				data.validatedWeekStart,
 			)}
 			<div class="lwc__calendar-yearly">
 				{#each yearGroups as section, index}
@@ -125,7 +139,10 @@
 							{#each section as week}
 								<WeekBlock
 									title={week.startDate.toLocaleDateString()}
-									mode={setWeekStatus(week.startDate)}
+									mode={setWeekStatus(
+										week.startDate,
+										data.validatedWeekStart,
+									)}
 									showDot={syncWithWeeklyNotes &&
 										!!allWeeklyNotes?.[
 											dateToDailyNoteFormatRecordKey(

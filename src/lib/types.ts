@@ -12,9 +12,12 @@ export interface CalendarData {
 	weekIntervals: Date[];
 	weeks: Week[];
 	hasWeeks: boolean;
+	validatedWeekStart: WeekStartsOn;
 }
 
 export enum CalendarMode {
-	BASIC = "basic",
-	YEARLY = "yearly",
+	BASIC = 'basic',
+	YEARLY = 'yearly',
 }
+
+export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6 | undefined;
