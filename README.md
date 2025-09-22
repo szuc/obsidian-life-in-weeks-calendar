@@ -6,6 +6,10 @@ The "life in weeks" calendar is a visual tool designed to shift one's perspectiv
 
 At its heart, the life in weeks calendar is a "memento mori," a Latin phrase meaning "remember that you must die." This concept, with roots in Stoic philosophy, encourages individuals to live more intentionally by keeping their mortality at the forefront of their minds. The calendar is not meant to be a morbid or anxiety-inducing tool, but rather a catalyst for positive change.
 
+## Weekly note integration
+
+Life is better with Periodic Notes plugin installed. Weeks can display an indicator on weeks where you've created a weekly note. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
+
 ## Plugin Settings and Options
 
 **Birthdate:**  
