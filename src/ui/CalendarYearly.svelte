@@ -1,11 +1,5 @@
 <script lang="ts">
-	import {
-		eachWeekOfInterval,
-		addYears,
-		addWeeks,
-		subWeeks,
-		getWeek,
-	} from 'date-fns';
+	import { getWeek } from 'date-fns';
 	import CalendarBase from './CalendarBase.svelte';
 	import WeekBlock from './WeekBlock.svelte';
 	import CalendarError from './CalendarError.svelte';
@@ -15,8 +9,8 @@
 		dateToDailyNoteFormatRecordKey,
 		setWeekStatus,
 	} from '../lib/utils';
-	import type { Week, WeekStartsOn } from 'src/lib/types';
 	import { CALENDAR_LAYOUT } from 'src/lib/calendar-constants';
+	import { createYearGroups } from 'src/lib/generateCalendarData';
 
 	let {
 		birthDate,
@@ -34,81 +28,16 @@
 		weekStartsOn: string | undefined;
 	} = $props();
 
-	/**
-	 * Groups weeks into year-based chunks for the yearly calendar display
-	 * Uses shared calendar data and adds year grouping functionality
-	 */
-	function createYearGroups(
-		validatedBirthDate: Date,
-		validatedLifespan: number,
-		birthWeek: Date,
-		validatedWeekStartsOn: WeekStartsOn,
-	): Week[][] {
-		const yearsPerGroup = CALENDAR_LAYOUT.YEAR_GROUP_SIZE;
+	const makeGroupLabel = (index: number) =>
+		String(index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE).padStart(2, '0');
 
-		try {
-			const yearGroups: Week[][] = [];
-			const endDate = addYears(birthWeek, validatedLifespan);
-			let currentStartDate = validatedBirthDate;
+	const showDotFn = (weekStartDate: Date) =>
+		syncWithWeeklyNotes &&
+		!!allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(weekStartDate)];
 
-			// Validate inputs
-			if (
-				!validatedBirthDate ||
-				validatedLifespan <= 0 ||
-				yearsPerGroup <= 0
-			) {
-				console.warn(
-					'CalendarYearly: Invalid parameters for year grouping',
-				);
-				return [];
-			}
-
-			while (currentStartDate < endDate) {
-				const currentEndDate = subWeeks(
-					addYears(
-						currentStartDate,
-						Math.min(
-							validatedLifespan -
-								yearGroups.length * yearsPerGroup,
-							yearsPerGroup,
-						),
-					),
-					1,
-				);
-
-				try {
-					const weekIntervals = eachWeekOfInterval(
-						{
-							start: currentStartDate,
-							end: currentEndDate,
-						},
-						validatedWeekStartsOn
-							? { weekStartsOn: validatedWeekStartsOn }
-							: undefined,
-					);
-					yearGroups.push(
-						weekIntervals.map((weekStartDate, index) => ({
-							index,
-							startDate: weekStartDate,
-						})),
-					);
-				} catch (intervalError) {
-					console.error(
-						'CalendarYearly: Error calculating week interval for year group:',
-						intervalError,
-					);
-					// Skip this group but continue with others
-				}
-
-				currentStartDate = addWeeks(currentEndDate, 1);
-			}
-
-			return yearGroups;
-		} catch (error) {
-			console.error('CalendarYearly: Error in createYearGroups:', error);
-			return []; // Return empty array as fallback
-		}
-	}
+	const onClickFn = (weekStartDate: Date) => {
+		syncWithWeeklyNotes && openWeeklyNoteFunction(weekStartDate, modalFn);
+	};
 </script>
 
 <CalendarBase
@@ -131,9 +60,7 @@
 				{#each yearGroups as section, index}
 					<div class="lwc__group">
 						<div class="lwc__year-label">
-							{String(
-								index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE,
-							).padStart(2, '0')}
+							{makeGroupLabel(index)}
 						</div>
 						<div class="lwc__calendar__grid">
 							{#each section as week}
@@ -143,20 +70,9 @@
 										week.startDate,
 										data.validatedWeekStartsOn,
 									)}
-									showDot={syncWithWeeklyNotes &&
-										!!allWeeklyNotes?.[
-											dateToDailyNoteFormatRecordKey(
-												week.startDate,
-											)
-										]}
+									showDot={showDotFn(week.startDate)}
 									style={`grid-column: ${getWeek(week.startDate)}`}
-									onClick={() => {
-										syncWithWeeklyNotes &&
-											openWeeklyNoteFunction(
-												week.startDate,
-												modalFn,
-											);
-									}}
+									onClick={() => onClickFn(week.startDate)}
 								/>
 							{/each}
 						</div>

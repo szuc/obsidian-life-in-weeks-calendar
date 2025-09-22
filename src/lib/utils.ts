@@ -1,7 +1,7 @@
 import { isThisWeek } from 'date-fns';
 import type { WeekStartsOn } from './types';
 
-/** Helper for determining Week class name */
+/** Determines if a week is in the past, present, or future. */
 const TODAY = new Date();
 export const setWeekStatus = (
 	weekStartDate: Date,
@@ -54,6 +54,11 @@ export function createLocalDateYYYYMMDD(dateString: string): Date {
 	return new Date(year, month - 1, day);
 }
 
+/**
+ * Formats a Date object into a "YYYY-MM-DD" string.
+ * @param date - The date to format.
+ * @returns The formatted date string.
+ */
 export function dateToYYYYMMDD(date: Date): string {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
 		throw new Error('dateToYYYYMMDD: date must be a valid Date object');
@@ -111,6 +116,11 @@ function formatTimezoneOffset(offsetMinutes: number): string {
 	return `${sign}${paddedHours}:${paddedMinutes}`;
 }
 
+/**
+ * Checks if a value is a valid Date object.
+ * @param d - The value to check.
+ * @returns `true` if the value is a valid Date, `false` otherwise.
+ */
 export function isValidDate(d: Date): boolean {
 	return d instanceof Date && !isNaN(d.getDate());
 }

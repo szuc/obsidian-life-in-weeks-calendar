@@ -25,13 +25,13 @@ export const openWeeklyNoteFunction = async (
 	// time the calendar was rendered
 	const allWeeklyNotes = getAllWeeklyNotes();
 
-	// @ts-expect-error, not typed`
+	// @ts-expect-error, not typed
 	const { workspace } = window.app;
 	const momentObject = moment(date);
 	const { format } = getWeeklyNoteSettings();
 	const filename = momentObject.format(format || 'gggg-[W]ww');
 
-	// getWeeklyNote from obsidian-daily-notes-interface wasn't working then the week start date isn't sunday
+	// getWeeklyNote from obsidian-daily-notes-interface wasn't working when the week start date isn't sunday
 	let dailyNote: TFile = allWeeklyNotes[dateToDailyNoteFormatRecordKey(date)];
 
 	if (!dailyNote && modalFn === undefined) {

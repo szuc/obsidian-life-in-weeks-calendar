@@ -25,10 +25,13 @@
 		weekStartsOn: string | undefined;
 	} = $props();
 
-	$effect(() => {
-		console.log(allWeeklyNotes);
-		console.log(weekStartsOn);
-	});
+	const showDotFn = (weekStartDate: Date) =>
+		syncWithWeeklyNotes &&
+		!!allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(weekStartDate)];
+
+	const onClickFn = (weekStartDate: Date) => {
+		syncWithWeeklyNotes && openWeeklyNoteFunction(weekStartDate, modalFn);
+	};
 </script>
 
 <CalendarBase
@@ -53,25 +56,14 @@
 								week.startDate,
 								data.validatedWeekStartsOn,
 							)}
-							showDot={syncWithWeeklyNotes &&
-								!!allWeeklyNotes?.[
-									dateToDailyNoteFormatRecordKey(
-										week.startDate,
-									)
-								]}
-							onClick={() => {
-								syncWithWeeklyNotes &&
-									openWeeklyNoteFunction(
-										week.startDate,
-										modalFn,
-									);
-							}}
+							showDot={showDotFn(week.startDate)}
+							onClick={() => onClickFn(week.startDate)}
 						/>
 					{/each}
 					{#if data.hasWeeks}
-						<span class="lwc__deathDate-label"
-							>{data.deathDate.toLocaleDateString()}</span
-						>
+						<span class="lwc__deathDate-label">
+							{data.deathDate.toLocaleDateString()}
+						</span>
 					{/if}
 				</div>
 			</div>

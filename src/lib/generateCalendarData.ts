@@ -1,6 +1,15 @@
-import { eachWeekOfInterval, addYears, startOfWeek } from 'date-fns';
+import {
+	eachWeekOfInterval,
+	addYears,
+	startOfWeek,
+	addWeeks,
+	subWeeks,
+} from 'date-fns';
 import type { Week, CalendarData, WeekStartsOn } from 'src/lib/types';
-import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
+import {
+	CALENDAR_LAYOUT,
+	CALENDAR_VALIDATION,
+} from 'src/lib/calendar-constants';
 
 /**
  * Creates validation functions for a calendar component
@@ -90,6 +99,7 @@ function createCalendarValidation(componentName: string): {
  * Calculates core calendar dates from validated inputs
  * @param validatedBirthDate - Validated birth date
  * @param validatedLifespan - Validated lifespan in years
+ * @param validatedWeekStartsOn - The week start day as an index or undefined
  * @returns Object with calculated dates
  */
 function calculateCalendarDates(
@@ -120,18 +130,14 @@ function calculateCalendarDates(
 	const birthWeek = startOfWeek(
 		validatedBirthDate,
 		validatedWeekStartsOn !== undefined
-			? {
-					weekStartsOn: validatedWeekStartsOn,
-				}
+			? { weekStartsOn: validatedWeekStartsOn }
 			: undefined,
 	);
 	const deathDate = addYears(validatedBirthDate, validatedLifespan);
 	const deathWeek = startOfWeek(
 		deathDate,
 		validatedWeekStartsOn !== undefined
-			? {
-					weekStartsOn: validatedWeekStartsOn,
-				}
+			? { weekStartsOn: validatedWeekStartsOn }
 			: undefined,
 	);
 
@@ -146,15 +152,15 @@ function calculateCalendarDates(
  * Generates week intervals with error handling
  * @param startWeek - Starting week date
  * @param endWeek - Ending week date
+ * @param validatedWeekStartsOn - The week start day as an index or undefined
  * @param componentName - Component name for error messages
- * @param validatedWeekStartsOn - Index of first day or week (0 = Sunday, 6 = Saturday). Undefined defaults to locale
  * @returns Array of week start dates or empty array on error
  */
 function generateWeekIntervals(
 	startWeek: Date,
 	endWeek: Date,
-	componentName: string,
 	validatedWeekStartsOn: WeekStartsOn,
+	componentName: string,
 ): Date[] {
 	try {
 		return eachWeekOfInterval(
@@ -163,9 +169,7 @@ function generateWeekIntervals(
 				end: endWeek,
 			},
 			validatedWeekStartsOn !== undefined
-				? {
-						weekStartsOn: validatedWeekStartsOn,
-					}
+				? { weekStartsOn: validatedWeekStartsOn }
 				: undefined,
 		);
 	} catch (error) {
@@ -249,8 +253,8 @@ export default function generateCalendarData(
 	const weekIntervals = generateWeekIntervals(
 		birthWeek,
 		deathWeek,
-		componentName,
 		validatedWeekStartsOn,
+		componentName,
 	);
 
 	// Create week objects
@@ -266,4 +270,66 @@ export default function generateCalendarData(
 		weeks,
 		hasWeeks: weeks.length > 0,
 	};
+}
+
+/**
+ * Groups weeks into year-based chunks for the yearly calendar display
+ * Uses shared calendar data and adds year grouping functionality
+ * @param validatedBirthDate - Birthdate
+ * @param validatedLifespan - number of years the calendar spans
+ * @param birthWeek - the first day of the week the containing the birthdate
+ * @param validatedWeekStartsOn - The week start day as an index or undefined
+ */
+export function createYearGroups(
+	validatedBirthDate: Date,
+	validatedLifespan: number,
+	birthWeek: Date,
+	validatedWeekStartsOn: WeekStartsOn,
+): Week[][] {
+	const yearsPerGroup = CALENDAR_LAYOUT.YEAR_GROUP_SIZE;
+
+	try {
+		const yearGroups: Week[][] = [];
+		const endDate = addYears(birthWeek, validatedLifespan);
+		let currentStartDate = birthWeek;
+
+		// Validate inputs
+		if (
+			!validatedBirthDate ||
+			validatedLifespan <= 0 ||
+			yearsPerGroup <= 0
+		) {
+			console.warn(
+				'CalendarYearly: Invalid parameters for year grouping',
+			);
+			return [];
+		}
+
+		while (currentStartDate < endDate) {
+			const currentEndDate = subWeeks(
+				addYears(
+					currentStartDate,
+					Math.min(
+						validatedLifespan - yearGroups.length * yearsPerGroup,
+						yearsPerGroup,
+					),
+				),
+				1,
+			);
+
+			const weekIntervals = generateWeekIntervals(
+				currentStartDate,
+				currentEndDate,
+				validatedWeekStartsOn,
+				'Yearly Calendar',
+			);
+			yearGroups.push(createWeekObjects(weekIntervals));
+			currentStartDate = addWeeks(currentEndDate, 1);
+		}
+
+		return yearGroups;
+	} catch (error) {
+		console.error('CalendarYearly: Error in createYearGroups:', error);
+		return []; // Return empty array as fallback
+	}
 }
