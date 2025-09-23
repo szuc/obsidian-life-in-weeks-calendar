@@ -71,7 +71,7 @@
 										data.validatedWeekStartsOn,
 									)}
 									showDot={showDotFn(week.startDate)}
-									style={`grid-column: ${getWeek(week.startDate)}`}
+									gridOffset={getWeek(week.startDate)}
 									onClick={() => onClickFn(week.startDate)}
 								/>
 							{/each}

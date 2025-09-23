@@ -10,7 +10,6 @@ export interface LifeCalendarSettings {
 	viewLocation: string;
 	confirmBeforeCreatingWeeklyNote: boolean;
 	syncWithWeeklyNotes: boolean;
-	// weekStartsOn: string;
 }
 
 export const DEFAULT_SETTINGS: LifeCalendarSettings = {
@@ -20,7 +19,6 @@ export const DEFAULT_SETTINGS: LifeCalendarSettings = {
 	viewLocation: 'main',
 	confirmBeforeCreatingWeeklyNote: true,
 	syncWithWeeklyNotes: true,
-	// weekStartsOn: 'locale',
 };
 
 const createErrorMessageElement = (
@@ -34,8 +32,7 @@ const createErrorMessageElement = (
 	const errorEl = document.createElement('div');
 	errorEl.textContent = message;
 	errorEl.id = id;
-	errorEl.className = 'my-error-message';
-	errorEl.style.color = 'red';
+	errorEl.className = 'lwc__error-message';
 	return errorEl;
 };
 
@@ -170,36 +167,6 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.onSettingsChanged();
 					}),
 			);
-
-		// new Setting(containerEl)
-		// 	.setName('Start week on')
-		// 	.setDesc(
-		// 		this.calendarPluginWeekStartsOn
-		// 			? 'Disabled: Using settings from Calendar plugin'
-		// 			: 'Choose what day of the week to start on.',
-		// 	)
-		// 	.addDropdown((dropdown) => {
-		// 		console.log(this.calendarPluginWeekStartsOn);
-		// 		dropdown
-		// 			.addOption('locale', 'Default')
-		// 			.addOption('sunday', 'Sunday')
-		// 			.addOption('monday', 'Monday')
-		// 			.addOption('tuesday', 'Tuesday')
-		// 			.addOption('wednesday', 'Wednesday')
-		// 			.addOption('thursday', 'Thursday')
-		// 			.addOption('friday', 'Friday')
-		// 			.addOption('saturday', 'Saturday')
-		// 			.setValue(
-		// 				this.calendarPluginWeekStartsOn ||
-		// 					this.plugin.settings.weekStartsOn,
-		// 			)
-		// 			.onChange(async (value) => {
-		// 				this.plugin.settings.weekStartsOn = value;
-		// 				await this.plugin.saveSettings();
-		// 				this.plugin.onSettingsChanged();
-		// 			})
-		// 			.setDisabled(this.calendarPluginWeekStartsOn !== undefined);
-		// 	});
 
 		new Setting(containerEl)
 			.setName("Integrate with Periodic Notes plugin's weekly notes")
