@@ -174,7 +174,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				});
 				banner.createEl('p', {
 					cls: 'lwc-setting-item-description',
-					text: 'The Life in Weeks Calendar is best with the Periodic Notes plugin weekly notes enabled(available in the Community Plugins catalog).',
+					text: 'The Life in Weeks Calendar is best with the Periodic Notes plugin weekly notes enabled (available in the Community Plugins catalog).',
 				});
 			});
 		}
