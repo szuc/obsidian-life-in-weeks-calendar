@@ -29,9 +29,11 @@
 		syncWithWeeklyNotes &&
 		!!allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(weekStartDate)];
 
-	const onClickFn = (weekStartDate: Date) => {
-		syncWithWeeklyNotes && openWeeklyNoteFunction(weekStartDate, modalFn);
-	};
+	const onClickFn = syncWithWeeklyNotes
+		? (weekStartDate: Date) => {
+				openWeeklyNoteFunction(weekStartDate, modalFn);
+			}
+		: undefined;
 </script>
 
 <CalendarBase
@@ -57,7 +59,9 @@
 								data.validatedWeekStartsOn,
 							)}
 							showDot={showDotFn(week.startDate)}
-							onClick={() => onClickFn(week.startDate)}
+							onClick={!!onClickFn
+								? () => onClickFn(week.startDate)
+								: undefined}
 						/>
 					{/each}
 					{#if data.hasWeeks}

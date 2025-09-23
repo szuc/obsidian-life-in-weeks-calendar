@@ -2,13 +2,13 @@
 
 ## The Life in Weeks Concept
 
-The "life in weeks" calendar is a visual tool designed to shift one's perspective on time and mortality. It presents a stark, tangible representation of a human lifespan, typically around 90 years, broken down into individual weeks, each represented by a small box. This grid of approximately 4,680 boxes serves as a powerful reminder of the finite nature of life.
+The _Life in Weeks Calendar_ is a visual tool designed to shift one's perspective on time and mortality. It presents a stark, tangible representation of a human lifespan, typically around 90 years, broken down into individual weeks, each represented by a small box. This grid of approximately 4,680 boxes serves as a powerful reminder of the finite nature of life.
 
 At its heart, the life in weeks calendar is a "memento mori," a Latin phrase meaning "remember that you must die." This concept, with roots in Stoic philosophy, encourages individuals to live more intentionally by keeping their mortality at the forefront of their minds. The calendar is not meant to be a morbid or anxiety-inducing tool, but rather a catalyst for positive change.
 
-## Weekly note integration
+## Periodic Notes plugin integration
 
-Life is better with Periodic Notes plugin installed. Weeks can display an indicator on weeks where you've created a weekly note. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
+While not required, this plugin's integrates with and is improved by installing the Periodic Notes plugin and activating the weekly notes feature. Weeks can display an indicator on weeks where you've created a weekly note. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
 
 ## Plugin Settings and Options
 
@@ -40,6 +40,10 @@ Displays your life in a grid with each cell representing a week in your life. Ea
 ![Logo](./assets/life_in_weeks-yearly.png)
 
 This view corrects an over simplification in the basic view. Years actually have fifty-two weeks and one day in a year, and depending on the year, will have either fifty-two or fifty-three week start dates. This view accounts for these variations and corrects varying year lengths. Each row accurately reflects a year, and decades of your life are grouped for easier visual parsing. Because row lengths are strictly accurate, this view is not responsive and is only practical for use in the main Obsidian view area.
+
+## Credits
+
+Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [obsidian-daily-notes-interface](https://github.com/liamcain/obsidian-daily-notes-interface).
 
 ## Thank You 🙏
 

@@ -164,6 +164,15 @@
 	margin: 0.5rem 0;
 }
 
+/* Settings page */
+.lwc-settings-banner {
+	background-color: var(--background-secondary-alt);
+	border-radius: 4px;
+	margin: 1.5em auto 1em;
+	padding: 1em 1.5em;
+	text-align: left;
+}
+
 /* A less than elegant solution to no-css-in-js rules */
 .lwc__week[data-offset='0'] {
 	grid-column: 0;

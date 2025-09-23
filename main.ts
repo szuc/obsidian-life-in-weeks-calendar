@@ -127,6 +127,12 @@ export default class LifeCalendarPlugin extends Plugin {
 		return calendarPlugin?.options?.weekStart;
 	}
 
+	weeklyPeriodicNotesPluginExists(): boolean {
+		// @ts-ignore
+		const periodicNotes = this.app.plugins.getPlugin('periodic-notes');
+		return periodicNotes && periodicNotes.settings?.weekly?.enabled;
+	}
+
 	async activateView(): Promise<void> {
 		const { workspace } = this.app;
 

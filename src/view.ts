@@ -49,23 +49,30 @@ export class LifeCalendarView extends ItemView {
 
 	private buildComponentProps() {
 		const settings = this.plugin.settings;
+		const weeklyNotesEnabled =
+			this.plugin.weeklyPeriodicNotesPluginExists();
+		const syncWithWeeklyNotes =
+			weeklyNotesEnabled &&
+			(settings.syncWithWeeklyNotes ??
+				DEFAULT_SETTINGS.syncWithWeeklyNotes);
+		const modalFunction = (message: string, cb: () => void) => {
+			new CreateFileModal(this.app, message, cb).open();
+		};
+		const modalFn = weeklyNotesEnabled
+			? (settings.confirmBeforeCreatingWeeklyNote ??
+				DEFAULT_SETTINGS.confirmBeforeCreatingWeeklyNote)
+				? modalFunction
+				: undefined
+			: undefined;
 		return {
-			birthdate: settings.birthdate || DEFAULT_SETTINGS.birthdate,
+			birthdate: settings.birthdate ?? DEFAULT_SETTINGS.birthdate,
 			projectedLifespan:
-				settings.projectedLifespan ||
+				settings.projectedLifespan ??
 				DEFAULT_SETTINGS.projectedLifespan,
 			calendarMode:
-				settings.calendarMode || DEFAULT_SETTINGS.calendarMode,
-			modalFn:
-				(settings.confirmBeforeCreatingWeeklyNote ??
-				DEFAULT_SETTINGS.confirmBeforeCreatingWeeklyNote)
-					? (message: string, cb: () => void) => {
-							new CreateFileModal(this.app, message, cb).open();
-						}
-					: undefined,
-			syncWithWeeklyNotes:
-				settings.syncWithWeeklyNotes ??
-				DEFAULT_SETTINGS.syncWithWeeklyNotes,
+				settings.calendarMode ?? DEFAULT_SETTINGS.calendarMode,
+			modalFn: modalFn,
+			syncWithWeeklyNotes: syncWithWeeklyNotes,
 			weekStartsOn: this.plugin.getWeekStartsOnOptionFromCalendar(),
 		};
 	}

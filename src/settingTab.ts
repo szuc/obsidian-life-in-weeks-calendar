@@ -52,9 +52,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h1', { text: 'General Settings' });
 		containerEl.createEl('p', {
-			text: 'Note: Settings related to weekly note integrations might require a restart of Obsidian to take effect.',
+			text: 'Note: Settings related to weekly note integrations might require closing the weekly calendar and reopening it for changes to take effect.',
 		});
 
 		new Setting(containerEl)
@@ -168,6 +167,18 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		if (!this.plugin.weeklyPeriodicNotesPluginExists()) {
+			this.containerEl.createDiv('lwc-settings-banner', (banner) => {
+				banner.createEl('h3', {
+					text: '⚠️ Weekly Notes not enabled',
+				});
+				banner.createEl('p', {
+					cls: 'lwc-setting-item-description',
+					text: 'The Life in Weeks Calendar is best with the Periodic Notes plugin weekly notes enabled(available in the Community Plugins catalog).',
+				});
+			});
+		}
+
 		new Setting(containerEl)
 			.setName("Integrate with Periodic Notes plugin's weekly notes")
 			.setDesc(
@@ -175,12 +186,18 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.syncWithWeeklyNotes)
+					.setValue(
+						this.plugin.weeklyPeriodicNotesPluginExists() &&
+							this.plugin.settings.syncWithWeeklyNotes,
+					)
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
 						this.plugin.onSettingsChanged();
-					}),
+					})
+					.setDisabled(
+						!this.plugin.weeklyPeriodicNotesPluginExists(),
+					),
 			);
 
 		new Setting(containerEl)
@@ -191,14 +208,19 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle
 					.setValue(
-						this.plugin.settings.confirmBeforeCreatingWeeklyNote,
+						this.plugin.weeklyPeriodicNotesPluginExists() &&
+							this.plugin.settings
+								.confirmBeforeCreatingWeeklyNote,
 					)
 					.onChange(async (value) => {
 						this.plugin.settings.confirmBeforeCreatingWeeklyNote =
 							value;
 						await this.plugin.saveSettings();
 						this.plugin.onSettingsChanged();
-					}),
+					})
+					.setDisabled(
+						!this.plugin.weeklyPeriodicNotesPluginExists(),
+					),
 			);
 	}
 }
