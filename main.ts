@@ -9,7 +9,7 @@ import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
-	lifeCalendarView: LifeCalendarView | null = null;
+	private lifeCalendarView: LifeCalendarView | null = null;
 	private statusBarItem: HTMLElement | null = null;
 	private lastBirthdayCheck: string | null = null;
 

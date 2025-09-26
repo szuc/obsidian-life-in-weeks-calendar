@@ -133,11 +133,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Calendar view mode')
-			.setDesc('Basic mode is better for sidebar or mobile views.')
+			.setDesc('Standard mode is better for sidebar or mobile views.')
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption('basic', 'Basic')
-					.addOption('yearly', 'Yearly')
+					.addOption('basic', 'Standard')
+					.addOption('yearly', 'Decades')
 					.setValue(this.plugin.settings.calendarMode)
 					.onChange(async (value) => {
 						this.plugin.settings.calendarMode = value;
