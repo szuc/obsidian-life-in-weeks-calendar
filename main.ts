@@ -1,19 +1,11 @@
-import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
+import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { LifeCalendarView, VIEW_TYPE_LIFE_CALENDAR } from 'src/view';
 import {
 	type LifeCalendarSettings,
 	LifeCalendarSettingTab,
 	DEFAULT_SETTINGS,
 } from 'src/settingTab';
-import {
-	createLocalDateYYYYMMDD,
-	dateToYYYYMMDD,
-	fixWeekStartDate,
-} from 'src/lib/utils';
-import {
-	appHasDailyNotesPluginLoaded,
-	getAllWeeklyNotes,
-} from 'obsidian-daily-notes-interface';
+import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
@@ -124,27 +116,6 @@ export default class LifeCalendarPlugin extends Plugin {
 
 	refreshLifeCalendarView(): void {
 		this.lifeCalendarView?.refreshView();
-	}
-
-	/**
-	 * Use obsidian-daily-notes-interface to get all the weekly notes then correct
-	 * for a bug in the weekly notes interface that keys the notes record to the wrong
-	 * week start date if the first day of the week has been edited in Calendar plugin
-	 * but the Calendar view hasn't been opened before the Life in Weeks view has.
-	 */
-	getAllWeeklyNotes(): Record<string, TFile> | undefined {
-		let allWeeklyNotes: Record<string, TFile> | undefined;
-		if (
-			appHasDailyNotesPluginLoaded() &&
-			(this.settings.syncWithWeeklyNotes ??
-				DEFAULT_SETTINGS.syncWithWeeklyNotes)
-		) {
-			allWeeklyNotes = getAllWeeklyNotes();
-		}
-		return fixWeekStartDate(
-			allWeeklyNotes,
-			this.getWeekStartsOnOptionFromCalendar(),
-		);
 	}
 
 	getWeekStartsOnOptionFromCalendar(): string | undefined {
