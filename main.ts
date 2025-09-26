@@ -9,7 +9,7 @@ import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
-	private lifeCalendarViews: Set<LifeCalendarView> = new Set();
+	private lifeCalendarView: LifeCalendarView | null = null;
 	private statusBarItem: HTMLElement | null = null;
 	private lastBirthdayCheck: string | null = null;
 
@@ -86,7 +86,7 @@ export default class LifeCalendarPlugin extends Plugin {
 
 	override onunload() {
 		// Clear the view registry
-		this.lifeCalendarViews.clear();
+		this.lifeCalendarView = null;
 		// Clean up status bar item
 		if (this.statusBarItem) {
 			this.statusBarItem.remove();
@@ -107,18 +107,15 @@ export default class LifeCalendarPlugin extends Plugin {
 	}
 
 	registerLifeCalendarView(view: LifeCalendarView): void {
-		this.lifeCalendarViews.add(view);
+		this.lifeCalendarView = view;
 	}
 
-	unregisterLifeCalendarView(view: LifeCalendarView): void {
-		this.lifeCalendarViews.delete(view);
+	unregisterLifeCalendarView(): void {
+		this.lifeCalendarView = null;
 	}
 
-	onSettingsChanged(): void {
-		// Notify all registered LifeCalendarViews to refresh
-		this.lifeCalendarViews.forEach((view) => {
-			view.refreshView();
-		});
+	refreshLifeCalendarView(): void {
+		this.lifeCalendarView?.refreshView();
 	}
 
 	getWeekStartsOnOptionFromCalendar(): string | undefined {

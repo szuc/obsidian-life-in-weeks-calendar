@@ -1,14 +1,18 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
 import LifeCalendar from 'src/ui/LifeCalendar.svelte';
 import { mount } from 'svelte';
 import type LifeCalendarPlugin from 'main';
 import { DEFAULT_SETTINGS } from 'src/settingTab';
 import { CreateFileModal } from 'src/createFileModal';
+import {
+	appHasDailyNotesPluginLoaded,
+	getAllWeeklyNotes,
+} from 'obsidian-daily-notes-interface';
+import { fixWeekStartDate } from './lib/utils';
 
 export const VIEW_TYPE_LIFE_CALENDAR = 'life-in-weeks-calendar';
 
 export class LifeCalendarView extends ItemView {
-	// A variable to hold on to the Counter instance mounted in this ItemView.
 	lifeCalendar: ReturnType<typeof LifeCalendar> | undefined;
 	plugin: LifeCalendarPlugin;
 
@@ -35,16 +39,32 @@ export class LifeCalendarView extends ItemView {
 	override async onOpen() {
 		// Register this view with the plugin for settings change notifications
 		this.plugin.registerLifeCalendarView(this);
-
 		this.mountComponent();
 	}
 
 	onFileChange(): void {
-		if (!this.app.workspace.layoutReady) {
-			// Workspace is still loading, do nothing
-			return;
+		this.plugin.refreshLifeCalendarView();
+	}
+
+	/**
+	 * Use obsidian-daily-notes-interface to get all the weekly notes then correct
+	 * for a bug in the weekly notes interface that keys the notes record to the wrong
+	 * week start date if the first day of the week has been edited in Calendar plugin
+	 * but the Calendar view hasn't been opened before the Life in Weeks view has.
+	 */
+	private getAllWeeklyNotes(): Record<string, TFile> | undefined {
+		let allWeeklyNotes: Record<string, TFile> | undefined;
+		if (
+			appHasDailyNotesPluginLoaded() &&
+			(this.plugin.settings.syncWithWeeklyNotes ??
+				DEFAULT_SETTINGS.syncWithWeeklyNotes)
+		) {
+			allWeeklyNotes = getAllWeeklyNotes();
 		}
-		this.lifeCalendar?.refreshWeeklyNotes();
+		return fixWeekStartDate(
+			allWeeklyNotes,
+			this.plugin.getWeekStartsOnOptionFromCalendar(),
+		);
 	}
 
 	private buildComponentProps() {
@@ -74,6 +94,7 @@ export class LifeCalendarView extends ItemView {
 			modalFn: modalFn,
 			syncWithWeeklyNotes: syncWithWeeklyNotes,
 			weekStartsOn: this.plugin.getWeekStartsOnOptionFromCalendar(),
+			allWeeklyNotes: this.getAllWeeklyNotes(),
 		};
 	}
 
@@ -101,6 +122,6 @@ export class LifeCalendarView extends ItemView {
 
 	override async onClose() {
 		this.cleanupComponent();
-		this.plugin.unregisterLifeCalendarView(this);
+		this.plugin.unregisterLifeCalendarView();
 	}
 }
