@@ -38,13 +38,10 @@ const createErrorMessageElement = (
 
 export class LifeCalendarSettingTab extends PluginSettingTab {
 	plugin: LifeCalendarPlugin;
-	calendarPluginWeekStartsOn: string | undefined;
 
 	constructor(app: App, plugin: LifeCalendarPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
-		this.calendarPluginWeekStartsOn =
-			this.plugin.getWeekStartsOnOptionFromCalendar();
 	}
 
 	display(): void {
@@ -82,7 +79,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							this.plugin.settings.birthdate = value;
 							try {
 								await this.plugin.saveSettings();
-								this.plugin.onSettingsChanged();
+								this.plugin.refreshLifeCalendarView();
 							} catch (error) {
 								console.error(
 									'Failed to save birthdate setting:',
@@ -123,7 +120,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.projectedLifespan = value;
 						try {
 							await this.plugin.saveSettings();
-							this.plugin.onSettingsChanged();
+							this.plugin.refreshLifeCalendarView();
 						} catch (error) {
 							console.error(
 								'Failed to save lifespan setting:',
@@ -145,7 +142,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.calendarMode = value;
 						await this.plugin.saveSettings();
-						this.plugin.onSettingsChanged();
+						this.plugin.refreshLifeCalendarView();
 					}),
 			);
 
@@ -163,7 +160,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.viewLocation = value;
 						await this.plugin.saveSettings();
-						this.plugin.onSettingsChanged();
+						this.plugin.refreshLifeCalendarView();
 					}),
 			);
 
@@ -193,7 +190,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
-						this.plugin.onSettingsChanged();
+						this.plugin.refreshLifeCalendarView();
 					})
 					.setDisabled(
 						!this.plugin.weeklyPeriodicNotesPluginExists(),
@@ -216,7 +213,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.confirmBeforeCreatingWeeklyNote =
 							value;
 						await this.plugin.saveSettings();
-						this.plugin.onSettingsChanged();
+						this.plugin.refreshLifeCalendarView();
 					})
 					.setDisabled(
 						!this.plugin.weeklyPeriodicNotesPluginExists(),

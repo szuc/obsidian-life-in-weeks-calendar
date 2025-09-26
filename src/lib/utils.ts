@@ -1,5 +1,6 @@
-import { isThisWeek } from 'date-fns';
+import { isThisWeek, startOfWeek, type Day } from 'date-fns';
 import type { WeekStartsOn } from './types';
+import type { TFile } from 'obsidian';
 
 /** Determines if a week is in the past, present, or future. */
 const TODAY = new Date();
@@ -123,4 +124,70 @@ function formatTimezoneOffset(offsetMinutes: number): string {
  */
 export function isValidDate(d: Date): boolean {
 	return d instanceof Date && !isNaN(d.getDate());
+}
+
+/**
+ * Corrects a bug where week start date might not match week start day depending on
+ * the order of when the calendar sidebar is opened.
+ * @param allWeeklyNotes - Weekly notes record from obsidian-daily-notes-interface
+ * @param weekStartsOn - modified week start day from Calendar settings
+ * @returns Weekly notes record with keys corrected to the week start day
+ */
+export function fixWeekStartDate(
+	allWeeklyNotes: Record<string, TFile> | undefined,
+	weekStartsOn: string | undefined,
+): Record<string, TFile> | undefined {
+	if (allWeeklyNotes === undefined) return;
+	if (weekStartsOn === undefined) return allWeeklyNotes;
+
+	const newAllWeeklyNotes: Record<string, TFile> = allWeeklyNotes;
+	// The keys on the objects might reflect the wrong day start
+	for (const key in allWeeklyNotes) {
+		const correctedKey = weeklyNoteKeyCorrection(key, weekStartsOn);
+		newAllWeeklyNotes[correctedKey] = allWeeklyNotes[key];
+	}
+	return newAllWeeklyNotes;
+}
+
+/**
+ * Corrects the date key string for allWeeklyNotes records
+ * @param key custom date string used in allWeeklyNotes record
+ * @param weekStartsOn string of the day that a week starts on
+ * @returns corrected key string
+ */
+function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
+	// parse the wrong start date from the key.
+	const dateString = key.slice(5, 15);
+	const date = createLocalDateYYYYMMDD(dateString);
+	const weekStartDate = startOfWeek(date, {
+		weekStartsOn: weekStartsOnStringToIndex(weekStartsOn) as Day,
+	});
+	// convert it back into the expected format
+	return dateToDailyNoteFormatRecordKey(weekStartDate);
+}
+
+/**
+ * Converts the string setting from Calendar for first day of the week to an index
+ * @param weekStartsOn - Day of the week string, "default", or undefined
+ * @returns index of the day or undefined
+ */
+export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
+	switch (weekStartsOn?.toLocaleLowerCase()) {
+		case 'sunday':
+			return 0;
+		case 'monday':
+			return 1;
+		case 'tuesday':
+			return 2;
+		case 'wednesday':
+			return 3;
+		case 'thursday':
+			return 4;
+		case 'friday':
+			return 5;
+		case 'saturday':
+			return 6;
+		default:
+			return undefined;
+	}
 }

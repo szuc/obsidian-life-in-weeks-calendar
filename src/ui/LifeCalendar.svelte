@@ -4,10 +4,6 @@
 	import { createLocalDateYYYYMMDD } from '../lib/utils';
 	import type { CalendarMode } from 'src/lib/types';
 	import { TFile } from 'obsidian';
-	import {
-		appHasDailyNotesPluginLoaded,
-		getAllWeeklyNotes,
-	} from 'obsidian-daily-notes-interface';
 
 	const {
 		birthdate,
@@ -16,6 +12,7 @@
 		modalFn,
 		syncWithWeeklyNotes,
 		weekStartsOn,
+		allWeeklyNotes,
 	}: {
 		birthdate: string;
 		projectedLifespan: string;
@@ -23,6 +20,7 @@
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
 		weekStartsOn: string | undefined;
+		allWeeklyNotes: Record<string, TFile> | undefined;
 	} = $props();
 
 	let mode: CalendarMode = $state(calendarMode as CalendarMode);
@@ -37,17 +35,6 @@
 
 	/** Convert lifespan string to number for calculations */
 	let lifespan = $derived(Number(lifespanString));
-
-	let allWeeklyNotes: Record<string, TFile> | undefined = $state(undefined);
-	if (appHasDailyNotesPluginLoaded() && syncWithWeeklyNotes) {
-		// gets a record of all the weekly notes <"date_string", TFile>
-		allWeeklyNotes = getAllWeeklyNotes();
-	}
-	export function refreshWeeklyNotes() {
-		if (appHasDailyNotesPluginLoaded() && syncWithWeeklyNotes) {
-			allWeeklyNotes = getAllWeeklyNotes();
-		}
-	}
 </script>
 
 <div class="life-in-weeks-calendar-plugin">

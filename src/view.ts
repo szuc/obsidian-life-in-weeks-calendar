@@ -8,7 +8,6 @@ import { CreateFileModal } from 'src/createFileModal';
 export const VIEW_TYPE_LIFE_CALENDAR = 'life-in-weeks-calendar';
 
 export class LifeCalendarView extends ItemView {
-	// A variable to hold on to the Counter instance mounted in this ItemView.
 	lifeCalendar: ReturnType<typeof LifeCalendar> | undefined;
 	plugin: LifeCalendarPlugin;
 
@@ -35,16 +34,11 @@ export class LifeCalendarView extends ItemView {
 	override async onOpen() {
 		// Register this view with the plugin for settings change notifications
 		this.plugin.registerLifeCalendarView(this);
-
 		this.mountComponent();
 	}
 
 	onFileChange(): void {
-		if (!this.app.workspace.layoutReady) {
-			// Workspace is still loading, do nothing
-			return;
-		}
-		this.lifeCalendar?.refreshWeeklyNotes();
+		this.plugin.refreshLifeCalendarView();
 	}
 
 	private buildComponentProps() {
@@ -74,6 +68,7 @@ export class LifeCalendarView extends ItemView {
 			modalFn: modalFn,
 			syncWithWeeklyNotes: syncWithWeeklyNotes,
 			weekStartsOn: this.plugin.getWeekStartsOnOptionFromCalendar(),
+			allWeeklyNotes: this.plugin.getAllWeeklyNotes(),
 		};
 	}
 
@@ -101,6 +96,6 @@ export class LifeCalendarView extends ItemView {
 
 	override async onClose() {
 		this.cleanupComponent();
-		this.plugin.unregisterLifeCalendarView(this);
+		this.plugin.unregisterLifeCalendarView();
 	}
 }

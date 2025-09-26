@@ -19,7 +19,7 @@
 	--lwc-color-week-current-text: var(--color-base-00, white);
 	/* Past week colors */
 	--lwc-color-week-past-bg: var(--color-accent-2, #333);
-	--lwc-color-week-past-text: var(--color-base-25, #ddd);
+	--lwc-color-week-past-text: var(--color-base-00, #white);
 	--lwc-color-week-past-border: var(--color-accent-1, #333);
 
 	/* Date and decade label configuration */

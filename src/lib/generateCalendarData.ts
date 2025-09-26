@@ -10,6 +10,7 @@ import {
 	CALENDAR_LAYOUT,
 	CALENDAR_VALIDATION,
 } from 'src/lib/calendar-constants';
+import { weekStartsOnStringToIndex } from './utils';
 
 /**
  * Creates validation functions for a calendar component
@@ -73,24 +74,7 @@ function createCalendarValidation(componentName: string): {
 			return CALENDAR_VALIDATION.DEFAULT_LIFESPAN;
 		},
 		getValidatedWeekStartsOn: (weekStartsOn?: string): WeekStartsOn => {
-			switch (weekStartsOn?.toLocaleLowerCase()) {
-				case 'sunday':
-					return 0;
-				case 'monday':
-					return 1;
-				case 'tuesday':
-					return 2;
-				case 'wednesday':
-					return 3;
-				case 'thursday':
-					return 4;
-				case 'friday':
-					return 5;
-				case 'saturday':
-					return 6;
-				default:
-					return undefined;
-			}
+			return weekStartsOnStringToIndex(weekStartsOn);
 		},
 	};
 }

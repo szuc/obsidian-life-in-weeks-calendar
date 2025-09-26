@@ -1,15 +1,23 @@
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { LifeCalendarView, VIEW_TYPE_LIFE_CALENDAR } from 'src/view';
 import {
 	type LifeCalendarSettings,
 	LifeCalendarSettingTab,
 	DEFAULT_SETTINGS,
 } from 'src/settingTab';
-import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
+import {
+	createLocalDateYYYYMMDD,
+	dateToYYYYMMDD,
+	fixWeekStartDate,
+} from 'src/lib/utils';
+import {
+	appHasDailyNotesPluginLoaded,
+	getAllWeeklyNotes,
+} from 'obsidian-daily-notes-interface';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
-	private lifeCalendarViews: Set<LifeCalendarView> = new Set();
+	lifeCalendarView: LifeCalendarView | null = null;
 	private statusBarItem: HTMLElement | null = null;
 	private lastBirthdayCheck: string | null = null;
 
@@ -86,7 +94,7 @@ export default class LifeCalendarPlugin extends Plugin {
 
 	override onunload() {
 		// Clear the view registry
-		this.lifeCalendarViews.clear();
+		this.lifeCalendarView = null;
 		// Clean up status bar item
 		if (this.statusBarItem) {
 			this.statusBarItem.remove();
@@ -107,18 +115,36 @@ export default class LifeCalendarPlugin extends Plugin {
 	}
 
 	registerLifeCalendarView(view: LifeCalendarView): void {
-		this.lifeCalendarViews.add(view);
+		this.lifeCalendarView = view;
 	}
 
-	unregisterLifeCalendarView(view: LifeCalendarView): void {
-		this.lifeCalendarViews.delete(view);
+	unregisterLifeCalendarView(): void {
+		this.lifeCalendarView = null;
 	}
 
-	onSettingsChanged(): void {
-		// Notify all registered LifeCalendarViews to refresh
-		this.lifeCalendarViews.forEach((view) => {
-			view.refreshView();
-		});
+	refreshLifeCalendarView(): void {
+		this.lifeCalendarView?.refreshView();
+	}
+
+	/**
+	 * Use obsidian-daily-notes-interface to get all the weekly notes then correct
+	 * for a bug in the weekly notes interface that keys the notes record to the wrong
+	 * week start date if the first day of the week has been edited in Calendar plugin
+	 * but the Calendar view hasn't been opened before the Life in Weeks view has.
+	 */
+	getAllWeeklyNotes(): Record<string, TFile> | undefined {
+		let allWeeklyNotes: Record<string, TFile> | undefined;
+		if (
+			appHasDailyNotesPluginLoaded() &&
+			(this.settings.syncWithWeeklyNotes ??
+				DEFAULT_SETTINGS.syncWithWeeklyNotes)
+		) {
+			allWeeklyNotes = getAllWeeklyNotes();
+		}
+		return fixWeekStartDate(
+			allWeeklyNotes,
+			this.getWeekStartsOnOptionFromCalendar(),
+		);
 	}
 
 	getWeekStartsOnOptionFromCalendar(): string | undefined {
