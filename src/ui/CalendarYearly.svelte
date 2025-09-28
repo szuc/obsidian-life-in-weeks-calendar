@@ -37,7 +37,7 @@
 
 	const onClickFn = syncWithWeeklyNotes
 		? (weekStartDate: Date) => {
-				openWeeklyNoteFunction(weekStartDate, modalFn);
+				openWeeklyNoteFunction(weekStartDate, allWeeklyNotes, modalFn);
 			}
 		: undefined;
 </script>

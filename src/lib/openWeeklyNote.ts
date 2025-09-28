@@ -5,12 +5,12 @@ import {
 	createWeeklyNote,
 	getWeeklyNoteSettings,
 	appHasDailyNotesPluginLoaded,
-	getAllWeeklyNotes,
 } from 'obsidian-daily-notes-interface';
 import { dateToDailyNoteFormatRecordKey } from './utils';
 
 export const openWeeklyNoteFunction = async (
 	date: Date,
+	allWeeklyNotes: Record<string, TFile> | undefined,
 	modalFn?: (message: string, cb: () => void) => void,
 ): Promise<void> => {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
@@ -21,10 +21,6 @@ export const openWeeklyNoteFunction = async (
 
 	if (!appHasDailyNotesPluginLoaded()) return;
 
-	// Get fresh list of all weekly notes because it may have changed since last
-	// time the calendar was rendered
-	const allWeeklyNotes = getAllWeeklyNotes();
-
 	// @ts-expect-error, not typed
 	const { workspace } = window.app;
 	const momentObject = moment(date);
@@ -32,7 +28,8 @@ export const openWeeklyNoteFunction = async (
 	const filename = momentObject.format(format || 'gggg-[W]ww');
 
 	// getWeeklyNote from obsidian-daily-notes-interface wasn't working when the week start date isn't sunday
-	let dailyNote: TFile = allWeeklyNotes[dateToDailyNoteFormatRecordKey(date)];
+	let dailyNote: TFile | undefined =
+		allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(date)];
 
 	if (!dailyNote && modalFn === undefined) {
 		dailyNote = await createWeeklyNote(filename);
