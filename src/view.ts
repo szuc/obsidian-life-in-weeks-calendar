@@ -52,7 +52,9 @@ export class LifeCalendarView extends ItemView {
 	 * week start date if the first day of the week has been edited in Calendar plugin
 	 * but the Calendar view hasn't been opened before the Life in Weeks view has.
 	 */
-	private getAllWeeklyNotes(): Record<string, TFile> | undefined {
+	private getAllWeeklyNotesDateCorrected():
+		| Record<string, TFile>
+		| undefined {
 		let allWeeklyNotes: Record<string, TFile> | undefined;
 		if (
 			appHasDailyNotesPluginLoaded() &&
@@ -94,7 +96,7 @@ export class LifeCalendarView extends ItemView {
 			modalFn: modalFn,
 			syncWithWeeklyNotes: syncWithWeeklyNotes,
 			weekStartsOn: this.plugin.getWeekStartsOnOptionFromCalendar(),
-			allWeeklyNotes: this.getAllWeeklyNotes(),
+			allWeeklyNotes: this.getAllWeeklyNotesDateCorrected(),
 		};
 	}
 
