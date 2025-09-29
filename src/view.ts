@@ -97,6 +97,7 @@ export class LifeCalendarView extends ItemView {
 			syncWithWeeklyNotes: syncWithWeeklyNotes,
 			weekStartsOn: this.plugin.getWeekStartsOnOptionFromCalendar(),
 			allWeeklyNotes: this.getAllWeeklyNotesDateCorrected(),
+			app: this.app,
 		};
 	}
 

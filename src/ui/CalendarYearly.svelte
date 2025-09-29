@@ -4,7 +4,7 @@
 	import WeekBlock from './WeekBlock.svelte';
 	import CalendarError from './CalendarError.svelte';
 	import { openWeeklyNoteFunction } from '../lib/openWeeklyNote';
-	import { TFile } from 'obsidian';
+	import { App, TFile } from 'obsidian';
 	import {
 		dateToDailyNoteFormatRecordKey,
 		setWeekStatus,
@@ -19,6 +19,7 @@
 		modalFn,
 		syncWithWeeklyNotes,
 		weekStartsOn,
+		app,
 	}: {
 		birthDate: Date;
 		lifespan: number;
@@ -26,6 +27,7 @@
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
 		weekStartsOn: string | undefined;
+		app: App;
 	} = $props();
 
 	const makeGroupLabel = (index: number) =>
@@ -37,7 +39,12 @@
 
 	const onClickFn = syncWithWeeklyNotes
 		? (weekStartDate: Date) => {
-				openWeeklyNoteFunction(weekStartDate, allWeeklyNotes, modalFn);
+				openWeeklyNoteFunction(
+					app,
+					weekStartDate,
+					allWeeklyNotes,
+					modalFn,
+				);
 			}
 		: undefined;
 </script>
