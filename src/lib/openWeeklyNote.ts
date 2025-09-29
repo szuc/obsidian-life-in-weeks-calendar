@@ -1,6 +1,6 @@
 const moment = require('moment');
 
-import type { MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
+import type { App, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
 import {
 	createWeeklyNote,
 	getWeeklyNoteSettings,
@@ -9,6 +9,7 @@ import {
 import { dateToDailyNoteFormatRecordKey } from './utils';
 
 export const openWeeklyNoteFunction = async (
+	app: App,
 	date: Date,
 	allWeeklyNotes: Record<string, TFile> | undefined,
 	modalFn?: (message: string, cb: () => void) => void,
@@ -21,8 +22,6 @@ export const openWeeklyNoteFunction = async (
 
 	if (!appHasDailyNotesPluginLoaded()) return;
 
-	// @ts-expect-error, not typed
-	const { workspace } = window.app;
 	const momentObject = moment(date);
 	const { format } = getWeeklyNoteSettings();
 	const filename = momentObject.format(format || 'gggg-[W]ww');
@@ -30,18 +29,20 @@ export const openWeeklyNoteFunction = async (
 	const openFile = (file: TFile) => {
 		let leaf = null;
 
-		workspace.getLeavesOfType('markdown').forEach((l: WorkspaceLeaf) => {
-			const markdownView = l.view as MarkdownView;
-			if (markdownView.file?.path === file.path) {
-				leaf = l;
-				return;
-			}
-		});
+		app.workspace
+			.getLeavesOfType('markdown')
+			.forEach((l: WorkspaceLeaf) => {
+				const markdownView = l.view as MarkdownView;
+				if (markdownView.file?.path === file.path) {
+					leaf = l;
+					return;
+				}
+			});
 
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			app.workspace.revealLeaf(leaf);
 		} else {
-			const newLeaf = workspace.getLeaf(true);
+			const newLeaf = app.workspace.getLeaf(true);
 			newLeaf.openFile(file, { active: true });
 		}
 	};

@@ -2,7 +2,7 @@
 	import CalendarBase from './CalendarBase.svelte';
 	import WeekBlock from './WeekBlock.svelte';
 	import CalendarError from './CalendarError.svelte';
-	import { TFile } from 'obsidian';
+	import { App, TFile } from 'obsidian';
 	import { openWeeklyNoteFunction } from 'src/lib/openWeeklyNote';
 	import {
 		dateToDailyNoteFormatRecordKey,
@@ -16,6 +16,7 @@
 		modalFn,
 		syncWithWeeklyNotes,
 		weekStartsOn,
+		app,
 	}: {
 		birthDate: Date;
 		lifespan: number;
@@ -23,6 +24,7 @@
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
 		syncWithWeeklyNotes: boolean;
 		weekStartsOn: string | undefined;
+		app: App;
 	} = $props();
 
 	const showDotFn = (weekStartDate: Date) =>
@@ -31,7 +33,12 @@
 
 	const onClickFn = syncWithWeeklyNotes
 		? (weekStartDate: Date) => {
-				openWeeklyNoteFunction(weekStartDate, allWeeklyNotes, modalFn);
+				openWeeklyNoteFunction(
+					app,
+					weekStartDate,
+					allWeeklyNotes,
+					modalFn,
+				);
 			}
 		: undefined;
 </script>

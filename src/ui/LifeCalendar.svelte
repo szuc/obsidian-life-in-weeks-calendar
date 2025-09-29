@@ -3,7 +3,7 @@
 	import CalendarYearly from './CalendarYearly.svelte';
 	import { createLocalDateYYYYMMDD } from '../lib/utils';
 	import type { CalendarMode } from 'src/lib/types';
-	import { TFile } from 'obsidian';
+	import { App, TFile } from 'obsidian';
 
 	const {
 		birthdate,
@@ -13,6 +13,7 @@
 		syncWithWeeklyNotes,
 		weekStartsOn,
 		allWeeklyNotes,
+		app,
 	}: {
 		birthdate: string;
 		projectedLifespan: string;
@@ -21,6 +22,7 @@
 		syncWithWeeklyNotes: boolean;
 		weekStartsOn: string | undefined;
 		allWeeklyNotes: Record<string, TFile> | undefined;
+		app: App;
 	} = $props();
 
 	let mode: CalendarMode = $state(calendarMode as CalendarMode);
@@ -46,6 +48,7 @@
 			{modalFn}
 			{syncWithWeeklyNotes}
 			{weekStartsOn}
+			{app}
 		/>
 	{:else}
 		<CalendarBasic
@@ -55,6 +58,7 @@
 			{modalFn}
 			{syncWithWeeklyNotes}
 			{weekStartsOn}
+			{app}
 		/>
 	{/if}
 </div>
