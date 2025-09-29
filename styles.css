@@ -37,18 +37,6 @@
 		var(--lwc-week-size) + var(--lwc-calendar-grid-gap-row) * 2
 	);
 
-	/* Calculated widths */
-	--lwc-calendar-max-width: calc(
-		var(--lwc-calendar-max-weeks) * var(--lwc-week-size) +
-			var(--lwc-calendar-grid-gap-column) *
-			(var(--lwc-calendar-max-weeks) - 1)
-	);
-	--lwc-calendar-max-width-alt: calc(
-		var(--lwc-calendar-max-weeks-alt) * var(--lwc-week-size) +
-			var(--lwc-calendar-grid-gap-column) *
-			(var(--lwc-calendar-max-weeks-alt) - 1)
-	);
-
 	/* Error message configuration */
 	--lwc-color-danger: var(--text-error, #d32f2f);
 	--lwc-color-danger-bg: #ffeaea;
@@ -99,6 +87,12 @@
 
 /* Basic Calendar component */
 .lwc__calendar--basic {
+	--lwc-calendar-max-width: calc(
+		var(--lwc-calendar-max-weeks) * var(--lwc-week-size) +
+			var(--lwc-calendar-grid-gap-column) *
+			(var(--lwc-calendar-max-weeks) - 1)
+	);
+
 	margin: 0 auto var(--lwc-calendar-margin-bottom);
 	max-width: var(--lwc-calendar-max-width);
 	padding-bottom: var(--lwc-calendar-padding-bottom);
@@ -122,6 +116,12 @@
 
 /* Yearly Calendar component */
 .lwc__calendar-yearly {
+	--lwc-calendar-max-width: calc(
+		var(--lwc-calendar-max-weeks-alt) * var(--lwc-week-size) +
+			var(--lwc-calendar-grid-gap-column) *
+			(var(--lwc-calendar-max-weeks-alt) - 1)
+	);
+
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -145,7 +145,7 @@
 		var(--lwc-calendar-max-weeks-alt),
 		var(--lwc-week-size)
 	);
-	width: var(--lwc-calendar-max-width-alt);
+	width: var(--lwc-calendar-max-width);
 	max-width: 100%;
 	gap: var(--lwc-calendar-grid-gap-row) var(--lwc-calendar-grid-gap-column);
 	align-items: center;
