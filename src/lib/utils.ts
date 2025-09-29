@@ -1,4 +1,4 @@
-import { isThisWeek, startOfWeek, type Day } from 'date-fns';
+import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
 
@@ -159,11 +159,18 @@ function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 	// parse the wrong start date from the key.
 	const dateString = key.slice(5, 15);
 	const date = createLocalDateYYYYMMDD(dateString);
-	const weekStartDate = startOfWeek(date, {
-		weekStartsOn: weekStartsOnStringToIndex(weekStartsOn) as Day,
-	});
+	const startDayIndex = weekStartsOnStringToIndex(weekStartsOn);
+	// If the day is the same as weekStartsOnDate then either the start date is the default
+	// or the weeks are set to the correct start date. If the weekStartsOn is undefined,
+	// then it is the default. Just return the key unmodified
+	if (getDay(date) === startDayIndex || startDayIndex === undefined) {
+		return key;
+	}
+	// Else, return the a new key with the next instance of that day as the start date
+	// (Trial and error led to this requirement)
+	const nextStartDay = nextDay(date, startDayIndex);
 	// convert it back into the expected format
-	return dateToDailyNoteFormatRecordKey(weekStartDate);
+	return dateToDailyNoteFormatRecordKey(nextStartDay);
 }
 
 /**
