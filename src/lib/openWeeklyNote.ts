@@ -1,6 +1,6 @@
 const moment = require('moment');
 
-import type { TFile } from 'obsidian';
+import type { MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
 import {
 	createWeeklyNote,
 	getWeeklyNoteSettings,
@@ -27,25 +27,42 @@ export const openWeeklyNoteFunction = async (
 	const { format } = getWeeklyNoteSettings();
 	const filename = momentObject.format(format || 'gggg-[W]ww');
 
-	// getWeeklyNote from obsidian-daily-notes-interface wasn't working when the week start date isn't sunday
+	const openFile = (file: TFile) => {
+		let leaf = null;
+
+		workspace.getLeavesOfType('markdown').forEach((l: WorkspaceLeaf) => {
+			const markdownView = l.view as MarkdownView;
+			if (markdownView.file?.path === file.path) {
+				leaf = l;
+				return;
+			}
+		});
+
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		} else {
+			const newLeaf = workspace.getLeaf(true);
+			newLeaf.openFile(file, { active: true });
+		}
+	};
+
 	let dailyNote: TFile | undefined =
 		allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(date)];
 
-	if (!dailyNote && modalFn === undefined) {
-		dailyNote = await createWeeklyNote(filename);
-	} else if (!dailyNote && modalFn !== undefined) {
-		modalFn(
-			`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
-			async () => {
-				dailyNote = await createWeeklyNote(filename);
-				if (dailyNote) {
-					const leaf = workspace.getUnpinnedLeaf();
-					await leaf.openFile(dailyNote, { active: true });
-				}
-			},
-		);
-		return;
+	if (!dailyNote) {
+		if (modalFn) {
+			modalFn(
+				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
+				async () => {
+					const newNote = await createWeeklyNote(filename);
+					openFile(newNote);
+				},
+			);
+		} else {
+			const newNote = await createWeeklyNote(filename);
+			openFile(newNote);
+		}
+	} else {
+		openFile(dailyNote);
 	}
-	const leaf = workspace.getUnpinnedLeaf();
-	await leaf.openFile(dailyNote, { active: true });
 };
