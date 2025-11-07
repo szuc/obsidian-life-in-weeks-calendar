@@ -1,6 +1,10 @@
-const moment = require('moment');
-
-import type { App, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
+import {
+	type App,
+	type MarkdownView,
+	type TFile,
+	type WorkspaceLeaf,
+	moment,
+} from 'obsidian';
 import {
 	createWeeklyNote,
 	getWeeklyNoteSettings,
@@ -55,13 +59,13 @@ export const openWeeklyNoteFunction = async (
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
 				() => {
-					createWeeklyNote(filename).then(async (newNote) => {
+					createWeeklyNote(momentObject).then(async (newNote) => {
 						await openFile(newNote);
 					});
 				},
 			);
 		} else {
-			const newNote = await createWeeklyNote(filename);
+			const newNote = await createWeeklyNote(momentObject);
 			await openFile(newNote);
 		}
 	} else {
