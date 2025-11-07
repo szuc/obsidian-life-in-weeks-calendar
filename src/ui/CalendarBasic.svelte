@@ -66,7 +66,7 @@
 								data.validatedWeekStartsOn,
 							)}
 							showDot={showDotFn(week.startDate)}
-							onClick={!!onClickFn
+							onClick={onClickFn
 								? () => onClickFn(week.startDate)
 								: undefined}
 						/>

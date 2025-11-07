@@ -81,7 +81,7 @@
 									)}
 									showDot={showDotFn(week.startDate)}
 									gridOffset={getWeek(week.startDate)}
-									onClick={!!onClickFn
+									onClick={onClickFn
 										? () => onClickFn(week.startDate)
 										: undefined}
 								/>

@@ -6,10 +6,10 @@ import sveltePlugin from 'eslint-plugin-svelte';
 import svelteParser from 'svelte-eslint-parser';
 
 export default [
-	{
-		ignores: ['node_modules/', 'main.js']
-	},
 	js.configs.recommended,
+	{
+		ignores: ['node_modules/', 'main.js'],
+	},
 	{
 		files: ['**/*.ts', '**/*.js'],
 		languageOptions: {

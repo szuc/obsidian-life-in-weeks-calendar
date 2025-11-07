@@ -23,7 +23,7 @@
 	--lwc-color-week-past-border: var(--color-accent-1, #333);
 
 	/* Date and decade label configuration */
-	--lwc-label-font-size: 0.85rem;
+	--lwc-label-font-size: calc(var(--lwc-week-size) * 0.7);
 
 	/* Calendar grid configuration */
 	--lwc-calendar-grid-gap-row: 2px;
