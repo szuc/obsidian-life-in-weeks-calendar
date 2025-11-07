@@ -58,10 +58,18 @@ export const openWeeklyNoteFunction = async (
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
+				// Add a .catch() block to handle potential errors from the promise chain
 				() => {
-					createWeeklyNote(momentObject).then(async (newNote) => {
-						await openFile(newNote);
-					});
+					createWeeklyNote(momentObject)
+						.then(async (newNote) => {
+							await openFile(newNote);
+						})
+						.catch((error) => {
+							console.error(
+								'Error creating or opening weekly note:',
+								error,
+							);
+						});
 				},
 			);
 		} else {
