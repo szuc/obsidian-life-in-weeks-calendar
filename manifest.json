@@ -1,7 +1,7 @@
 {
 	"id": "life-in-weeks-calendar",
 	"name": "Life in Weeks Calendar",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"minAppVersion": "1.9.0",
 	"description": "Display your entire life in weeks, with weekly notes integration.",
 	"author": "Jeff Szuc",

@@ -34,19 +34,19 @@ export default class LifeCalendarPlugin extends Plugin {
 		// Add icon to left ribbon to open the Life in Weeks Calendar view
 		const ribbonIconEl = this.addRibbonIcon(
 			'calendar-clock',
-			'Open Life in Weeks Calendar',
-			() => {
-				this.activateView();
+			'Open life in weeks calendar',
+			async () => {
+				await this.activateView();
 			},
 		);
 		ribbonIconEl.addClass('life-in-weeks-calendar-ribbon-class');
 
 		// Add a command to open the Life in Weeks Calendar view
 		this.addCommand({
-			id: 'open-life-in-weeks-calendar',
+			id: 'open-lwc-view',
 			name: 'Open calendar',
-			callback: () => {
-				this.activateView();
+			callback: async () => {
+				await this.activateView();
 			},
 		});
 
@@ -80,7 +80,7 @@ export default class LifeCalendarPlugin extends Plugin {
 			birthDate.getMonth() === today.getMonth()
 		) {
 			this.statusBarItem = this.addStatusBarItem();
-			this.statusBarItem.createEl('span', { text: '🎂 Happy Birthday!' });
+			this.statusBarItem.createEl('span', { text: '🎂 Happy birthday!' });
 		}
 	}
 
@@ -155,6 +155,6 @@ export default class LifeCalendarPlugin extends Plugin {
 		}
 
 		// "Reveal" the leaf in case it is in a collapsed sidebar
-		workspace.revealLeaf(leaf!);
+		await workspace.revealLeaf(leaf!);
 	}
 }

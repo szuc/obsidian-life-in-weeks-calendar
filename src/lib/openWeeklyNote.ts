@@ -26,7 +26,7 @@ export const openWeeklyNoteFunction = async (
 	const { format } = getWeeklyNoteSettings();
 	const filename = momentObject.format(format || 'gggg-[W]ww');
 
-	const openFile = (file: TFile) => {
+	const openFile = async (file: TFile) => {
 		let leaf = null;
 
 		app.workspace
@@ -40,10 +40,10 @@ export const openWeeklyNoteFunction = async (
 			});
 
 		if (leaf) {
-			app.workspace.revealLeaf(leaf);
+			await app.workspace.revealLeaf(leaf);
 		} else {
 			const newLeaf = app.workspace.getLeaf(true);
-			newLeaf.openFile(file, { active: true });
+			await newLeaf.openFile(file, { active: true });
 		}
 	};
 
@@ -54,16 +54,17 @@ export const openWeeklyNoteFunction = async (
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
-				async () => {
-					const newNote = await createWeeklyNote(filename);
-					openFile(newNote);
+				() => {
+					createWeeklyNote(filename).then(async (newNote) => {
+						await openFile(newNote);
+					});
 				},
 			);
 		} else {
 			const newNote = await createWeeklyNote(filename);
-			openFile(newNote);
+			await openFile(newNote);
 		}
 	} else {
-		openFile(dailyNote);
+		await openFile(dailyNote);
 	}
 };

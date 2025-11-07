@@ -20,30 +20,25 @@ export class LifeCalendarView extends ItemView {
 		super(leaf);
 		this.plugin = plugin;
 		// Refresh the view when a new file is created or deleted
-		this.registerEvent(
-			this.app.vault.on('create', this.onFileChange, this),
-		);
-		this.registerEvent(
-			this.app.vault.on('delete', this.onFileChange, this),
-		);
+		this.registerEvent(this.app.vault.on('create', this.onFileChange));
+		this.registerEvent(this.app.vault.on('delete', this.onFileChange));
 	}
+
+	onFileChange = (): void => this.plugin.refreshLifeCalendarView();
 
 	getViewType(): string {
 		return VIEW_TYPE_LIFE_CALENDAR;
 	}
 
 	getDisplayText(): string {
-		return 'Life in Weeks Calendar';
+		return 'Life in weeks calendar';
 	}
 
-	override async onOpen() {
+	override onOpen() {
 		// Register this view with the plugin for settings change notifications
 		this.plugin.registerLifeCalendarView(this);
 		this.mountComponent();
-	}
-
-	onFileChange(): void {
-		this.plugin.refreshLifeCalendarView();
+		return Promise.resolve();
 	}
 
 	/**
@@ -123,8 +118,9 @@ export class LifeCalendarView extends ItemView {
 		this.mountComponent();
 	}
 
-	override async onClose() {
+	override onClose() {
 		this.cleanupComponent();
 		this.plugin.unregisterLifeCalendarView();
+		return Promise.resolve();
 	}
 }

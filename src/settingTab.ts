@@ -50,7 +50,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl('p', {
-			text: 'Note: Settings related to weekly note integrations might require closing the weekly calendar and reopening it for changes to take effect.',
+			text: 'Note: settings related to weekly note integrations might require closing the weekly calendar and reopening it for changes to take effect.',
 		});
 
 		new Setting(containerEl)
@@ -154,8 +154,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption('main', 'Main')
-					.addOption('left', 'Left Sidebar')
-					.addOption('right', 'Right Sidebar')
+					.addOption('left', 'Left sidebar')
+					.addOption('right', 'Right sidebar')
 					.setValue(this.plugin.settings.viewLocation)
 					.onChange(async (value) => {
 						this.plugin.settings.viewLocation = value;
@@ -165,21 +165,19 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			);
 
 		if (!this.plugin.weeklyPeriodicNotesPluginExists()) {
-			this.containerEl.createDiv('lwc-settings-banner', (banner) => {
-				banner.createEl('h3', {
-					text: '⚠️ Weekly Notes not enabled',
-				});
-				banner.createEl('p', {
-					cls: 'lwc-setting-item-description',
-					text: 'The Life in Weeks Calendar is best with the Periodic Notes plugin weekly notes enabled (available in the Community Plugins catalog).',
-				});
-			});
+			new Setting(containerEl)
+				.setName('⚠️ Weekly notes not enabled')
+				.setHeading()
+				.setDesc(
+					'The life in weeks calendar is best with the periodic notes plugin weekly notes enabled (available in the community plugins catalog).',
+				)
+				.setClass('lwc__warning-setting');
 		}
 
 		new Setting(containerEl)
-			.setName("Integrate with Periodic Notes plugin's weekly notes")
+			.setName("Integrate with periodic notes plugin's weekly notes")
 			.setDesc(
-				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note. Requires Periodic Notes plugin to be installed.',
+				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note. Requires periodic notes plugin to be installed.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -200,7 +198,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')
 			.setDesc(
-				'Require confirmation before creating a new weekly note. Requires Periodic Notes plugin to be installed.',
+				'Require confirmation before creating a new weekly note. Requires periodic notes plugin to be installed.',
 			)
 			.addToggle((toggle) =>
 				toggle
