@@ -166,7 +166,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		if (!this.plugin.weeklyPeriodicNotesPluginExists()) {
 			new Setting(containerEl)
-				.setName('⚠️ Weekly notes not enabled')
+				.setName('Weekly notes not enabled ⚠️')
 				.setHeading()
 				.setDesc(
 					'The life in weeks calendar is best with the periodic notes plugin weekly notes enabled (available in the community plugins catalog).',

@@ -80,7 +80,7 @@ export default class LifeCalendarPlugin extends Plugin {
 			birthDate.getMonth() === today.getMonth()
 		) {
 			this.statusBarItem = this.addStatusBarItem();
-			this.statusBarItem.createEl('span', { text: '🎂 Happy birthday!' });
+			this.statusBarItem.createEl('span', { text: 'Happy birthday 🎂' });
 		}
 	}
 
