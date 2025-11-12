@@ -1,4 +1,8 @@
-# Obsidian Life in Weeks Calendar Plugin
+# Life in Weeks Calendar
+
+## Overview
+
+This plugin displays your entire life in a grid of weeks. It color-codes past, present, and future weeks and, more importantly, marks the weeks when you have created a weekly Obsidian note.
 
 ## The Life in Weeks Concept
 

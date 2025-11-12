@@ -35,8 +35,6 @@ export class LifeCalendarView extends ItemView {
 	}
 
 	override onOpen() {
-		// Register this view with the plugin for settings change notifications
-		this.plugin.registerLifeCalendarView(this);
 		this.mountComponent();
 		return Promise.resolve();
 	}
@@ -120,7 +118,6 @@ export class LifeCalendarView extends ItemView {
 
 	override onClose() {
 		this.cleanupComponent();
-		this.plugin.unregisterLifeCalendarView();
 		return Promise.resolve();
 	}
 }
