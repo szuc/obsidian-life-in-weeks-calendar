@@ -9,7 +9,6 @@ import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
-	private lifeCalendarView: LifeCalendarView | null = null;
 	private statusBarItem: HTMLElement | null = null;
 	private lastBirthdayCheck: string | null = null;
 
@@ -43,7 +42,7 @@ export default class LifeCalendarPlugin extends Plugin {
 
 		// Add a command to open the Life in Weeks Calendar view
 		this.addCommand({
-			id: 'open-lwc-view',
+			id: 'open-calendar',
 			name: 'Open calendar',
 			callback: async () => {
 				await this.activateView();
@@ -85,8 +84,6 @@ export default class LifeCalendarPlugin extends Plugin {
 	}
 
 	override onunload() {
-		// Clear the view registry
-		this.lifeCalendarView = null;
 		// Clean up status bar item
 		if (this.statusBarItem) {
 			this.statusBarItem.remove();
@@ -106,16 +103,13 @@ export default class LifeCalendarPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	registerLifeCalendarView(view: LifeCalendarView): void {
-		this.lifeCalendarView = view;
-	}
-
-	unregisterLifeCalendarView(): void {
-		this.lifeCalendarView = null;
-	}
-
 	refreshLifeCalendarView(): void {
-		this.lifeCalendarView?.refreshView();
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_LIFE_CALENDAR)) {
+			const view = leaf.view;
+			if (view instanceof LifeCalendarView) {
+				view.refreshView();
+			}
+		}
 	}
 
 	getWeekStartsOnOptionFromCalendar(): string | undefined {
