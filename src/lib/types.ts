@@ -20,3 +20,18 @@ export enum CalendarMode {
 }
 
 export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6 | undefined;
+
+/**
+ * Configuration settings for the Life Calendar plugin.
+ */
+export interface LifeCalendarSettings {
+	birthdate: string;
+	projectedLifespan: string;
+	calendarMode: string;
+	viewLocation: string;
+	confirmBeforeCreatingWeeklyNote: boolean;
+	syncWithWeeklyNotes: boolean;
+	fileNamingPattern: string;
+	fileLocation: string;
+	weekStartDay: string;
+}

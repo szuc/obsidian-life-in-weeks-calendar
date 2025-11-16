@@ -10,9 +10,105 @@ import {
 	getWeeklyNoteSettings,
 	appHasDailyNotesPluginLoaded,
 } from 'obsidian-daily-notes-interface';
-import { dateToDailyNoteFormatRecordKey } from './utils';
+import { dateToDailyNoteRecordKeyFormat } from './utils';
+import { DEFAULT_SETTINGS } from './calendar-constants';
 
+/**
+ * Opens a file in the workspace, reusing an existing tab if the file is already open.
+ * If the file is already open in a leaf, reveals that leaf. Otherwise, creates a new leaf.
+ * @param app - Obsidian application instance
+ * @param file - The file to open
+ */
+const openFile = async (app: App, file: TFile) => {
+	let leaf = null;
+
+	app.workspace.getLeavesOfType('markdown').forEach((l: WorkspaceLeaf) => {
+		const markdownView = l.view as MarkdownView;
+		if (markdownView.file?.path === file.path) {
+			leaf = l;
+			return;
+		}
+	});
+
+	if (leaf) {
+		await app.workspace.revealLeaf(leaf);
+	} else {
+		const newLeaf = app.workspace.getLeaf(true);
+		await newLeaf.openFile(file, { active: true });
+	}
+};
+
+/**
+ * Opens a weekly note for the given date using custom file naming and folder settings.
+ * If the note doesn't exist, creates it (optionally with user confirmation).
+ * @param app - Obsidian application instance
+ * @param date - The date within the week to open
+ * @param allWeeklyNotes - Record of existing weekly notes
+ * @param folderPath - Custom folder path where weekly notes are stored
+ * @param fileNamePattern - Custom Moment.js format pattern for file naming
+ * @param modalFn - Optional function to show confirmation modal before creating a new note
+ */
 export const openWeeklyNoteFunction = async (
+	app: App,
+	date: Date,
+	allWeeklyNotes: Record<string, TFile> | undefined,
+	folderPath: string,
+	fileNamePattern: string,
+	modalFn?: (message: string, cb: () => void) => void,
+): Promise<void> => {
+	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+		throw new Error(
+			'openWeeklyNoteFunction: date must be a valid Date object',
+		);
+	}
+
+	const momentObject = moment(date);
+	const filename = momentObject.format(
+		fileNamePattern || DEFAULT_SETTINGS.fileNamingPattern,
+	);
+	const filePath = folderPath
+		? `${folderPath}/${filename}.md`
+		: `${filename}.md`;
+
+	let dailyNote: TFile | undefined =
+		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
+
+	if (!dailyNote) {
+		if (modalFn) {
+			modalFn(
+				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
+				() => {
+					app.vault
+						.create(filePath, '')
+						.then(async (newNote) => {
+							await openFile(app, newNote);
+						})
+						.catch((error) => {
+							console.error(
+								'Error creating or opening weekly note:',
+								error,
+							);
+						});
+				},
+			);
+		} else {
+			const newNote = await app.vault.create(filePath, '');
+			await openFile(app, newNote);
+		}
+	} else {
+		await openFile(app, dailyNote);
+	}
+};
+
+/**
+ * Opens a weekly note for the given date using periodic notes plugin settings.
+ * If the note doesn't exist, creates it using the periodic notes plugin (optionally with user confirmation).
+ * @param app - Obsidian application instance
+ * @param date - The date within the week to open
+ * @param allWeeklyNotes - Record of existing weekly notes
+ * @param modalFn - Optional function to show confirmation modal before creating a new note
+ */
+export const openPeriodicNoteFunction = async (
 	app: App,
 	date: Date,
 	allWeeklyNotes: Record<string, TFile> | undefined,
@@ -28,41 +124,21 @@ export const openWeeklyNoteFunction = async (
 
 	const momentObject = moment(date);
 	const { format } = getWeeklyNoteSettings();
-	const filename = momentObject.format(format || 'gggg-[W]ww');
-
-	const openFile = async (file: TFile) => {
-		let leaf = null;
-
-		app.workspace
-			.getLeavesOfType('markdown')
-			.forEach((l: WorkspaceLeaf) => {
-				const markdownView = l.view as MarkdownView;
-				if (markdownView.file?.path === file.path) {
-					leaf = l;
-					return;
-				}
-			});
-
-		if (leaf) {
-			await app.workspace.revealLeaf(leaf);
-		} else {
-			const newLeaf = app.workspace.getLeaf(true);
-			await newLeaf.openFile(file, { active: true });
-		}
-	};
+	const filename = momentObject.format(
+		format || DEFAULT_SETTINGS.fileNamingPattern,
+	);
 
 	let dailyNote: TFile | undefined =
-		allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(date)];
+		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
 
 	if (!dailyNote) {
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
-				// Add a .catch() block to handle potential errors from the promise chain
 				() => {
 					createWeeklyNote(momentObject)
 						.then(async (newNote) => {
-							await openFile(newNote);
+							await openFile(app, newNote);
 						})
 						.catch((error) => {
 							console.error(
@@ -74,9 +150,9 @@ export const openWeeklyNoteFunction = async (
 			);
 		} else {
 			const newNote = await createWeeklyNote(momentObject);
-			await openFile(newNote);
+			await openFile(app, newNote);
 		}
 	} else {
-		await openFile(dailyNote);
+		await openFile(app, dailyNote);
 	}
 };

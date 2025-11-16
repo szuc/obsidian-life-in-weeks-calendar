@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CalendarBasic from './CalendarBasic.svelte';
 	import CalendarYearly from './CalendarYearly.svelte';
-	import { createLocalDateYYYYMMDD } from '../lib/utils';
+	import { createLocalDateYYYYMMDD, updateToday } from '../lib/utils';
 	import type { CalendarMode } from 'src/lib/types';
 	import { App, TFile } from 'obsidian';
 
@@ -10,8 +10,10 @@
 		projectedLifespan,
 		calendarMode,
 		modalFn,
-		syncWithWeeklyNotes,
+		usePeriodicNotes,
 		weekStartsOn,
+		folderPath,
+		fileNamePattern,
 		allWeeklyNotes,
 		app,
 	}: {
@@ -19,9 +21,11 @@
 		projectedLifespan: string;
 		calendarMode: string;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
-		syncWithWeeklyNotes: boolean;
-		weekStartsOn: string | undefined;
+		usePeriodicNotes: boolean;
+		weekStartsOn: string;
 		allWeeklyNotes: Record<string, TFile> | undefined;
+		folderPath: string;
+		fileNamePattern: string;
 		app: App;
 	} = $props();
 
@@ -37,6 +41,13 @@
 
 	/** Convert lifespan string to number for calculations */
 	let lifespan = $derived(Number(lifespanString));
+
+	/** Update the current date reference before each render */
+	$effect(() => {
+		updateToday();
+	});
+
+	console.log(allWeeklyNotes);
 </script>
 
 <div class="life-in-weeks-calendar-plugin">
@@ -46,8 +57,10 @@
 			{lifespan}
 			{allWeeklyNotes}
 			{modalFn}
-			{syncWithWeeklyNotes}
+			{usePeriodicNotes}
 			{weekStartsOn}
+			{folderPath}
+			{fileNamePattern}
 			{app}
 		/>
 	{:else}
@@ -56,8 +69,10 @@
 			{lifespan}
 			{allWeeklyNotes}
 			{modalFn}
-			{syncWithWeeklyNotes}
+			{usePeriodicNotes}
 			{weekStartsOn}
+			{folderPath}
+			{fileNamePattern}
 			{app}
 		/>
 	{/if}
