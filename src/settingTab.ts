@@ -125,10 +125,6 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('p', {
-			text: 'Note: settings related to weekly note integrations might require closing the weekly calendar and reopening it for changes to take effect.',
-		});
-
 		new Setting(containerEl)
 			.setName('Birth date')
 			.setDesc('Your date of birth')
@@ -244,11 +240,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName(
 				!this.plugin.weeklyPeriodicNotesPluginExists()
-					? 'Weekly notes not enabled ⚠️'
-					: 'Use periodic notes plugin',
+					? 'Periodic weekly notes not enabled ⚠️'
+					: 'Use periodic notes plugin settings',
 			)
 			.setDesc(
-				'Optional: sync with periodic notes plugin settings – filename, location, first day of week, etc.',
+				'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, etc.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -269,56 +265,6 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
-			)
-			.setDesc(
-				this.isOverriddenByPeriodicNotes()
-					? 'Using settings from periodic notes plugin.'
-					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
-			)
-			.addText((text) => {
-				text.inputEl.type = 'text';
-				text.inputEl.placeholder = 'e.g. gggg-[W]ww';
-				text.inputEl.disabled = this.isOverriddenByPeriodicNotes();
-				text.setValue(this.plugin.settings.fileNamingPattern || '');
-
-				// Validate and save on blur
-				text.inputEl.addEventListener('blur', async () => {
-					const value = text.inputEl.value;
-					const invalidPattern = !this.isValidFileNamingPattern(
-						value.trim(),
-					);
-
-					if (invalidPattern) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-filename-error',
-							'Please enter a valid file naming pattern.',
-						);
-						text.inputEl.parentElement?.appendChild(errorEl);
-						return;
-					} else {
-						const existingError = document.getElementById(
-							'setting-filename-error',
-						);
-						if (existingError) {
-							existingError.remove();
-						}
-						this.plugin.settings.fileNamingPattern = value;
-						try {
-							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
-						} catch (error) {
-							console.error(
-								'Failed to save fileNamingPattern setting:',
-								error instanceof Error ? error.message : error,
-							);
-						}
-					}
-				});
-			});
-
-		new Setting(containerEl)
-			.setName(
 				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note folder location`,
 			)
 			.setDesc(
@@ -329,7 +275,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.addSearch((search) => {
 				search
 					.setPlaceholder(
-						'e.g. weekly-notes or periodic-notes/weekly',
+						'E.g. weekly-notes or periodic-notes/weekly',
 					)
 					.setValue(this.plugin.settings.fileLocation)
 					.onChange(async (value) => {
@@ -376,12 +322,62 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note start day of week`,
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
 			)
 			.setDesc(
 				this.isOverriddenByPeriodicNotes()
 					? 'Using settings from periodic notes plugin.'
-					: 'Close the day that weeks start on.',
+					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
+			)
+			.addText((text) => {
+				text.inputEl.type = 'text';
+				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
+				text.inputEl.disabled = this.isOverriddenByPeriodicNotes();
+				text.setValue(this.plugin.settings.fileNamingPattern || '');
+
+				// Validate and save on blur
+				text.inputEl.addEventListener('blur', async () => {
+					const value = text.inputEl.value;
+					const invalidPattern = !this.isValidFileNamingPattern(
+						value.trim(),
+					);
+
+					if (invalidPattern) {
+						const errorEl = this.createErrorMessageElement(
+							'setting-filename-error',
+							'Please enter a valid file naming pattern.',
+						);
+						text.inputEl.parentElement?.appendChild(errorEl);
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-filename-error',
+						);
+						if (existingError) {
+							existingError.remove();
+						}
+						this.plugin.settings.fileNamingPattern = value;
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save fileNamingPattern setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}First day of the week`,
+			)
+			.setDesc(
+				this.isOverriddenByPeriodicNotes()
+					? 'Using settings from periodic notes plugin.'
+					: 'Select the day that weekly notes start on.',
 			)
 			.addDropdown((dropdown) =>
 				dropdown
@@ -403,12 +399,12 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Template file for new weekly notes`,
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note template`,
 			)
 			.setDesc(
 				this.isOverriddenByPeriodicNotes()
 					? 'Using settings from periodic notes plugin.'
-					: 'Optional path+filename to template file for new weekly notes.',
+					: 'Optional template file for new weekly notes. Leave blank for no template.',
 			)
 			.addSearch((search) => {
 				search

@@ -1,7 +1,7 @@
 {
 	"name": "life-in-weeks-calendar",
-	"version": "1.0.7",
-	"description": "Displays your life in weeks with integration with Daily Notes and Periodic Notes plugins.",
+	"version": "1.0.8",
+	"description": "Displays your life in weeks with weekly notes integration.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
