@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS: LifeCalendarSettings = {
 	fileNamingPattern: 'gggg-[W]ww',
 	fileLocation: '',
 	weekStartDay: 'monday',
+	templatePath: '',
 };
 
 export const VIEW_TYPE_LIFE_CALENDAR = 'life-in-weeks-calendar';

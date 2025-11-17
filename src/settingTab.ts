@@ -2,6 +2,8 @@ import LifeCalendarPlugin from 'main';
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
 import { dateToYYYYMMDD, isValidDate } from 'src/lib/utils';
+import { FileSuggest } from './FileSuggest';
+import { FolderSuggest } from './FolderSuggest';
 
 /**
  * Settings tab for the Life Calendar plugin.
@@ -239,21 +241,39 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		if (!this.plugin.weeklyPeriodicNotesPluginExists()) {
-			new Setting(containerEl)
-				.setName('Weekly notes not enabled ⚠️')
-				.setHeading()
-				.setDesc(
-					'The life in weeks calendar is best with the periodic notes plugin weekly notes enabled (available in the community plugins catalog).',
-				)
-				.setClass('lwc__warning-setting');
-		}
+		new Setting(containerEl)
+			.setName(
+				!this.plugin.weeklyPeriodicNotesPluginExists()
+					? 'Weekly notes not enabled ⚠️'
+					: 'Use periodic notes plugin',
+			)
+			.setDesc(
+				'Optional: sync with periodic notes plugin settings – filename, location, first day of week, etc.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(
+						this.plugin.weeklyPeriodicNotesPluginExists() &&
+							this.plugin.settings.syncWithWeeklyNotes,
+					)
+					.onChange(async (value) => {
+						this.plugin.settings.syncWithWeeklyNotes = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+						this.display(); // Re-render settings to update disabled states on other settings
+					})
+					.setDisabled(
+						!this.plugin.weeklyPeriodicNotesPluginExists(),
+					),
+			);
 
 		new Setting(containerEl)
-			.setName('Weekly note file naming pattern')
+			.setName(
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
+			)
 			.setDesc(
 				this.isOverriddenByPeriodicNotes()
-					? '(Overridden by periodic notes plugin)'
+					? 'Using settings from periodic notes plugin.'
 					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
 			)
 			.addText((text) => {
@@ -298,62 +318,69 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Weekly note folder location')
+			.setName(
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note folder location`,
+			)
 			.setDesc(
 				this.isOverriddenByPeriodicNotes()
-					? '(Overridden by periodic notes plugin)'
+					? 'Using settings from periodic notes plugin.'
 					: 'Folder path where weekly notes are stored. Leave blank for root directory.',
 			)
-			.addText((text) => {
-				text.inputEl.type = 'text';
-				text.inputEl.placeholder =
-					'e.g. weekly-notes or periodic-notes/weekly';
-				text.inputEl.disabled = this.isOverriddenByPeriodicNotes();
-				text.setValue(this.plugin.settings.fileLocation || '');
+			.addSearch((search) => {
+				search
+					.setPlaceholder(
+						'e.g. weekly-notes or periodic-notes/weekly',
+					)
+					.setValue(this.plugin.settings.fileLocation)
+					.onChange(async (value) => {
+						this.plugin.settings.fileLocation = value;
+						const normalized = this.normalizeFolderPath(value);
+						const invalidPath = !this.isValidFolderPath(normalized);
 
-				// Validate and save on blur
-				text.inputEl.addEventListener('blur', async () => {
-					const value = text.inputEl.value;
-					const normalized = this.normalizeFolderPath(value);
-					const invalidPath = !this.isValidFolderPath(normalized);
-
-					if (invalidPath) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-filepath-error',
-							'Please enter a valid folder path.',
-						);
-						text.inputEl.parentElement?.appendChild(errorEl);
-						return;
-					} else {
-						const existingError = document.getElementById(
-							'setting-filepath-error',
-						);
-						if (existingError) {
-							existingError.remove();
-						}
-
-						// Update input to show normalized path
-						text.inputEl.value = normalized;
-						this.plugin.settings.fileLocation = normalized;
-
-						try {
-							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
-						} catch (error) {
-							console.error(
-								'Failed to save fileLocation setting:',
-								error instanceof Error ? error.message : error,
+						if (invalidPath) {
+							const errorEl = this.createErrorMessageElement(
+								'setting-filepath-error',
+								'Please enter a valid folder path.',
 							);
+							search.inputEl.parentElement?.appendChild(errorEl);
+							return;
+						} else {
+							const existingError = document.getElementById(
+								'setting-filepath-error',
+							);
+							if (existingError) {
+								existingError.remove();
+							}
+
+							// Update input to show normalized path
+							search.inputEl.value = normalized;
+							this.plugin.settings.fileLocation = normalized;
+
+							try {
+								await this.plugin.saveSettings();
+								this.plugin.refreshLifeCalendarView();
+							} catch (error) {
+								console.error(
+									'Failed to save fileLocation setting:',
+									error instanceof Error
+										? error.message
+										: error,
+								);
+							}
 						}
-					}
-				});
+					});
+
+				// Attaches custom suggestions
+				new FolderSuggest(this.app, search.inputEl);
 			});
 
 		new Setting(containerEl)
-			.setName('Weekly note start day of week')
+			.setName(
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note start day of week`,
+			)
 			.setDesc(
 				this.isOverriddenByPeriodicNotes()
-					? '(Overridden by periodic notes plugin)'
+					? 'Using settings from periodic notes plugin.'
 					: 'Close the day that weeks start on.',
 			)
 			.addDropdown((dropdown) =>
@@ -376,27 +403,55 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName(
-				"Override weekly note settings with periodic notes plugin's settings",
+				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Template file for new weekly notes`,
 			)
 			.setDesc(
-				'Use settings from the periodic notes plugin — filename, location, first day of week, etc.',
+				this.isOverriddenByPeriodicNotes()
+					? 'Using settings from periodic notes plugin.'
+					: 'Optional path+filename to template file for new weekly notes.',
 			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(
-						this.plugin.weeklyPeriodicNotesPluginExists() &&
-							this.plugin.settings.syncWithWeeklyNotes,
-					)
-					.onChange(async (value) => {
-						this.plugin.settings.syncWithWeeklyNotes = value;
-						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
-						this.display(); // Re-render settings to update disabled states
-					})
-					.setDisabled(
-						!this.plugin.weeklyPeriodicNotesPluginExists(),
-					),
-			);
+			.addSearch((search) => {
+				search
+					.setPlaceholder('E.g. templates/weekly-note.md')
+					.setValue(this.plugin.settings.templatePath);
+
+				// Validate and save on blur
+				search.inputEl.addEventListener('blur', async () => {
+					const value = search.inputEl.value;
+					const invalidPattern = !this.isValidFileNamingPattern(
+						value.trim(),
+					);
+
+					if (invalidPattern) {
+						const errorEl = this.createErrorMessageElement(
+							'setting-filename-error',
+							'Please enter a valid file naming pattern.',
+						);
+						search.inputEl.parentElement?.appendChild(errorEl);
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-filename-error',
+						);
+						if (existingError) {
+							existingError.remove();
+						}
+						this.plugin.settings.fileNamingPattern = value;
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save fileNamingPattern setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
+
+				// Attaches custom suggestions
+				new FileSuggest(this.app, search.inputEl);
+			});
 
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')

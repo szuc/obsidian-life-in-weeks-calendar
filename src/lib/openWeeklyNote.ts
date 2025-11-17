@@ -46,6 +46,7 @@ const openFile = async (app: App, file: TFile) => {
  * @param allWeeklyNotes - Record of existing weekly notes
  * @param folderPath - Custom folder path where weekly notes are stored
  * @param fileNamePattern - Custom Moment.js format pattern for file naming
+ * @param templatePath - Custom template path for new notes
  * @param modalFn - Optional function to show confirmation modal before creating a new note
  */
 export const openWeeklyNoteFunction = async (
@@ -54,6 +55,7 @@ export const openWeeklyNoteFunction = async (
 	allWeeklyNotes: Record<string, TFile> | undefined,
 	folderPath: string,
 	fileNamePattern: string,
+	templatePath: string,
 	modalFn?: (message: string, cb: () => void) => void,
 ): Promise<void> => {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
@@ -73,13 +75,29 @@ export const openWeeklyNoteFunction = async (
 	let dailyNote: TFile | undefined =
 		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
 
+	let templateContent = '';
+
+	try {
+		const templateFile = app.vault.getAbstractFileByPath(
+			templatePath, // This is the path to the template file
+		) as TFile;
+		if (!templateFile || templateFile.extension !== 'md') {
+			console.error(`Template file not found at: ${templatePath}`);
+			return;
+		}
+		templateContent = await app.vault.read(templateFile);
+	} catch (error) {
+		console.error(`Error reading template file at: ${templatePath}`, error);
+		return;
+	}
+
 	if (!dailyNote) {
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
 				() => {
 					app.vault
-						.create(filePath, '')
+						.create(filePath, templateContent)
 						.then(async (newNote) => {
 							await openFile(app, newNote);
 						})
@@ -92,7 +110,7 @@ export const openWeeklyNoteFunction = async (
 				},
 			);
 		} else {
-			const newNote = await app.vault.create(filePath, '');
+			const newNote = await app.vault.create(filePath, templateContent);
 			await openFile(app, newNote);
 		}
 	} else {

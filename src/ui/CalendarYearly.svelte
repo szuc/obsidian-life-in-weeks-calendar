@@ -24,6 +24,7 @@
 		weekStartsOn,
 		folderPath,
 		fileNamePattern,
+		templatePath,
 		app,
 	}: {
 		birthDate: Date;
@@ -34,6 +35,7 @@
 		weekStartsOn: string;
 		folderPath: string;
 		fileNamePattern: string;
+		templatePath: string;
 		app: App;
 	} = $props();
 
@@ -58,6 +60,7 @@
 				allWeeklyNotes,
 				folderPath,
 				fileNamePattern,
+				templatePath,
 				modalFn,
 			);
 		}

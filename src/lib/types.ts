@@ -34,4 +34,5 @@ export interface LifeCalendarSettings {
 	fileNamingPattern: string;
 	fileLocation: string;
 	weekStartDay: string;
+	templatePath: string;
 }

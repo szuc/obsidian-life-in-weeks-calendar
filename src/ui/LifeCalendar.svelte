@@ -15,6 +15,7 @@
 		folderPath,
 		fileNamePattern,
 		allWeeklyNotes,
+		templatePath,
 		app,
 	}: {
 		birthdate: string;
@@ -26,6 +27,7 @@
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		folderPath: string;
 		fileNamePattern: string;
+		templatePath: string;
 		app: App;
 	} = $props();
 
@@ -46,8 +48,6 @@
 	$effect(() => {
 		updateToday();
 	});
-
-	console.log(allWeeklyNotes);
 </script>
 
 <div class="life-in-weeks-calendar-plugin">
@@ -61,6 +61,7 @@
 			{weekStartsOn}
 			{folderPath}
 			{fileNamePattern}
+			{templatePath}
 			{app}
 		/>
 	{:else}
@@ -73,6 +74,7 @@
 			{weekStartsOn}
 			{folderPath}
 			{fileNamePattern}
+			{templatePath}
 			{app}
 		/>
 	{/if}

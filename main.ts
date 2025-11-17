@@ -1,11 +1,12 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian';
-import { LifeCalendarView, VIEW_TYPE_LIFE_CALENDAR } from 'src/view';
-import {
-	type LifeCalendarSettings,
-	LifeCalendarSettingTab,
-	DEFAULT_SETTINGS,
-} from 'src/settingTab';
+import { LifeCalendarView } from 'src/view';
+import { LifeCalendarSettingTab } from 'src/settingTab';
 import { createLocalDateYYYYMMDD, dateToYYYYMMDD } from 'src/lib/utils';
+import {
+	DEFAULT_SETTINGS,
+	VIEW_TYPE_LIFE_CALENDAR,
+} from 'src/lib/calendar-constants';
+import type { LifeCalendarSettings } from 'src/lib/types';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
@@ -104,7 +105,9 @@ export default class LifeCalendarPlugin extends Plugin {
 	}
 
 	refreshLifeCalendarView(): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_LIFE_CALENDAR)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(
+			VIEW_TYPE_LIFE_CALENDAR,
+		)) {
 			const view = leaf.view;
 			if (view instanceof LifeCalendarView) {
 				view.refreshView();

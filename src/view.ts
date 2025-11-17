@@ -109,13 +109,16 @@ export class LifeCalendarView extends ItemView {
 			false;
 		// Week start day from settings or default or periodic notes plugin
 		const weekStartsOn = usePeriodicNotes
-			? this.plugin.getWeekStartsOnOptionFromCalendar()
+			? (this.plugin.getWeekStartsOnOptionFromCalendar() ??
+				DEFAULT_SETTINGS.weekStartDay)
 			: (settings.weekStartDay ?? DEFAULT_SETTINGS.weekStartDay);
 		// Folder path and file naming pattern from settings or defaults
 		const folderPath = settings.fileLocation ?? '';
 		// File naming pattern from settings or default
 		const fileNamePattern =
 			settings.fileNamingPattern ?? DEFAULT_SETTINGS.fileNamingPattern;
+		const templatePath =
+			settings.templatePath ?? DEFAULT_SETTINGS.templatePath;
 		// Function to create a new modal window with message and callback
 		// only if setting to prompt for file creation is enabled
 		const modalFn =
@@ -143,6 +146,7 @@ export class LifeCalendarView extends ItemView {
 			allWeeklyNotes,
 			folderPath,
 			fileNamePattern,
+			templatePath,
 			app: this.app,
 		};
 	}
