@@ -229,7 +229,7 @@ export function createFilesRecord(
 	const record: Record<string, TFile> = {};
 	// for each file see if the filename converts to a moment date using the user defined filename pattern
 	files.forEach((file) => {
-		const momentObject = moment(file.basename, fileNamePattern);
+		const momentObject = moment(file.basename, fileNamePattern, true);
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
 				`[week-]YYYY-MM-DDT00:00:00${momentObject.format('Z')}`,

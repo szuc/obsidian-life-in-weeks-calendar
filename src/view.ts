@@ -116,7 +116,7 @@ export class LifeCalendarView extends ItemView {
 		const folderPath = settings.fileLocation ?? '';
 		// File naming pattern from settings or default
 		const fileNamePattern =
-			settings.fileNamingPattern ?? DEFAULT_SETTINGS.fileNamingPattern;
+			settings.fileNamePattern ?? DEFAULT_SETTINGS.fileNamePattern;
 		const templatePath =
 			settings.templatePath ?? DEFAULT_SETTINGS.templatePath;
 		// Function to create a new modal window with message and callback

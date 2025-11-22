@@ -32,7 +32,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	/**
 	 * Validates that a file naming pattern contains only safe characters and has balanced brackets.
 	 */
-	private isValidFileNamingPattern(pattern: string): boolean {
+	private isValidFileNamePattern(pattern: string): boolean {
 		// Empty pattern is valid (falls back to default)
 		if (pattern === '') return true;
 
@@ -333,12 +333,12 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				text.inputEl.type = 'text';
 				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
 				text.inputEl.disabled = this.isOverriddenByPeriodicNotes();
-				text.setValue(this.plugin.settings.fileNamingPattern || '');
+				text.setValue(this.plugin.settings.fileNamePattern || '');
 
 				// Validate and save on blur
 				text.inputEl.addEventListener('blur', async () => {
 					const value = text.inputEl.value;
-					const invalidPattern = !this.isValidFileNamingPattern(
+					const invalidPattern = !this.isValidFileNamePattern(
 						value.trim(),
 					);
 
@@ -356,13 +356,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						if (existingError) {
 							existingError.remove();
 						}
-						this.plugin.settings.fileNamingPattern = value;
+						this.plugin.settings.fileNamePattern = value;
 						try {
 							await this.plugin.saveSettings();
 							this.plugin.refreshLifeCalendarView();
 						} catch (error) {
 							console.error(
-								'Failed to save fileNamingPattern setting:',
+								'Failed to save fileNamePattern setting:',
 								error instanceof Error ? error.message : error,
 							);
 						}
@@ -414,7 +414,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const invalidPattern = !this.isValidFileNamingPattern(
+					const invalidPattern = !this.isValidFileNamePattern(
 						value.trim(),
 					);
 
@@ -432,13 +432,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						if (existingError) {
 							existingError.remove();
 						}
-						this.plugin.settings.fileNamingPattern = value;
+						this.plugin.settings.fileNamePattern = value;
 						try {
 							await this.plugin.saveSettings();
 							this.plugin.refreshLifeCalendarView();
 						} catch (error) {
 							console.error(
-								'Failed to save fileNamingPattern setting:',
+								'Failed to save fileNamePattern setting:',
 								error instanceof Error ? error.message : error,
 							);
 						}

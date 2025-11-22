@@ -66,7 +66,7 @@ export const openWeeklyNoteFunction = async (
 
 	const momentObject = moment(date);
 	const filename = momentObject.format(
-		fileNamePattern || DEFAULT_SETTINGS.fileNamingPattern,
+		fileNamePattern || DEFAULT_SETTINGS.fileNamePattern,
 	);
 	const filePath = folderPath
 		? `${folderPath}/${filename}.md`
@@ -143,7 +143,7 @@ export const openPeriodicNoteFunction = async (
 	const momentObject = moment(date);
 	const { format } = getWeeklyNoteSettings();
 	const filename = momentObject.format(
-		format || DEFAULT_SETTINGS.fileNamingPattern,
+		format || DEFAULT_SETTINGS.fileNamePattern,
 	);
 
 	let dailyNote: TFile | undefined =

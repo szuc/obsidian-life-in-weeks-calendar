@@ -31,7 +31,7 @@ export interface LifeCalendarSettings {
 	viewLocation: string;
 	confirmBeforeCreatingWeeklyNote: boolean;
 	syncWithWeeklyNotes: boolean;
-	fileNamingPattern: string;
+	fileNamePattern: string;
 	fileLocation: string;
 	weekStartDay: string;
 	templatePath: string;
