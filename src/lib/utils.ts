@@ -215,6 +215,32 @@ export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
 }
 
 /**
+ * Converts a day-of-the-week index (0-6) to its corresponding lowercase string representation.
+ * @param index - The day index, where 0 is Sunday, 1 is Monday, and so on. Can be undefined.
+ * @returns The lowercase name of the day (e.g., 'sunday', 'monday'), or an empty string if the index is invalid or undefined.
+ */
+export function weekStartsOnIndexToString(index: number | undefined): string {
+	switch (index) {
+		case 0:
+			return 'sunday';
+		case 1:
+			return 'monday';
+		case 2:
+			return 'tuesday';
+		case 3:
+			return 'wednesday';
+		case 4:
+			return 'thursday';
+		case 5:
+			return 'friday';
+		case 6:
+			return 'saturday';
+		default:
+			return '';
+	}
+}
+
+/**
  * Converts an array of TFile objects into a Record with date-formatted keys.
  * @param fileNamePattern - Moment.js format pattern for parsing file names
  * @param weekStartDay - Day of the week that weeks start on

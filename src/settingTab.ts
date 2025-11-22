@@ -89,12 +89,36 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Checks if weekly note settings are overridden by the periodic notes plugin.
+	 * Checks if weekly note settings are overridden by either the Periodic Notes or Journals plugin.
+	 * Uses helper methods to determine if either plugin integration is currently active.
+	 * @returns `true` if settings are being synced from either plugin, `false` otherwise.
 	 */
-	private isOverriddenByPeriodicNotes(): boolean {
+	private isOverriddenByOtherPlugin(): boolean {
+		return (
+			this.syncWithWeeklyNotesIsEnabled() ||
+			this.syncWithJournalNotesIsEnabled()
+		);
+	}
+
+	/**
+	 * Checks if syncing with the Periodic Notes plugin is enabled.
+	 * @returns `true` if the Periodic Notes plugin exists and sync is enabled, `false` otherwise.
+	 */
+	private syncWithWeeklyNotesIsEnabled(): boolean {
 		return (
 			this.plugin.weeklyPeriodicNotesPluginExists() &&
 			this.plugin.settings.syncWithWeeklyNotes
+		);
+	}
+
+	/**
+	 * Checks if syncing with the Journals plugin is enabled.
+	 * @returns `true` if the Journals plugin exists and sync is enabled, `false` otherwise.
+	 */
+	private syncWithJournalNotesIsEnabled(): boolean {
+		return (
+			!!this.plugin.journalPluginWeeklySettings() &&
+			this.plugin.settings.syncWithJournalNotes
 		);
 	}
 
@@ -125,6 +149,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		// Setting for user's birth date.
 		new Setting(containerEl)
 			.setName('Birth date')
 			.setDesc('Your date of birth')
@@ -165,6 +190,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				);
 			});
 
+		// Setting for user's projected lifespan.
 		new Setting(containerEl)
 			.setName('Projected lifespan (years)')
 			.setDesc('Your projected lifespan in years (1 to 200)')
@@ -204,6 +230,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				});
 			});
 
+		// Setting for calendar view mode.
 		new Setting(containerEl)
 			.setName('Calendar view mode')
 			.setDesc('Standard mode is better for sidebar or mobile views.')
@@ -219,6 +246,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		// Setting for the view's location in the workspace.
 		new Setting(containerEl)
 			.setName('View location')
 			.setDesc(
@@ -237,21 +265,56 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		// Setting to sync with the Journals plugin.
+		// The name and description change if the Journals plugin is not detected.
+		// It is disabled if syncing with Periodic Notes is enabled.
 		new Setting(containerEl)
 			.setName(
-				!this.plugin.weeklyPeriodicNotesPluginExists()
-					? 'Periodic weekly notes not enabled ⚠️'
-					: 'Use periodic notes plugin settings',
+				this.syncWithWeeklyNotesIsEnabled()
+					? 'Disabled: Use journals plugin settings'
+					: !!this.plugin.journalPluginWeeklySettings()
+						? 'Use journals plugin settings'
+						: 'Journals weekly notes not enabled ⚠️',
 			)
 			.setDesc(
-				'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, etc.',
+				this.syncWithWeeklyNotesIsEnabled()
+					? 'Using periodic notes plugin settings.'
+					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, etc.',
 			)
 			.addToggle((toggle) =>
 				toggle
-					.setValue(
-						this.plugin.weeklyPeriodicNotesPluginExists() &&
-							this.plugin.settings.syncWithWeeklyNotes,
-					)
+					.setValue(this.syncWithJournalNotesIsEnabled())
+					.onChange(async (value) => {
+						this.plugin.settings.syncWithJournalNotes = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+						this.display(); // Re-render settings to update disabled states on other settings
+					})
+					.setDisabled(
+						this.syncWithWeeklyNotesIsEnabled() ||
+							!this.plugin.journalPluginWeeklySettings(),
+					),
+			);
+
+		// Setting to sync with the Periodic Notes plugin.
+		// The name and description change if the Periodic Notes plugin is not detected.
+		// It is disabled if syncing with Journals is enabled.
+		new Setting(containerEl)
+			.setName(
+				this.syncWithJournalNotesIsEnabled()
+					? 'Disabled: Use periodic notes plugin settings'
+					: this.plugin.weeklyPeriodicNotesPluginExists()
+						? 'Use periodic notes plugin settings'
+						: 'Periodic weekly notes not enabled ⚠️',
+			)
+			.setDesc(
+				this.syncWithJournalNotesIsEnabled()
+					? 'Using journals plugin settings.'
+					: 'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, etc.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.syncWithWeeklyNotesIsEnabled())
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
@@ -259,17 +322,20 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.display(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
-						!this.plugin.weeklyPeriodicNotesPluginExists(),
+						this.syncWithJournalNotesIsEnabled() ||
+							!this.plugin.weeklyPeriodicNotesPluginExists(),
 					),
 			);
 
+		// Setting for weekly note folder location.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note folder location`,
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note folder location`,
 			)
 			.setDesc(
-				this.isOverriddenByPeriodicNotes()
-					? 'Using settings from periodic notes plugin.'
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
 					: 'Folder path where weekly notes are stored. Leave blank for root directory.',
 			)
 			.addSearch((search) => {
@@ -320,19 +386,21 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				new FolderSuggest(this.app, search.inputEl);
 			});
 
+		// Setting for weekly note file naming pattern.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
 			)
 			.setDesc(
-				this.isOverriddenByPeriodicNotes()
-					? 'Using settings from periodic notes plugin.'
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
 					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
 			)
 			.addText((text) => {
 				text.inputEl.type = 'text';
 				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
-				text.inputEl.disabled = this.isOverriddenByPeriodicNotes();
+				text.inputEl.disabled = this.isOverriddenByOtherPlugin();
 				text.setValue(this.plugin.settings.fileNamePattern || '');
 
 				// Validate and save on blur
@@ -370,13 +438,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				});
 			});
 
+		// Setting for the first day of the week.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}First day of the week`,
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}First day of the week`,
 			)
 			.setDesc(
-				this.isOverriddenByPeriodicNotes()
-					? 'Using settings from periodic notes plugin.'
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
 					: 'Select the day that weekly notes start on.',
 			)
 			.addDropdown((dropdown) =>
@@ -388,7 +458,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.addOption('friday', 'Friday')
 					.addOption('saturday', 'Saturday')
 					.addOption('sunday', 'Sunday')
-					.setDisabled(this.isOverriddenByPeriodicNotes())
+					.setDisabled(this.isOverriddenByOtherPlugin())
 					.setValue(this.plugin.settings.weekStartDay || 'monday')
 					.onChange(async (value) => {
 						this.plugin.settings.weekStartDay = value;
@@ -397,13 +467,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		// Setting for the weekly note template file.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
 			.setName(
-				`${this.isOverriddenByPeriodicNotes() ? 'Disabled: ' : ''}Weekly note template`,
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note template`,
 			)
 			.setDesc(
-				this.isOverriddenByPeriodicNotes()
-					? 'Using settings from periodic notes plugin.'
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
 					: 'Optional template file for new weekly notes. Leave blank for no template.',
 			)
 			.addSearch((search) => {
@@ -449,6 +521,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				new FileSuggest(this.app, search.inputEl);
 			});
 
+		// Setting to confirm before creating a new weekly note.
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')
 			.setDesc('Require confirmation before creating a new weekly note.')

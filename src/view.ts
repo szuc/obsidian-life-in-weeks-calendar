@@ -107,18 +107,30 @@ export class LifeCalendarView extends ItemView {
 			(this.plugin.weeklyPeriodicNotesPluginExists() &&
 				settings.syncWithWeeklyNotes) ??
 			false;
-		// Week start day from settings or default or periodic notes plugin
+		// Determine if journals plugin setting values should be used
+		const journalSettings = settings.syncWithJournalNotes
+			? this.plugin.journalPluginWeeklySettings()
+			: undefined;
+		// Week start day from periodic notes/calendar plugin or journals plugin or settings or default
 		const weekStartsOn = usePeriodicNotes
 			? (this.plugin.getWeekStartsOnOptionFromCalendar() ??
 				DEFAULT_SETTINGS.weekStartDay)
-			: (settings.weekStartDay ?? DEFAULT_SETTINGS.weekStartDay);
-		// Folder path and file naming pattern from settings or defaults
-		const folderPath = settings.fileLocation ?? '';
-		// File naming pattern from settings or default
+			: (journalSettings?.weekStartDay ??
+				settings.weekStartDay ??
+				DEFAULT_SETTINGS.weekStartDay);
+		// Folder path and file naming pattern from journal plugin or settings or defaults
+		const folderPath =
+			journalSettings?.folderPath ?? settings.fileLocation ?? '';
+		// File naming pattern from journal plugin or settings or defaults
 		const fileNamePattern =
-			settings.fileNamePattern ?? DEFAULT_SETTINGS.fileNamePattern;
+			journalSettings?.fileNamePattern ??
+			settings.fileNamePattern ??
+			DEFAULT_SETTINGS.fileNamePattern;
+		// Template path from journal plugin or settings or defaults
 		const templatePath =
-			settings.templatePath ?? DEFAULT_SETTINGS.templatePath;
+			journalSettings?.templatePath ??
+			settings.templatePath ??
+			DEFAULT_SETTINGS.templatePath;
 		// Function to create a new modal window with message and callback
 		// only if setting to prompt for file creation is enabled
 		const modalFn =
