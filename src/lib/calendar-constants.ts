@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: LifeCalendarSettings = {
 	viewLocation: 'main',
 	confirmBeforeCreatingWeeklyNote: true,
 	syncWithWeeklyNotes: false,
+	syncWithJournalNotes: false,
 	fileNamePattern: 'gggg-[W]ww',
 	fileLocation: '',
 	weekStartDay: 'monday',

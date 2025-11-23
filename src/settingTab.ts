@@ -2,8 +2,7 @@ import LifeCalendarPlugin from 'main';
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
 import { dateToYYYYMMDD, isValidDate } from 'src/lib/utils';
-import { FileSuggest } from './FileSuggest';
-import { FolderSuggest } from './FolderSuggest';
+import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 
 /**
  * Settings tab for the Life Calendar plugin.
@@ -18,6 +17,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/**
 	 * Validates that a lifespan value is a valid integer within the allowed range.
+	 * @param value - The lifespan value to validate
+	 * @returns `true` if the value is a valid integer between MIN_LIFESPAN and MAX_LIFESPAN, `false` otherwise
 	 */
 	private isValidLifespan(value: string): boolean {
 		const lifespan = Number(value);
@@ -30,15 +31,26 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
+	 * Tests for filesystem characters that are unsafe across Windows, macOS, and Linux.
+	 * @param value - The string to test for unsafe characters
+	 * @returns `true` if the value contains unsafe filesystem characters, `false` otherwise
+	 */
+	private containsUnsafeCharacters(value: string): boolean {
+		const unsafeCharacters = /[<>:"|?*\\]/;
+		return unsafeCharacters.test(value);
+	}
+
+	/**
 	 * Validates that a file naming pattern contains only safe characters and has balanced brackets.
+	 * @param pattern - The Moment.js date format pattern to validate
+	 * @returns `true` if the pattern is valid (safe characters and balanced brackets), `false` otherwise
 	 */
 	private isValidFileNamePattern(pattern: string): boolean {
 		// Empty pattern is valid (falls back to default)
 		if (pattern === '') return true;
 
 		// Check for filesystem-unsafe characters
-		const unsafeChars = /[<>:"|?*\/\\]/;
-		if (unsafeChars.test(pattern)) return false;
+		if (this.containsUnsafeCharacters(pattern)) return false;
 
 		// Check for balanced square brackets
 		let bracketDepth = 0;
@@ -53,16 +65,17 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Validates that a folder path contains only safe characters and no relative path markers.
+	 * Validates that a path contains only safe characters and no relative path markers.
+	 * @param path - The path to validate
+	 * @returns `true` if the path is valid (safe characters, no relative paths), `false` otherwise
 	 */
-	private isValidFolderPath(path: string): boolean {
+	private isValidPath(path: string): boolean {
 		path = path.trim();
 		// Empty path is valid (vault root)
 		if (path === '') return true;
 
 		// Check for filesystem-unsafe characters (allow / for folder separators)
-		const unsafeChars = /[<>:"|?*\\]/;
-		if (unsafeChars.test(path)) return false;
+		if (this.containsUnsafeCharacters(path)) return false;
 
 		// Check for consecutive slashes
 		if (path.includes('//')) return false;
@@ -77,6 +90,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/**
 	 * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
+	 * @param path - The folder path to normalize
+	 * @returns The normalized path without leading/trailing slashes
 	 */
 	private normalizeFolderPath(path: string): string {
 		// Trim whitespace
@@ -124,7 +139,10 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/**
 	 * Creates an error message element for the settings UI.
-	 * Removes any existing error with the same ID.
+	 * Removes any existing error with the same ID before creating a new one.
+	 * @param id - Unique identifier for the error element
+	 * @param message - Error message text to display
+	 * @returns The created error message HTMLElement
 	 */
 	private createErrorMessageElement(
 		id: string,
@@ -142,14 +160,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Renders the settings UI with all configuration options.
+	 * Adds the birthdate setting to the settings UI.
+	 * Provides a date input with validation and persists changes to plugin settings.
+	 * @param containerEl - The HTML element to append the setting to
 	 */
-	display(): void {
-		const { containerEl } = this;
-
-		containerEl.empty();
-
-		// Setting for user's birth date.
+	addBirthdateSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Birth date')
 			.setDesc('Your date of birth')
@@ -189,11 +204,17 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					},
 				);
 			});
+	}
 
-		// Setting for user's projected lifespan.
+	/**
+	 * Adds the projected lifespan setting to the settings UI.
+	 * Provides a number input with validation for values between 1 and 200 years.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addLifespanSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Projected lifespan (years)')
-			.setDesc('Your projected lifespan in years (1 to 200)')
+			.setDesc('How many years you expect to live (1 to 200)')
 			.addText((text) => {
 				text.inputEl.type = 'number';
 				text.inputEl.min = CALENDAR_VALIDATION.MIN_LIFESPAN.toString();
@@ -229,8 +250,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}
 				});
 			});
+	}
 
-		// Setting for calendar view mode.
+	/**
+	 * Adds the calendar view mode setting to the settings UI.
+	 * Allows users to choose between 'Standard' and 'Decades' view modes.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addCalendarModeSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Calendar view mode')
 			.setDesc('Standard mode is better for sidebar or mobile views.')
@@ -245,8 +272,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.refreshLifeCalendarView();
 					}),
 			);
+	}
 
-		// Setting for the view's location in the workspace.
+	/**
+	 * Adds the view location setting to the settings UI.
+	 * Allows users to choose where the calendar view appears (main, left sidebar, or right sidebar).
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addViewLocationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('View location')
 			.setDesc(
@@ -264,7 +297,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.refreshLifeCalendarView();
 					}),
 			);
+	}
 
+	/**
+	 * Adds plugin integration settings to the settings UI.
+	 * Includes toggles for syncing with the Journals and Periodic Notes plugins.
+	 * These settings are mutually exclusive - enabling one disables the other.
+	 * @param containerEl - The HTML element to append the settings to
+	 */
+	addPluginIntegrationSettings(containerEl: HTMLElement): void {
 		// Setting to sync with the Journals plugin.
 		// The name and description change if the Journals plugin is not detected.
 		// It is disabled if syncing with Periodic Notes is enabled.
@@ -279,7 +320,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setDesc(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Using periodic notes plugin settings.'
-					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, etc.',
+					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -310,7 +351,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setDesc(
 				this.syncWithJournalNotesIsEnabled()
 					? 'Using journals plugin settings.'
-					: 'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, etc.',
+					: 'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, templates.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -326,7 +367,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							!this.plugin.weeklyPeriodicNotesPluginExists(),
 					),
 			);
-
+	}
+	/**
+	 * Adds weekly note configuration settings to the settings UI.
+	 * Includes settings for folder location, file naming pattern, week start day, and template file.
+	 * These settings are disabled when syncing with Journals or Periodic Notes plugins.
+	 * @param containerEl - The HTML element to append the settings to
+	 */
+	addWeeklyNoteSettings(containerEl: HTMLElement): void {
 		// Setting for weekly note folder location.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
@@ -343,44 +391,45 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.setPlaceholder(
 						'E.g. weekly-notes or periodic-notes/weekly',
 					)
-					.setValue(this.plugin.settings.fileLocation)
-					.onChange(async (value) => {
-						this.plugin.settings.fileLocation = value;
-						const normalized = this.normalizeFolderPath(value);
-						const invalidPath = !this.isValidFolderPath(normalized);
+					.setValue(this.plugin.settings.fileLocation);
 
-						if (invalidPath) {
-							const errorEl = this.createErrorMessageElement(
-								'setting-filepath-error',
-								'Please enter a valid folder path.',
-							);
-							search.inputEl.parentElement?.appendChild(errorEl);
-							return;
-						} else {
-							const existingError = document.getElementById(
-								'setting-filepath-error',
-							);
-							if (existingError) {
-								existingError.remove();
-							}
+				// Validate and save on blur
+				search.inputEl.addEventListener('blur', async () => {
+					const value = search.inputEl.value;
+					this.plugin.settings.fileLocation = value;
+					const normalized = this.normalizeFolderPath(value);
+					const invalidPath = !this.isValidPath(normalized);
 
-							// Update input to show normalized path
-							search.inputEl.value = normalized;
-							this.plugin.settings.fileLocation = normalized;
-
-							try {
-								await this.plugin.saveSettings();
-								this.plugin.refreshLifeCalendarView();
-							} catch (error) {
-								console.error(
-									'Failed to save fileLocation setting:',
-									error instanceof Error
-										? error.message
-										: error,
-								);
-							}
+					if (invalidPath) {
+						const errorEl = this.createErrorMessageElement(
+							'setting-filepath-error',
+							'Please enter a valid folder path.',
+						);
+						search.inputEl.parentElement?.appendChild(errorEl);
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-filepath-error',
+						);
+						if (existingError) {
+							existingError.remove();
 						}
-					});
+
+						// Update input to show normalized path
+						search.inputEl.value = normalized;
+						this.plugin.settings.fileLocation = normalized;
+
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save fileLocation setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
 
 				// Attaches custom suggestions
 				new FolderSuggest(this.app, search.inputEl);
@@ -486,31 +535,29 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const invalidPattern = !this.isValidFileNamePattern(
-						value.trim(),
-					);
+					const invalidPattern = !this.isValidPath(value.trim());
 
 					if (invalidPattern) {
 						const errorEl = this.createErrorMessageElement(
-							'setting-filename-error',
-							'Please enter a valid file naming pattern.',
+							'setting-templatePath-error',
+							'Please enter a valid template file.',
 						);
 						search.inputEl.parentElement?.appendChild(errorEl);
 						return;
 					} else {
 						const existingError = document.getElementById(
-							'setting-filename-error',
+							'setting-templatePath-error',
 						);
 						if (existingError) {
 							existingError.remove();
 						}
-						this.plugin.settings.fileNamePattern = value;
+						this.plugin.settings.templatePath = value;
 						try {
 							await this.plugin.saveSettings();
 							this.plugin.refreshLifeCalendarView();
 						} catch (error) {
 							console.error(
-								'Failed to save fileNamePattern setting:',
+								'Failed to save templatePath setting:',
 								error instanceof Error ? error.message : error,
 							);
 						}
@@ -520,8 +567,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Attaches custom suggestions
 				new FileSuggest(this.app, search.inputEl);
 			});
-
-		// Setting to confirm before creating a new weekly note.
+	}
+	/**
+	 * Adds the confirmation setting for creating weekly notes to the settings UI.
+	 * Allows users to toggle whether they want a confirmation modal before creating new notes.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addConfirmationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')
 			.setDesc('Require confirmation before creating a new weekly note.')
@@ -537,5 +589,23 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.refreshLifeCalendarView();
 					}),
 			);
+	}
+
+	/**
+	 * Renders the settings UI with all configuration options.
+	 * Clears the container and builds all settings sections in order.
+	 */
+	display(): void {
+		const { containerEl } = this;
+
+		containerEl.empty();
+
+		this.addBirthdateSetting(containerEl);
+		this.addLifespanSetting(containerEl);
+		this.addCalendarModeSetting(containerEl);
+		this.addViewLocationSetting(containerEl);
+		this.addPluginIntegrationSettings(containerEl);
+		this.addWeeklyNoteSettings(containerEl);
+		this.addConfirmationSetting(containerEl);
 	}
 }

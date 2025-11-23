@@ -165,27 +165,41 @@ export default class LifeCalendarPlugin extends Plugin {
 	 * - `templatePath`: The template file path for new weekly notes.
 	 * Returns `undefined` if the 'Journals' plugin is not found or if no weekly settings are configured.
 	 */
-	journalPluginWeeklySettings() {
+	journalPluginWeeklySettings():
+		| {
+				weekStartDay: string;
+				fileNamePattern: string;
+				folderPath: string;
+				templatePath: string;
+		  }
+		| undefined {
 		// @ts-ignore
 		const journalsPlugin = this.app.plugins.getPlugin('journals');
-		const weeksSettings = journalsPlugin?.journals.filter(
-			(j: any) => j?.type === 'week',
-		)[0];
-		const weekStartDay: number | undefined =
-			journalsPlugin?.calendarSettings.dow;
-		const fileNamePattern: string | undefined = weeksSettings?.dateFormat;
-		const folderPath: string | undefined =
-			weeksSettings?.config?.value?.folder;
-		const templatePath: string | undefined =
-			weeksSettings?.config?.value?.templates?.[0];
 
-		if (weekStartDay === undefined && fileNamePattern === undefined) {
+		if (!journalsPlugin) {
 			return undefined;
 		}
 
+		const weeksSettings = journalsPlugin.journals?.find(
+			(j: any) => j?.type === 'week',
+		);
+
+		// Return undefined if no weekly journal configuration exists
+		if (!weeksSettings) {
+			return undefined;
+		}
+
+		const weekStartDay: number | undefined =
+			journalsPlugin.calendarSettings?.dow;
+		const fileNamePattern: string | undefined = weeksSettings.dateFormat;
+		const folderPath: string | undefined =
+			weeksSettings.config?.value?.folder;
+		const templatePath: string | undefined =
+			weeksSettings.config?.value?.templates?.[0];
+
 		return {
-			weekStartDay: weekStartsOnIndexToString(weekStartDay),
-			fileNamePattern: fileNamePattern,
+			weekStartDay: weekStartsOnIndexToString(weekStartDay) || '',
+			fileNamePattern: fileNamePattern || '',
 			folderPath: folderPath || '',
 			templatePath: templatePath || '',
 		};

@@ -3,6 +3,7 @@ import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
 import { moment } from 'obsidian';
 
+/** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();
 
 /**
@@ -155,7 +156,7 @@ export function fixWeekRecordStartDates(
 	if (allWeeklyNotes === undefined) return;
 	if (weekStartsOn === undefined) return allWeeklyNotes;
 
-	const newAllWeeklyNotes: Record<string, TFile> = allWeeklyNotes;
+	const newAllWeeklyNotes: Record<string, TFile> = { ...allWeeklyNotes };
 	// The keys on the objects might reflect the wrong day start
 	for (const key in allWeeklyNotes) {
 		const correctedKey = weeklyNoteKeyCorrection(key, weekStartsOn);
@@ -219,7 +220,9 @@ export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
  * @param index - The day index, where 0 is Sunday, 1 is Monday, and so on. Can be undefined.
  * @returns The lowercase name of the day (e.g., 'sunday', 'monday'), or an empty string if the index is invalid or undefined.
  */
-export function weekStartsOnIndexToString(index: number | undefined): string {
+export function weekStartsOnIndexToString(
+	index: number | undefined,
+): string | undefined {
 	switch (index) {
 		case 0:
 			return 'sunday';
@@ -236,7 +239,7 @@ export function weekStartsOnIndexToString(index: number | undefined): string {
 		case 6:
 			return 'saturday';
 		default:
-			return '';
+			return undefined;
 	}
 }
 
@@ -253,14 +256,14 @@ export function createFilesRecord(
 	files: TFile[],
 ): Record<string, TFile> | undefined {
 	const record: Record<string, TFile> = {};
-	// for each file see if the filename converts to a moment date using the user defined filename pattern
+	// For each file see if the filename converts to a moment date using the user defined filename pattern
 	files.forEach((file) => {
 		const momentObject = moment(file.basename, fileNamePattern, true);
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
 				`[week-]YYYY-MM-DDT00:00:00${momentObject.format('Z')}`,
 			);
-			//correct for the week start day
+			// Correct for the week start day
 			const correctedKey = weeklyNoteKeyCorrection(dateKey, weekStartDay);
 			record[correctedKey] = file;
 		}

@@ -39,22 +39,26 @@ export class LifeCalendarView extends ItemView {
 
 	/**
 	 * Retrieves all files within a specified folder path.
-	 *
-	 * @param folderPath - The path of the folder to search for files
-	 * @returns An array of TFile objects found in the folder, or an empty array if the folder doesn't exist or is invalid
+	 * @param folderPath - The path of the folder to search for files (use '' for root)
+	 * @returns An array of TFile objects found in the folder or empty array if folder doesn't exist
 	 */
-	private getAllFilesInfolder(folderPath: string): TFile[] {
-		const folder = this.app.vault.getAbstractFileByPath(folderPath);
-		if (folder && folder instanceof TFile === false) {
-			const filesInFolder: TFile[] = [];
-			this.app.vault.getFiles().forEach((file) => {
-				if (file.path.startsWith(folderPath + '/')) {
-					filesInFolder.push(file);
-				}
-			});
-			return filesInFolder;
+	private getAllFilesInFolder(folderPath: string): TFile[] {
+		// Normalize empty string or '/' to root
+		const normalizedPath =
+			!folderPath || folderPath === '/' ? '' : folderPath;
+
+		const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+		// Check if folder exists and is actually a folder (TFolder)
+		if (!folder || folder instanceof TFile) {
+			return [];
 		}
-		return [];
+
+		return this.app.vault.getFiles().filter((file) => {
+			// Handle root folder case
+			if (normalizedPath === '') return true;
+			return file.path.startsWith(normalizedPath + '/');
+		});
 	}
 
 	/**
@@ -84,7 +88,7 @@ export class LifeCalendarView extends ItemView {
 		fileNamePattern: string,
 		weekStartDay: string,
 	): Record<string, TFile> | undefined {
-		const files = this.getAllFilesInfolder(folderPath);
+		const files = this.getAllFilesInFolder(folderPath);
 		return createFilesRecord(fileNamePattern, weekStartDay, files);
 	}
 
@@ -95,13 +99,13 @@ export class LifeCalendarView extends ItemView {
 	private buildComponentProps(): ComponentProps<typeof LifeCalendar> {
 		const settings = this.plugin.settings;
 		// Birthday from settings or default
-		const birthdate = settings.birthdate ?? DEFAULT_SETTINGS.birthdate;
+		const birthdate = settings.birthdate || DEFAULT_SETTINGS.birthdate;
 		// Projected lifespan from settings or default
 		const projectedLifespan =
-			settings.projectedLifespan ?? DEFAULT_SETTINGS.projectedLifespan;
+			settings.projectedLifespan || DEFAULT_SETTINGS.projectedLifespan;
 		// Calendar mode from settings or default
 		const calendarMode =
-			settings.calendarMode ?? DEFAULT_SETTINGS.calendarMode;
+			settings.calendarMode || DEFAULT_SETTINGS.calendarMode;
 		// Determine if periodic notes plugin setting values should be used
 		const usePeriodicNotes =
 			(this.plugin.weeklyPeriodicNotesPluginExists() &&

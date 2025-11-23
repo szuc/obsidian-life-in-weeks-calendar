@@ -1,7 +1,7 @@
 import {
 	type App,
 	type MarkdownView,
-	type TFile,
+	TFile,
 	type WorkspaceLeaf,
 	moment,
 } from 'obsidian';
@@ -18,6 +18,7 @@ import { DEFAULT_SETTINGS } from './calendar-constants';
  * If the file is already open in a leaf, reveals that leaf. Otherwise, creates a new leaf.
  * @param app - Obsidian application instance
  * @param file - The file to open
+ * @returns Promise<void>
  */
 const openFile = async (app: App, file: TFile) => {
 	let leaf = null;
@@ -37,6 +38,34 @@ const openFile = async (app: App, file: TFile) => {
 		await newLeaf.openFile(file, { active: true });
 	}
 };
+
+async function getTemplateContent(
+	app: App,
+	templatePath: string,
+): Promise<string> {
+	let templateContent = '';
+	if (templatePath && templatePath.trim() !== '') {
+		try {
+			const templateFile = app.vault.getAbstractFileByPath(templatePath);
+			if (
+				templateFile instanceof TFile &&
+				templateFile.extension === 'md'
+			) {
+				templateContent = await app.vault.read(templateFile);
+			} else {
+				console.warn(
+					`Template file not found at: ${templatePath}. Creating note without template.`,
+				);
+			}
+		} catch (error) {
+			console.warn(
+				`Error reading template file at: ${templatePath}. Creating note without template.`,
+				error,
+			);
+		}
+	}
+	return templateContent;
+}
 
 /**
  * Opens a weekly note for the given date using custom file naming and folder settings.
@@ -72,26 +101,12 @@ export const openWeeklyNoteFunction = async (
 		? `${folderPath}/${filename}.md`
 		: `${filename}.md`;
 
-	let dailyNote: TFile | undefined =
+	let weeklyNote: TFile | undefined =
 		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
 
-	let templateContent = '';
+	let templateContent = await getTemplateContent(app, templatePath);
 
-	try {
-		const templateFile = app.vault.getAbstractFileByPath(
-			templatePath, // This is the path to the template file
-		) as TFile;
-		if (!templateFile || templateFile.extension !== 'md') {
-			console.error(`Template file not found at: ${templatePath}`);
-			return;
-		}
-		templateContent = await app.vault.read(templateFile);
-	} catch (error) {
-		console.error(`Error reading template file at: ${templatePath}`, error);
-		return;
-	}
-
-	if (!dailyNote) {
+	if (!weeklyNote) {
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
@@ -114,7 +129,7 @@ export const openWeeklyNoteFunction = async (
 			await openFile(app, newNote);
 		}
 	} else {
-		await openFile(app, dailyNote);
+		await openFile(app, weeklyNote);
 	}
 };
 
@@ -134,7 +149,7 @@ export const openPeriodicNoteFunction = async (
 ): Promise<void> => {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
 		throw new Error(
-			'openWeeklyNoteFunction: date must be a valid Date object',
+			'openPeriodicNoteFunction: date must be a valid Date object',
 		);
 	}
 
@@ -146,10 +161,10 @@ export const openPeriodicNoteFunction = async (
 		format || DEFAULT_SETTINGS.fileNamePattern,
 	);
 
-	let dailyNote: TFile | undefined =
+	let weeklyNote: TFile | undefined =
 		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
 
-	if (!dailyNote) {
+	if (!weeklyNote) {
 		if (modalFn) {
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
@@ -171,6 +186,6 @@ export const openPeriodicNoteFunction = async (
 			await openFile(app, newNote);
 		}
 	} else {
-		await openFile(app, dailyNote);
+		await openFile(app, weeklyNote);
 	}
 };
