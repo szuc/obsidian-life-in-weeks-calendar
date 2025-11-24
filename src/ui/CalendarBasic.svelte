@@ -5,7 +5,7 @@
 	import { App, TFile } from 'obsidian';
 	import { openWeeklyNoteFunction } from 'src/lib/openWeeklyNote';
 	import {
-		dateToDailyNoteRecordKeyFormat,
+		dateToWeeklyNoteRecordKeyFormat,
 		setWeekStatus,
 	} from '../lib/utils';
 
@@ -32,7 +32,7 @@
 	} = $props();
 
 	const showDotFn = (weekStartDate: Date) =>
-		!!allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(weekStartDate)];
+		!!allWeeklyNotes?.[dateToWeeklyNoteRecordKeyFormat(weekStartDate)];
 
 	const onClickFn = (weekStartDate: Date) => {
 		openWeeklyNoteFunction(

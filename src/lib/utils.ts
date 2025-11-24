@@ -88,17 +88,17 @@ export function dateToYYYYMMDD(date: Date): string {
 }
 
 /**
- * Periodic note plugin records are keyed by date strings in the format:
+ * Based off of Periodic note plugin records which are keyed by date strings in the format:
  * "week-YYYY-MM-DDT00:00:00+00:00" where the date is the start of the week
  * and the timezone offset is included.
  * This function generates that key for a given date.
  * @param date - The date for which to generate the key.
  * @returns The formatted key string.
  */
-export function dateToDailyNoteRecordKeyFormat(date: Date): string {
+export function dateToWeeklyNoteRecordKeyFormat(date: Date): string {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
 		throw new Error(
-			'dateToDailyNoteRecordKeyFormat: date must be a valid Date object',
+			'dateToWeeklyNoteRecordKeyFormat: date must be a valid Date object',
 		);
 	}
 
@@ -163,7 +163,7 @@ export function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 	// (Trial and error led to this requirement)
 	const nextStartDay = nextDay(date, startDayIndex);
 	// convert it back into the expected format
-	return dateToDailyNoteRecordKeyFormat(nextStartDay);
+	return dateToWeeklyNoteRecordKeyFormat(nextStartDay);
 }
 
 /**
@@ -225,7 +225,7 @@ export function weekStartsOnIndexToString(
  * @param fileNamePattern - Moment.js format pattern for parsing file names
  * @param weekStartDay - Day of the week that weeks start on
  * @param files - Array of TFile objects to process
- * @returns Record with date keys in the format `week-YYYY-MM-DDTHH:MM:SS+HH:MM`
+ * @returns Record with date keys in the format `week-YYYY-MM-DDT00:00:00+HH:MM`
  */
 export function createFilesRecord(
 	fileNamePattern: string,
@@ -246,4 +246,107 @@ export function createFilesRecord(
 		}
 	});
 	return record;
+}
+
+/**
+ * Validates that a lifespan value is a valid integer within the allowed range.
+ * @param value - The lifespan value to validate
+ * @param minLifespan - Minimum allowed lifespan
+ * @param maxLifespan - Maximum allowed lifespan
+ * @returns `true` if the value is a valid integer between minLifespan and maxLifespan, `false` otherwise
+ */
+export function isValidLifespan(
+	value: string,
+	minLifespan: number,
+	maxLifespan: number,
+): boolean {
+	const lifespan = Number(value);
+	return (
+		!isNaN(lifespan) &&
+		Number.isInteger(lifespan) &&
+		lifespan >= minLifespan &&
+		lifespan <= maxLifespan
+	);
+}
+
+/**
+ * Tests for filesystem characters that are unsafe across Windows, macOS, and Linux.
+ * @param value - The string to test for unsafe characters
+ * @returns `true` if the value contains unsafe filesystem characters, `false` otherwise
+ */
+export function containsUnsafeCharacters(value: string): boolean {
+	const unsafeCharacters = /[<>:"|?*\\]/;
+	return unsafeCharacters.test(value);
+}
+
+/**
+ * Validates that a file naming pattern contains only safe characters and has balanced brackets.
+ * @param pattern - The Moment.js date format pattern to validate
+ * @returns `true` if the pattern is valid (safe characters and balanced brackets), `false` otherwise
+ */
+export function isValidFileNamePattern(pattern: string): boolean {
+	// Empty pattern is valid (falls back to default)
+	if (pattern === '') return true;
+
+	// Check for filesystem-unsafe characters
+	if (containsUnsafeCharacters(pattern)) return false;
+
+	// Check for balanced square brackets
+	let bracketDepth = 0;
+	for (const char of pattern) {
+		if (char === '[') bracketDepth++;
+		if (char === ']') bracketDepth--;
+		if (bracketDepth < 0) return false; // Closing before opening
+	}
+	if (bracketDepth !== 0) return false; // Unmatched brackets
+
+	return true;
+}
+
+/**
+ * Validates that a path contains only safe characters and no relative path markers.
+ * @param path - The path to validate
+ * @returns `true` if the path is valid (safe characters, no relative paths), `false` otherwise
+ */
+export function isValidPath(path: string): boolean {
+	path = path.trim();
+	// Empty path is valid (vault root)
+	if (path === '') return true;
+
+	// Check for filesystem-unsafe characters (allow / for folder separators)
+	if (containsUnsafeCharacters(path)) return false;
+
+	// Check for consecutive slashes
+	if (path.includes('//')) return false;
+
+	// Check for relative path markers
+	if (path.includes('..') || path === '.' || path.includes('/.')) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Validates that a file path is valid and ends with '.md'.
+ * @param path - The file path to validate
+ * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
+ */
+export function isValidFileName(path: string): boolean {
+	return isValidPath(path) && path.endsWith('.md');
+}
+
+/**
+ * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
+ * @param path - The folder path to normalize
+ * @returns The normalized path without leading/trailing slashes
+ */
+export function normalizeFolderPath(path: string): string {
+	// Trim whitespace
+	path = path.trim();
+
+	// Strip leading and trailing slashes
+	path = path.replace(/^\/+|\/+$/g, '');
+
+	return path;
 }

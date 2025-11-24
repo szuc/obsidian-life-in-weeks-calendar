@@ -1,7 +1,15 @@
 import LifeCalendarPlugin from 'main';
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
-import { dateToYYYYMMDD, isValidDate } from 'src/lib/utils';
+import {
+	dateToYYYYMMDD,
+	isValidDate,
+	isValidLifespan,
+	isValidFileNamePattern,
+	isValidPath,
+	isValidFileName,
+	normalizeFolderPath,
+} from 'src/lib/utils';
 import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 
 /**
@@ -10,114 +18,68 @@ import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 export class LifeCalendarSettingTab extends PluginSettingTab {
 	plugin: LifeCalendarPlugin;
 
+	/** Cache for plugin state to avoid repeated lookups during settings render */
+	private _cachedWeeklyPeriodicNotesExists: boolean | undefined;
+	private _cachedJournalPluginSettings?: ReturnType<
+		typeof LifeCalendarPlugin.prototype.journalPluginWeeklySettings
+	>;
+	private _cachedSyncWithWeeklyNotes: boolean | undefined;
+	private _cachedSyncWithJournalNotes: boolean | undefined;
+	private _cachedIsOverridden: boolean | undefined;
+
 	constructor(app: App, plugin: LifeCalendarPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	/**
-	 * Validates that a lifespan value is a valid integer within the allowed range.
-	 * @param value - The lifespan value to validate
-	 * @returns `true` if the value is a valid integer between MIN_LIFESPAN and MAX_LIFESPAN, `false` otherwise
+	 * Computes and caches plugin state values to avoid repeated lookups during settings render.
+	 * Should be called once at the start of display() and cleared after rendering completes.
 	 */
-	private isValidLifespan(value: string): boolean {
-		const lifespan = Number(value);
-		return (
-			!isNaN(lifespan) &&
-			Number.isInteger(lifespan) &&
-			lifespan >= CALENDAR_VALIDATION.MIN_LIFESPAN &&
-			lifespan <= CALENDAR_VALIDATION.MAX_LIFESPAN
-		);
+	private computeSettingsCache(): void {
+		// Cache plugin existence checks (these involve plugin lookups)
+		this._cachedWeeklyPeriodicNotesExists =
+			this.plugin.weeklyPeriodicNotesPluginExists();
+		this._cachedJournalPluginSettings =
+			this.plugin.journalPluginWeeklySettings();
+
+		// Cache computed sync states
+		this._cachedSyncWithWeeklyNotes =
+			this._cachedWeeklyPeriodicNotesExists &&
+			this.plugin.settings.syncWithWeeklyNotes;
+		this._cachedSyncWithJournalNotes =
+			!!this._cachedJournalPluginSettings &&
+			this.plugin.settings.syncWithJournalNotes;
+
+		// Cache the override state
+		this._cachedIsOverridden =
+			this._cachedSyncWithWeeklyNotes || this._cachedSyncWithJournalNotes;
 	}
 
 	/**
-	 * Tests for filesystem characters that are unsafe across Windows, macOS, and Linux.
-	 * @param value - The string to test for unsafe characters
-	 * @returns `true` if the value contains unsafe filesystem characters, `false` otherwise
+	 * Clears the cached settings values.
+	 * Should be called after display() completes to free memory.
 	 */
-	private containsUnsafeCharacters(value: string): boolean {
-		const unsafeCharacters = /[<>:"|?*\\]/;
-		return unsafeCharacters.test(value);
-	}
-
-	/**
-	 * Validates that a file naming pattern contains only safe characters and has balanced brackets.
-	 * @param pattern - The Moment.js date format pattern to validate
-	 * @returns `true` if the pattern is valid (safe characters and balanced brackets), `false` otherwise
-	 */
-	private isValidFileNamePattern(pattern: string): boolean {
-		// Empty pattern is valid (falls back to default)
-		if (pattern === '') return true;
-
-		// Check for filesystem-unsafe characters
-		if (this.containsUnsafeCharacters(pattern)) return false;
-
-		// Check for balanced square brackets
-		let bracketDepth = 0;
-		for (const char of pattern) {
-			if (char === '[') bracketDepth++;
-			if (char === ']') bracketDepth--;
-			if (bracketDepth < 0) return false; // Closing before opening
-		}
-		if (bracketDepth !== 0) return false; // Unmatched brackets
-
-		return true;
-	}
-
-	/**
-	 * Validates that a path contains only safe characters and no relative path markers.
-	 * @param path - The path to validate
-	 * @returns `true` if the path is valid (safe characters, no relative paths), `false` otherwise
-	 */
-	private isValidPath(path: string): boolean {
-		path = path.trim();
-		// Empty path is valid (vault root)
-		if (path === '') return true;
-
-		// Check for filesystem-unsafe characters (allow / for folder separators)
-		if (this.containsUnsafeCharacters(path)) return false;
-
-		// Check for consecutive slashes
-		if (path.includes('//')) return false;
-
-		// Check for relative path markers
-		if (path.includes('..') || path === '.' || path.includes('/.')) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Validates that a file path is valid and ends with '.md'.
-	 * @param path - The file path to validate
-	 * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
-	 */
-	private isValidFileName(path: string): boolean {
-		return this.isValidPath(path) && path.endsWith('.md');
-	}
-
-	/**
-	 * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
-	 * @param path - The folder path to normalize
-	 * @returns The normalized path without leading/trailing slashes
-	 */
-	private normalizeFolderPath(path: string): string {
-		// Trim whitespace
-		path = path.trim();
-
-		// Strip leading and trailing slashes
-		path = path.replace(/^\/+|\/+$/g, '');
-
-		return path;
+	private clearSettingsCache(): void {
+		this._cachedWeeklyPeriodicNotesExists = undefined;
+		this._cachedJournalPluginSettings = undefined;
+		this._cachedSyncWithWeeklyNotes = undefined;
+		this._cachedSyncWithJournalNotes = undefined;
+		this._cachedIsOverridden = undefined;
 	}
 
 	/**
 	 * Checks if weekly note settings are overridden by either the Periodic Notes or Journals plugin.
 	 * Uses helper methods to determine if either plugin integration is currently active.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
 	 * @returns `true` if settings are being synced from either plugin, `false` otherwise.
 	 */
 	private isOverriddenByOtherPlugin(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedIsOverridden !== undefined) {
+			return this._cachedIsOverridden;
+		}
+		// Fallback to computed value (e.g., if called outside display())
 		return (
 			this.syncWithWeeklyNotesIsEnabled() ||
 			this.syncWithJournalNotesIsEnabled()
@@ -126,9 +88,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/**
 	 * Checks if syncing with the Periodic Notes plugin is enabled.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
 	 * @returns `true` if the Periodic Notes plugin exists and sync is enabled, `false` otherwise.
 	 */
 	private syncWithWeeklyNotesIsEnabled(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedSyncWithWeeklyNotes !== undefined) {
+			return this._cachedSyncWithWeeklyNotes;
+		}
+		// Fallback to computed value (e.g., if called outside display())
 		return (
 			this.plugin.weeklyPeriodicNotesPluginExists() &&
 			this.plugin.settings.syncWithWeeklyNotes
@@ -137,9 +105,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/**
 	 * Checks if syncing with the Journals plugin is enabled.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
 	 * @returns `true` if the Journals plugin exists and sync is enabled, `false` otherwise.
 	 */
 	private syncWithJournalNotesIsEnabled(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedSyncWithJournalNotes !== undefined) {
+			return this._cachedSyncWithJournalNotes;
+		}
+		// Fallback to computed value (e.g., if called outside display())
 		return (
 			!!this.plugin.journalPluginWeeklySettings() &&
 			this.plugin.settings.syncWithJournalNotes
@@ -231,7 +205,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				text.setValue(
 					this.plugin.settings.projectedLifespan.toString(),
 				).onChange(async (value) => {
-					const invalidLifespan = !this.isValidLifespan(value);
+					const invalidLifespan = !isValidLifespan(
+						value,
+						CALENDAR_VALIDATION.MIN_LIFESPAN,
+						CALENDAR_VALIDATION.MAX_LIFESPAN,
+					);
 					if (invalidLifespan) {
 						const errorEl = this.createErrorMessageElement(
 							'setting-lifespan-error',
@@ -322,7 +300,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setName(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Disabled: Use journals plugin settings'
-					: !!this.plugin.journalPluginWeeklySettings()
+					: !!this._cachedJournalPluginSettings
 						? 'Use journals plugin settings'
 						: 'Journals weekly notes not enabled ⚠️',
 			)
@@ -342,7 +320,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					})
 					.setDisabled(
 						this.syncWithWeeklyNotesIsEnabled() ||
-							!this.plugin.journalPluginWeeklySettings(),
+							!this._cachedJournalPluginSettings,
 					),
 			);
 
@@ -353,7 +331,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setName(
 				this.syncWithJournalNotesIsEnabled()
 					? 'Disabled: Use periodic notes plugin settings'
-					: this.plugin.weeklyPeriodicNotesPluginExists()
+					: this._cachedWeeklyPeriodicNotesExists
 						? 'Use periodic notes plugin settings'
 						: 'Periodic weekly notes not enabled ⚠️',
 			)
@@ -373,7 +351,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					})
 					.setDisabled(
 						this.syncWithJournalNotesIsEnabled() ||
-							!this.plugin.weeklyPeriodicNotesPluginExists(),
+							!this._cachedWeeklyPeriodicNotesExists,
 					),
 			);
 	}
@@ -406,8 +384,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
 					this.plugin.settings.fileLocation = value;
-					const normalized = this.normalizeFolderPath(value);
-					const invalidPath = !this.isValidPath(normalized);
+					const normalized = normalizeFolderPath(value);
+					const invalidPath = !isValidPath(normalized);
 
 					if (invalidPath) {
 						const errorEl = this.createErrorMessageElement(
@@ -464,7 +442,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				text.inputEl.addEventListener('blur', async () => {
 					const value = text.inputEl.value;
-					const invalidPattern = !this.isValidFileNamePattern(
+					const invalidPattern = !isValidFileNamePattern(
 						value.trim(),
 					);
 
@@ -544,7 +522,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const invalidPattern = !this.isValidFileName(value.trim());
+					const invalidPattern = !isValidFileName(value.trim());
 
 					if (invalidPattern) {
 						const errorEl = this.createErrorMessageElement(
@@ -603,9 +581,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	/**
 	 * Renders the settings UI with all configuration options.
 	 * Clears the container and builds all settings sections in order.
+	 * Caches plugin state at the start to avoid repeated lookups during render.
 	 */
 	display(): void {
 		const { containerEl } = this;
+
+		// Compute cache once before rendering to avoid repeated plugin lookups
+		this.computeSettingsCache();
 
 		containerEl.empty();
 
@@ -616,5 +598,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		this.addPluginIntegrationSettings(containerEl);
 		this.addWeeklyNoteSettings(containerEl);
 		this.addConfirmationSetting(containerEl);
+
+		// Clear cache after rendering to free memory
+		this.clearSettingsCache();
 	}
 }

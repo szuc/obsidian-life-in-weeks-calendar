@@ -10,7 +10,7 @@ import {
 	DEFAULT_SETTINGS,
 	VIEW_TYPE_LIFE_CALENDAR,
 } from 'src/lib/calendar-constants';
-import type { LifeCalendarSettings } from 'src/lib/types';
+import type { IntegrationSettings, LifeCalendarSettings } from 'src/lib/types';
 
 export default class LifeCalendarPlugin extends Plugin {
 	settings!: LifeCalendarSettings;
@@ -165,14 +165,7 @@ export default class LifeCalendarPlugin extends Plugin {
 	 * - `templatePath`: The template file path for new weekly notes.
 	 * Returns `undefined` if the 'Journals' plugin is not found or if no weekly settings are configured.
 	 */
-	journalPluginWeeklySettings():
-		| {
-				weekStartDay: string;
-				fileNamePattern: string;
-				folderPath: string;
-				templatePath: string;
-		  }
-		| undefined {
+	journalPluginWeeklySettings(): IntegrationSettings | undefined {
 		// @ts-ignore
 		const journalsPlugin = this.app.plugins.getPlugin('journals');
 
@@ -219,11 +212,7 @@ export default class LifeCalendarPlugin extends Plugin {
    not enabled.
    */
 	periodicNotesPluginWeeklySettings():
-		| {
-				fileNamePattern: string;
-				folderPath: string;
-				templatePath: string;
-		  }
+		| Omit<IntegrationSettings, 'weekStartDay'>
 		| undefined {
 		const periodicNotesSettings =
 			// @ts-ignore

@@ -6,7 +6,7 @@
 	import { openWeeklyNoteFunction } from '../lib/openWeeklyNote';
 	import { App, TFile } from 'obsidian';
 	import {
-		dateToDailyNoteRecordKeyFormat,
+		dateToWeeklyNoteRecordKeyFormat,
 		setWeekStatus,
 	} from '../lib/utils';
 	import { CALENDAR_LAYOUT } from 'src/lib/calendar-constants';
@@ -38,7 +38,7 @@
 		String(index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE).padStart(2, '0');
 
 	const showDotFn = (weekStartDate: Date) =>
-		!!allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(weekStartDate)];
+		!!allWeeklyNotes?.[dateToWeeklyNoteRecordKeyFormat(weekStartDate)];
 
 	const onClickFn = (weekStartDate: Date) => {
 		openWeeklyNoteFunction(

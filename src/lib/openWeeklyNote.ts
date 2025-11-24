@@ -5,7 +5,7 @@ import {
 	type WorkspaceLeaf,
 	moment,
 } from 'obsidian';
-import { dateToDailyNoteRecordKeyFormat } from './utils';
+import { dateToWeeklyNoteRecordKeyFormat } from './utils';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /**
@@ -102,7 +102,7 @@ export const openWeeklyNoteFunction = async (
 	}
 
 	let weeklyNote: TFile | undefined =
-		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
+		allWeeklyNotes?.[dateToWeeklyNoteRecordKeyFormat(date)];
 
 	let templateContent = await getTemplateContent(app, templatePath);
 

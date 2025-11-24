@@ -157,7 +157,9 @@ export class LifeCalendarView extends ItemView {
 
 	/**
 	 * Determines the week start day based on plugin integrations or user settings.
-	 * Priority order: Periodic Notes > Journals > Plugin settings > Default
+	 * Priority order:
+	 * If Periodic Notes enabled: Calendar settings > Default
+	 * Otherwise: Journals > Plugin settings > Default
 	 * @returns The week start day as a string (e.g., 'monday', 'sunday')
 	 */
 	private getWeekStartsOnFromSettings() {

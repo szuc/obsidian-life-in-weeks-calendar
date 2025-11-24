@@ -38,3 +38,10 @@ export interface LifeCalendarSettings {
 	/** Whether to sync weekly note settings with the Journals plugin. */
 	syncWithJournalNotes: boolean;
 }
+
+export interface IntegrationSettings {
+	folderPath: string;
+	fileNamePattern: string;
+	templatePath: string;
+	weekStartDay: string;
+}
