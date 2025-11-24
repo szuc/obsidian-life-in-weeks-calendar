@@ -5,11 +5,6 @@ import {
 	type WorkspaceLeaf,
 	moment,
 } from 'obsidian';
-import {
-	createWeeklyNote,
-	getWeeklyNoteSettings,
-	appHasDailyNotesPluginLoaded,
-} from 'obsidian-daily-notes-interface';
 import { dateToDailyNoteRecordKeyFormat } from './utils';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
@@ -126,63 +121,6 @@ export const openWeeklyNoteFunction = async (
 			);
 		} else {
 			const newNote = await app.vault.create(filePath, templateContent);
-			await openFile(app, newNote);
-		}
-	} else {
-		await openFile(app, weeklyNote);
-	}
-};
-
-/**
- * Opens a weekly note for the given date using periodic notes plugin settings.
- * If the note doesn't exist, creates it using the periodic notes plugin (optionally with user confirmation).
- * @param app - Obsidian application instance
- * @param date - The date within the week to open
- * @param allWeeklyNotes - Record of existing weekly notes
- * @param modalFn - Optional function to show confirmation modal before creating a new note
- */
-export const openPeriodicNoteFunction = async (
-	app: App,
-	date: Date,
-	allWeeklyNotes: Record<string, TFile> | undefined,
-	modalFn?: (message: string, cb: () => void) => void,
-): Promise<void> => {
-	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-		throw new Error(
-			'openPeriodicNoteFunction: date must be a valid Date object',
-		);
-	}
-
-	if (!appHasDailyNotesPluginLoaded()) return;
-
-	const momentObject = moment(date);
-	const { format } = getWeeklyNoteSettings();
-	const filename = momentObject.format(
-		format || DEFAULT_SETTINGS.fileNamePattern,
-	);
-
-	let weeklyNote: TFile | undefined =
-		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
-
-	if (!weeklyNote) {
-		if (modalFn) {
-			modalFn(
-				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
-				() => {
-					createWeeklyNote(momentObject)
-						.then(async (newNote) => {
-							await openFile(app, newNote);
-						})
-						.catch((error) => {
-							console.error(
-								'Error creating or opening weekly note:',
-								error,
-							);
-						});
-				},
-			);
-		} else {
-			const newNote = await createWeeklyNote(momentObject);
 			await openFile(app, newNote);
 		}
 	} else {

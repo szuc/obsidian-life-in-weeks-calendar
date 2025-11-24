@@ -59,7 +59,7 @@ This view corrects an over simplification in the basic view. Years actually have
 
 ## Credits
 
-Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [obsidian-daily-notes-interface](https://github.com/liamcain/obsidian-daily-notes-interface).
+Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [Journal](https://github.com/srg-kostyrko/obsidian-journal).
 
 ## Thank You 🙏
 

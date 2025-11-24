@@ -143,29 +143,6 @@ export function isValidDate(d: Date): boolean {
 }
 
 /**
- * Corrects a bug where week start date might not match week start day depending on
- * the order of when the calendar sidebar is opened.
- * @param allWeeklyNotes - Weekly notes record from obsidian-daily-notes-interface
- * @param weekStartsOn - modified week start day from Calendar settings
- * @returns Weekly notes record with keys corrected to the week start day
- */
-export function fixWeekRecordStartDates(
-	allWeeklyNotes: Record<string, TFile> | undefined,
-	weekStartsOn: string | undefined,
-): Record<string, TFile> | undefined {
-	if (allWeeklyNotes === undefined) return;
-	if (weekStartsOn === undefined) return allWeeklyNotes;
-
-	const newAllWeeklyNotes: Record<string, TFile> = { ...allWeeklyNotes };
-	// The keys on the objects might reflect the wrong day start
-	for (const key in allWeeklyNotes) {
-		const correctedKey = weeklyNoteKeyCorrection(key, weekStartsOn);
-		newAllWeeklyNotes[correctedKey] = allWeeklyNotes[key];
-	}
-	return newAllWeeklyNotes;
-}
-
-/**
  * Corrects the date key string for allWeeklyNotes records.
  * @param key - Custom date string used in allWeeklyNotes record
  * @param weekStartsOn - Day of the week that weeks start on

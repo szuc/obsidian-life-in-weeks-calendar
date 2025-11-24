@@ -205,6 +205,45 @@ export default class LifeCalendarPlugin extends Plugin {
 		};
 	}
 
+	/**
+   * Retrieves weekly note settings from the 'Periodic Notes' plugin if it's installed and 
+  configured.
+   * This is used for integration to help locate weekly notes.
+   *
+   * @returns An object with weekly settings if found, otherwise undefined.
+   * The returned object contains:
+   * - `fileNamePattern`: The date format pattern for weekly note file names.
+   * - `folderPath`: The folder where weekly notes are stored.
+   * - `templatePath`: The template file path for new weekly notes.
+   * Returns `undefined` if the 'Periodic Notes' plugin is not found or if weekly notes are
+   not enabled.
+   */
+	periodicNotesPluginWeeklySettings():
+		| {
+				fileNamePattern: string;
+				folderPath: string;
+				templatePath: string;
+		  }
+		| undefined {
+		const periodicNotesSettings =
+			// @ts-ignore
+			this.app.plugins.getPlugin('periodic-notes');
+
+		if (!periodicNotesSettings) {
+			return undefined;
+		}
+
+		const weeklySettings = periodicNotesSettings.settings?.weekly;
+		if (!weeklySettings?.enabled) {
+			return undefined;
+		}
+		return {
+			fileNamePattern: weeklySettings.format || '',
+			folderPath: weeklySettings.folder || '',
+			templatePath: weeklySettings.template || '',
+		};
+	}
+
 	async activateView(): Promise<void> {
 		const { workspace } = this.app;
 

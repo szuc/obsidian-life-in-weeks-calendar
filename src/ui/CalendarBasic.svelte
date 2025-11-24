@@ -3,10 +3,7 @@
 	import WeekBlock from './WeekBlock.svelte';
 	import CalendarError from './CalendarError.svelte';
 	import { App, TFile } from 'obsidian';
-	import {
-		openPeriodicNoteFunction,
-		openWeeklyNoteFunction,
-	} from 'src/lib/openWeeklyNote';
+	import { openWeeklyNoteFunction } from 'src/lib/openWeeklyNote';
 	import {
 		dateToDailyNoteRecordKeyFormat,
 		setWeekStatus,
@@ -17,7 +14,6 @@
 		lifespan,
 		allWeeklyNotes,
 		modalFn,
-		usePeriodicNotes,
 		weekStartsOn,
 		folderPath,
 		fileNamePattern,
@@ -28,7 +24,6 @@
 		lifespan: number;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
-		usePeriodicNotes: boolean;
 		weekStartsOn: string;
 		folderPath: string;
 		fileNamePattern: string;
@@ -40,24 +35,15 @@
 		!!allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(weekStartDate)];
 
 	const onClickFn = (weekStartDate: Date) => {
-		if (usePeriodicNotes) {
-			openPeriodicNoteFunction(
-				app,
-				weekStartDate,
-				allWeeklyNotes,
-				modalFn,
-			);
-		} else {
-			openWeeklyNoteFunction(
-				app,
-				weekStartDate,
-				allWeeklyNotes,
-				folderPath,
-				fileNamePattern,
-				templatePath,
-				modalFn,
-			);
-		}
+		openWeeklyNoteFunction(
+			app,
+			weekStartDate,
+			allWeeklyNotes,
+			folderPath,
+			fileNamePattern,
+			templatePath,
+			modalFn,
+		);
 	};
 </script>
 

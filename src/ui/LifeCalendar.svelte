@@ -10,7 +10,6 @@
 		projectedLifespan,
 		calendarMode,
 		modalFn,
-		usePeriodicNotes,
 		weekStartsOn,
 		folderPath,
 		fileNamePattern,
@@ -22,7 +21,6 @@
 		projectedLifespan: string;
 		calendarMode: string;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
-		usePeriodicNotes: boolean;
 		weekStartsOn: string;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		folderPath: string;
@@ -57,7 +55,6 @@
 			{lifespan}
 			{allWeeklyNotes}
 			{modalFn}
-			{usePeriodicNotes}
 			{weekStartsOn}
 			{folderPath}
 			{fileNamePattern}
@@ -70,7 +67,6 @@
 			{lifespan}
 			{allWeeklyNotes}
 			{modalFn}
-			{usePeriodicNotes}
 			{weekStartsOn}
 			{folderPath}
 			{fileNamePattern}
