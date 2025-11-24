@@ -89,6 +89,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
+	 * Validates that a file path is valid and ends with '.md'.
+	 * @param path - The file path to validate
+	 * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
+	 */
+	private isValidFileName(path: string): boolean {
+		return this.isValidPath(path) && path.endsWith('.md');
+	}
+
+	/**
 	 * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
 	 * @param path - The folder path to normalize
 	 * @returns The normalized path without leading/trailing slashes
@@ -535,7 +544,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const invalidPattern = !this.isValidPath(value.trim());
+					const invalidPattern = !this.isValidFileName(value.trim());
 
 					if (invalidPattern) {
 						const errorEl = this.createErrorMessageElement(

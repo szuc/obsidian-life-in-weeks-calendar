@@ -96,6 +96,11 @@ export const openWeeklyNoteFunction = async (
 		? `${folderPath}/${filename}.md`
 		: `${filename}.md`;
 
+	if (folderPath) {
+		// Ensure the folder exists. Creates it. Ignore errors if it already exists.
+		await app.vault.createFolder(folderPath).catch(() => {});
+	}
+
 	let weeklyNote: TFile | undefined =
 		allWeeklyNotes?.[dateToDailyNoteRecordKeyFormat(date)];
 
@@ -111,7 +116,16 @@ export const openWeeklyNoteFunction = async (
 						.then(async (newNote) => {
 							await openFile(app, newNote);
 						})
-						.catch((error) => {
+						.catch(async (error) => {
+							if (error.message.includes('already exists')) {
+								// Try to open the existing file
+								const existingFile =
+									app.vault.getAbstractFileByPath(filePath);
+								if (existingFile instanceof TFile) {
+									await openFile(app, existingFile);
+									return;
+								}
+							}
 							console.error(
 								'Error creating or opening weekly note:',
 								error,

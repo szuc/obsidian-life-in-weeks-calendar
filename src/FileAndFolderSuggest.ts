@@ -8,7 +8,7 @@ import { App, AbstractInputSuggest, TFolder, TFile } from 'obsidian';
 abstract class FilesAndFoldersSuggest extends AbstractInputSuggest<string> {
 	protected filesAndFolders: string[];
 	protected inputEl: HTMLInputElement;
-	private static readonly MAX_SUGGESTIONS = 20;
+	private static readonly MAX_SUGGESTIONS = 20; // Arbitrary limit to avoid overwhelming the user
 
 	// The filesAndFolders list is populated in the constructor and used for suggestions
 	// It isn't refreshed dynamically, so changes in the vault after instantiation won't be reflected
