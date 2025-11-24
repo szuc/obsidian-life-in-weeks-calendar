@@ -123,23 +123,25 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	/**
 	 * Creates an error message element for the settings UI.
 	 * Removes any existing error with the same ID before creating a new one.
+	 * Uses Obsidian's createDiv method for proper cleanup.
+	 * @param parent - Parent element to append the error to
 	 * @param id - Unique identifier for the error element
 	 * @param message - Error message text to display
-	 * @returns The created error message HTMLElement
 	 */
 	private createErrorMessageElement(
+		parent: HTMLElement,
 		id: string,
 		message: string,
-	): HTMLElement {
+	): void {
 		const existingError = document.getElementById(id);
 		if (existingError) {
 			existingError.remove();
 		}
-		const errorEl = document.createElement('div');
-		errorEl.textContent = message;
-		errorEl.id = id;
-		errorEl.className = 'lwc__error-message--setting';
-		return errorEl;
+		parent.createDiv({
+			cls: 'lwc__error-message--setting',
+			text: message,
+			attr: { id },
+		});
 	}
 
 	/**
@@ -158,11 +160,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				text.setValue(this.plugin.settings.birthdate).onChange(
 					async (value) => {
 						if (!value || !isValidDate(new Date(value))) {
-							const errorEl = this.createErrorMessageElement(
-								'setting-birthdate-error',
-								'Please enter a valid date.',
-							);
-							text.inputEl.parentElement?.appendChild(errorEl);
+							if (text.inputEl.parentElement) {
+								this.createErrorMessageElement(
+									text.inputEl.parentElement,
+									'setting-birthdate-error',
+									'Please enter a valid date.',
+								);
+							}
 							return;
 						} else {
 							const existingError = document.getElementById(
@@ -211,11 +215,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						CALENDAR_VALIDATION.MAX_LIFESPAN,
 					);
 					if (invalidLifespan) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-lifespan-error',
-							'Please enter a valid number.',
-						);
-						text.inputEl.parentElement?.appendChild(errorEl);
+						if (text.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								text.inputEl.parentElement,
+								'setting-lifespan-error',
+								'Please enter a valid number.',
+							);
+						}
 						return;
 					} else {
 						const existingError = document.getElementById(
@@ -388,11 +394,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					const invalidPath = !isValidPath(normalized);
 
 					if (invalidPath) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-filepath-error',
-							'Please enter a valid folder path.',
-						);
-						search.inputEl.parentElement?.appendChild(errorEl);
+						if (search.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								search.inputEl.parentElement,
+								'setting-filepath-error',
+								'Please enter a valid folder path.',
+							);
+						}
 						return;
 					} else {
 						const existingError = document.getElementById(
@@ -447,11 +455,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					);
 
 					if (invalidPattern) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-filename-error',
-							'Please enter a valid file naming pattern.',
-						);
-						text.inputEl.parentElement?.appendChild(errorEl);
+						if (text.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								text.inputEl.parentElement,
+								'setting-filename-error',
+								'Please enter a valid file naming pattern.',
+							);
+						}
 						return;
 					} else {
 						const existingError = document.getElementById(
@@ -522,14 +532,16 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const invalidPattern = !isValidFileName(value.trim());
+					const invalidPattern = !isValidFileName(value);
 
 					if (invalidPattern) {
-						const errorEl = this.createErrorMessageElement(
-							'setting-templatePath-error',
-							'Please enter a valid template file.',
-						);
-						search.inputEl.parentElement?.appendChild(errorEl);
+						if (search.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								search.inputEl.parentElement,
+								'setting-templatePath-error',
+								'Please enter a valid template file.',
+							);
+						}
 						return;
 					} else {
 						const existingError = document.getElementById(
@@ -538,7 +550,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						if (existingError) {
 							existingError.remove();
 						}
-						this.plugin.settings.templatePath = value;
+						this.plugin.settings.templatePath = value.trim();
 						try {
 							await this.plugin.saveSettings();
 							this.plugin.refreshLifeCalendarView();

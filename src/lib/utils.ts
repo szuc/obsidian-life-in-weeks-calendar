@@ -1,7 +1,7 @@
 import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
-import { moment } from 'obsidian';
+import { moment, normalizePath } from 'obsidian';
 
 /** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();
@@ -316,15 +316,21 @@ export function isValidPath(path: string): boolean {
 	// Check for filesystem-unsafe characters (allow / for folder separators)
 	if (containsUnsafeCharacters(path)) return false;
 
-	// Check for consecutive slashes
-	if (path.includes('//')) return false;
+	try {
+		const normalized = normalizePath(path);
+		if (normalized === '') return false;
 
-	// Check for relative path markers
-	if (path.includes('..') || path === '.' || path.includes('/.')) {
+		// Check for problematic path segments
+		const segments = normalized.split('/');
+		for (const segment of segments) {
+			if (segment.endsWith('.')) return false;
+			if (segment === '.' || segment === '..') return false;
+		}
+
+		return true;
+	} catch {
 		return false;
 	}
-
-	return true;
 }
 
 /**
@@ -333,6 +339,7 @@ export function isValidPath(path: string): boolean {
  * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
  */
 export function isValidFileName(path: string): boolean {
+	if (path.trim() === '') return true;
 	return isValidPath(path) && path.endsWith('.md');
 }
 
@@ -342,11 +349,7 @@ export function isValidFileName(path: string): boolean {
  * @returns The normalized path without leading/trailing slashes
  */
 export function normalizeFolderPath(path: string): string {
-	// Trim whitespace
 	path = path.trim();
-
-	// Strip leading and trailing slashes
-	path = path.replace(/^\/+|\/+$/g, '');
-
-	return path;
+	if (path === '') return '';
+	return normalizePath(path);
 }
