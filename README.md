@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plugin displays your entire life in a grid of weeks. It color-codes past, present, and future weeks and, more importantly, marks the weeks when you have created a weekly Obsidian note.
+This plugin displays your entire life in a grid of weeks. It color-codes past, present, and future weeks and, more importantly, marks the weeks when you have created a weekly Obsidian note. It integrates with either the Periodic Notes plugin or the Journals plugin, or as a standalone plugin.
 
 ## The Life in Weeks Concept
 
@@ -24,9 +24,6 @@ Choose how you'd like the calendar displayed, either "Standard" or "Decades" (mo
 **View Location:**  
 Sets which panel a new calendar will be opened in when you use the "Open Life in Weeks Calendar" ribbon button or command pallet option.
 
-**Periodic Notes Integration:**  
-Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
-
 **Weekly note folder location**
 Set the folder where your weekly notes will be stored. Select from existing folders.
 
@@ -42,6 +39,12 @@ Set the first day of the week. Defaults to Monday.
 
 **Weekly note template**
 Choose a file to use as a template for your new weekly notes. Newly created notes will be prefilled with content from this file.
+
+**Periodic Notes Integration:**  
+Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
+
+**Journals Plugin Integration:**  
+Optionally, this plugin can integrate with the Journals plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Journals' settings.
 
 ## Calendar Modes
 
