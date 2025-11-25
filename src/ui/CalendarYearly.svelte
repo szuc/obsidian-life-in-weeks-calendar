@@ -6,7 +6,7 @@
 	import { openWeeklyNoteFunction } from '../lib/openWeeklyNote';
 	import { App, TFile } from 'obsidian';
 	import {
-		dateToDailyNoteFormatRecordKey,
+		dateToWeeklyNoteRecordKeyFormat,
 		setWeekStatus,
 	} from '../lib/utils';
 	import { CALENDAR_LAYOUT } from 'src/lib/calendar-constants';
@@ -17,16 +17,20 @@
 		lifespan,
 		allWeeklyNotes,
 		modalFn,
-		syncWithWeeklyNotes,
 		weekStartsOn,
+		folderPath,
+		fileNamePattern,
+		templatePath,
 		app,
 	}: {
 		birthDate: Date;
 		lifespan: number;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
-		syncWithWeeklyNotes: boolean;
-		weekStartsOn: string | undefined;
+		weekStartsOn: string;
+		folderPath: string;
+		fileNamePattern: string;
+		templatePath: string;
 		app: App;
 	} = $props();
 
@@ -34,19 +38,19 @@
 		String(index * CALENDAR_LAYOUT.YEAR_GROUP_SIZE).padStart(2, '0');
 
 	const showDotFn = (weekStartDate: Date) =>
-		syncWithWeeklyNotes &&
-		!!allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(weekStartDate)];
+		!!allWeeklyNotes?.[dateToWeeklyNoteRecordKeyFormat(weekStartDate)];
 
-	const onClickFn = syncWithWeeklyNotes
-		? (weekStartDate: Date) => {
-				openWeeklyNoteFunction(
-					app,
-					weekStartDate,
-					allWeeklyNotes,
-					modalFn,
-				);
-			}
-		: undefined;
+	const onClickFn = (weekStartDate: Date) => {
+		openWeeklyNoteFunction(
+			app,
+			weekStartDate,
+			allWeeklyNotes,
+			folderPath,
+			fileNamePattern,
+			templatePath,
+			modalFn,
+		);
+	};
 </script>
 
 <CalendarBase

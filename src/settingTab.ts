@@ -1,58 +1,155 @@
 import LifeCalendarPlugin from 'main';
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
-import { dateToYYYYMMDD, isValidDate } from 'src/lib/utils';
+import {
+	dateToYYYYMMDD,
+	isValidDate,
+	isValidLifespan,
+	isValidFileNamePattern,
+	isValidPath,
+	isValidFileName,
+	normalizeFolderPath,
+} from 'src/lib/utils';
+import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 
-export interface LifeCalendarSettings {
-	birthdate: string;
-	projectedLifespan: string;
-	calendarMode: string;
-	viewLocation: string;
-	confirmBeforeCreatingWeeklyNote: boolean;
-	syncWithWeeklyNotes: boolean;
-}
-
-export const DEFAULT_SETTINGS: LifeCalendarSettings = {
-	birthdate: '2000-01-01',
-	projectedLifespan: '80',
-	calendarMode: 'basic',
-	viewLocation: 'main',
-	confirmBeforeCreatingWeeklyNote: true,
-	syncWithWeeklyNotes: true,
-};
-
-const createErrorMessageElement = (
-	id: string,
-	message: string,
-): HTMLElement => {
-	const existingError = document.getElementById(id);
-	if (existingError) {
-		existingError.remove();
-	}
-	const errorEl = document.createElement('div');
-	errorEl.textContent = message;
-	errorEl.id = id;
-	errorEl.className = 'lwc__error-message';
-	return errorEl;
-};
-
+/**
+ * Settings tab for the Life Calendar plugin.
+ */
 export class LifeCalendarSettingTab extends PluginSettingTab {
 	plugin: LifeCalendarPlugin;
+
+	/** Cache for plugin state to avoid repeated lookups during settings render */
+	private _cachedWeeklyPeriodicNotesExists: boolean | undefined;
+	private _cachedJournalPluginSettings?: ReturnType<
+		typeof LifeCalendarPlugin.prototype.journalPluginWeeklySettings
+	>;
+	private _cachedSyncWithWeeklyNotes: boolean | undefined;
+	private _cachedSyncWithJournalNotes: boolean | undefined;
+	private _cachedIsOverridden: boolean | undefined;
 
 	constructor(app: App, plugin: LifeCalendarPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
-	display(): void {
-		const { containerEl } = this;
+	/**
+	 * Computes and caches plugin state values to avoid repeated lookups during settings render.
+	 * Should be called once at the start of display() and cleared after rendering completes.
+	 */
+	private computeSettingsCache(): void {
+		// Cache plugin existence checks (these involve plugin lookups)
+		this._cachedWeeklyPeriodicNotesExists =
+			this.plugin.weeklyPeriodicNotesPluginExists();
+		this._cachedJournalPluginSettings =
+			this.plugin.journalPluginWeeklySettings();
 
-		containerEl.empty();
+		// Cache computed sync states
+		this._cachedSyncWithWeeklyNotes =
+			this._cachedWeeklyPeriodicNotesExists &&
+			this.plugin.settings.syncWithWeeklyNotes;
+		this._cachedSyncWithJournalNotes =
+			!!this._cachedJournalPluginSettings &&
+			this.plugin.settings.syncWithJournalNotes;
 
-		containerEl.createEl('p', {
-			text: 'Note: settings related to weekly note integrations might require closing the weekly calendar and reopening it for changes to take effect.',
+		// Cache the override state
+		this._cachedIsOverridden =
+			this._cachedSyncWithWeeklyNotes || this._cachedSyncWithJournalNotes;
+	}
+
+	/**
+	 * Clears the cached settings values.
+	 * Should be called after display() completes to free memory.
+	 */
+	private clearSettingsCache(): void {
+		this._cachedWeeklyPeriodicNotesExists = undefined;
+		this._cachedJournalPluginSettings = undefined;
+		this._cachedSyncWithWeeklyNotes = undefined;
+		this._cachedSyncWithJournalNotes = undefined;
+		this._cachedIsOverridden = undefined;
+	}
+
+	/**
+	 * Checks if weekly note settings are overridden by either the Periodic Notes or Journals plugin.
+	 * Uses helper methods to determine if either plugin integration is currently active.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
+	 * @returns `true` if settings are being synced from either plugin, `false` otherwise.
+	 */
+	private isOverriddenByOtherPlugin(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedIsOverridden !== undefined) {
+			return this._cachedIsOverridden;
+		}
+		// Fallback to computed value (e.g., if called outside display())
+		return (
+			this.syncWithWeeklyNotesIsEnabled() ||
+			this.syncWithJournalNotesIsEnabled()
+		);
+	}
+
+	/**
+	 * Checks if syncing with the Periodic Notes plugin is enabled.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
+	 * @returns `true` if the Periodic Notes plugin exists and sync is enabled, `false` otherwise.
+	 */
+	private syncWithWeeklyNotesIsEnabled(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedSyncWithWeeklyNotes !== undefined) {
+			return this._cachedSyncWithWeeklyNotes;
+		}
+		// Fallback to computed value (e.g., if called outside display())
+		return (
+			this.plugin.weeklyPeriodicNotesPluginExists() &&
+			this.plugin.settings.syncWithWeeklyNotes
+		);
+	}
+
+	/**
+	 * Checks if syncing with the Journals plugin is enabled.
+	 * Uses cached values during settings render to avoid repeated plugin lookups.
+	 * @returns `true` if the Journals plugin exists and sync is enabled, `false` otherwise.
+	 */
+	private syncWithJournalNotesIsEnabled(): boolean {
+		// Use cached value if available (during display render)
+		if (this._cachedSyncWithJournalNotes !== undefined) {
+			return this._cachedSyncWithJournalNotes;
+		}
+		// Fallback to computed value (e.g., if called outside display())
+		return (
+			!!this.plugin.journalPluginWeeklySettings() &&
+			this.plugin.settings.syncWithJournalNotes
+		);
+	}
+
+	/**
+	 * Creates an error message element for the settings UI.
+	 * Removes any existing error with the same ID before creating a new one.
+	 * Uses Obsidian's createDiv method for proper cleanup.
+	 * @param parent - Parent element to append the error to
+	 * @param id - Unique identifier for the error element
+	 * @param message - Error message text to display
+	 */
+	private createErrorMessageElement(
+		parent: HTMLElement,
+		id: string,
+		message: string,
+	): void {
+		const existingError = document.getElementById(id);
+		if (existingError) {
+			existingError.remove();
+		}
+		parent.createDiv({
+			cls: 'lwc__error-message--setting',
+			text: message,
+			attr: { id },
 		});
+	}
 
+	/**
+	 * Adds the birthdate setting to the settings UI.
+	 * Provides a date input with validation and persists changes to plugin settings.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addBirthdateSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Birth date')
 			.setDesc('Your date of birth')
@@ -63,11 +160,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				text.setValue(this.plugin.settings.birthdate).onChange(
 					async (value) => {
 						if (!value || !isValidDate(new Date(value))) {
-							const errorEl = createErrorMessageElement(
-								'setting-birthdate-error',
-								'Please enter a valid date.',
-							);
-							text.inputEl.parentElement?.appendChild(errorEl);
+							if (text.inputEl.parentElement) {
+								this.createErrorMessageElement(
+									text.inputEl.parentElement,
+									'setting-birthdate-error',
+									'Please enter a valid date.',
+								);
+							}
 							return;
 						} else {
 							const existingError = document.getElementById(
@@ -92,10 +191,17 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					},
 				);
 			});
+	}
 
+	/**
+	 * Adds the projected lifespan setting to the settings UI.
+	 * Provides a number input with validation for values between 1 and 200 years.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addLifespanSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Projected lifespan (years)')
-			.setDesc('Your projected lifespan in years (1 to 200)')
+			.setDesc('How many years you expect to live (1 to 200)')
 			.addText((text) => {
 				text.inputEl.type = 'number';
 				text.inputEl.min = CALENDAR_VALIDATION.MIN_LIFESPAN.toString();
@@ -103,12 +209,19 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				text.setValue(
 					this.plugin.settings.projectedLifespan.toString(),
 				).onChange(async (value) => {
-					if (!value) {
-						const errorEl = createErrorMessageElement(
-							'setting-lifespan-error',
-							'Please enter a valid number.',
-						);
-						text.inputEl.parentElement?.appendChild(errorEl);
+					const invalidLifespan = !isValidLifespan(
+						value,
+						CALENDAR_VALIDATION.MIN_LIFESPAN,
+						CALENDAR_VALIDATION.MAX_LIFESPAN,
+					);
+					if (invalidLifespan) {
+						if (text.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								text.inputEl.parentElement,
+								'setting-lifespan-error',
+								'Please enter a valid number.',
+							);
+						}
 						return;
 					} else {
 						const existingError = document.getElementById(
@@ -130,7 +243,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					}
 				});
 			});
+	}
 
+	/**
+	 * Adds the calendar view mode setting to the settings UI.
+	 * Allows users to choose between 'Standard' and 'Decades' view modes.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addCalendarModeSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Calendar view mode')
 			.setDesc('Standard mode is better for sidebar or mobile views.')
@@ -145,7 +265,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.refreshLifeCalendarView();
 					}),
 			);
+	}
 
+	/**
+	 * Adds the view location setting to the settings UI.
+	 * Allows users to choose where the calendar view appears (main, left sidebar, or right sidebar).
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addViewLocationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('View location')
 			.setDesc(
@@ -163,59 +290,328 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.refreshLifeCalendarView();
 					}),
 			);
+	}
 
-		if (!this.plugin.weeklyPeriodicNotesPluginExists()) {
-			new Setting(containerEl)
-				.setName('Weekly notes not enabled ⚠️')
-				.setHeading()
-				.setDesc(
-					'The life in weeks calendar is best with the periodic notes plugin weekly notes enabled (available in the community plugins catalog).',
-				)
-				.setClass('lwc__warning-setting');
-		}
-
+	/**
+	 * Adds plugin integration settings to the settings UI.
+	 * Includes toggles for syncing with the Journals and Periodic Notes plugins.
+	 * These settings are mutually exclusive - enabling one disables the other.
+	 * @param containerEl - The HTML element to append the settings to
+	 */
+	addPluginIntegrationSettings(containerEl: HTMLElement): void {
+		// Setting to sync with the Journals plugin.
+		// The name and description change if the Journals plugin is not detected.
+		// It is disabled if syncing with Periodic Notes is enabled.
 		new Setting(containerEl)
-			.setName("Integrate with periodic notes plugin's weekly notes")
+			.setName(
+				this.syncWithWeeklyNotesIsEnabled()
+					? 'Disabled: Use journals plugin settings'
+					: !!this._cachedJournalPluginSettings
+						? 'Use journals plugin settings'
+						: 'Journals weekly notes not enabled ⚠️',
+			)
 			.setDesc(
-				'Allows quick linking to weekly notes and shows a dot on weeks with a corresponding weekly note. Requires periodic notes plugin to be installed.',
+				this.syncWithWeeklyNotesIsEnabled()
+					? 'Using periodic notes plugin settings.'
+					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
 			)
 			.addToggle((toggle) =>
 				toggle
-					.setValue(
-						this.plugin.weeklyPeriodicNotesPluginExists() &&
-							this.plugin.settings.syncWithWeeklyNotes,
-					)
+					.setValue(this.syncWithJournalNotesIsEnabled())
+					.onChange(async (value) => {
+						this.plugin.settings.syncWithJournalNotes = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+						this.display(); // Re-render settings to update disabled states on other settings
+					})
+					.setDisabled(
+						this.syncWithWeeklyNotesIsEnabled() ||
+							!this._cachedJournalPluginSettings,
+					),
+			);
+
+		// Setting to sync with the Periodic Notes plugin.
+		// The name and description change if the Periodic Notes plugin is not detected.
+		// It is disabled if syncing with Journals is enabled.
+		new Setting(containerEl)
+			.setName(
+				this.syncWithJournalNotesIsEnabled()
+					? 'Disabled: Use periodic notes plugin settings'
+					: this._cachedWeeklyPeriodicNotesExists
+						? 'Use periodic notes plugin settings'
+						: 'Periodic weekly notes not enabled ⚠️',
+			)
+			.setDesc(
+				this.syncWithJournalNotesIsEnabled()
+					? 'Using journals plugin settings.'
+					: 'Optional: sync with periodic notes plugin weekly note settings – filename, location, first day of week, templates.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.syncWithWeeklyNotesIsEnabled())
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
 						this.plugin.refreshLifeCalendarView();
+						this.display(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
-						!this.plugin.weeklyPeriodicNotesPluginExists(),
+						this.syncWithJournalNotesIsEnabled() ||
+							!this._cachedWeeklyPeriodicNotesExists,
 					),
 			);
+	}
+	/**
+	 * Adds weekly note configuration settings to the settings UI.
+	 * Includes settings for folder location, file naming pattern, week start day, and template file.
+	 * These settings are disabled when syncing with Journals or Periodic Notes plugins.
+	 * @param containerEl - The HTML element to append the settings to
+	 */
+	addWeeklyNoteSettings(containerEl: HTMLElement): void {
+		// Setting for weekly note folder location.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
+		new Setting(containerEl)
+			.setName(
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note folder location`,
+			)
+			.setDesc(
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
+					: 'Folder path where weekly notes are stored. Leave blank for root directory.',
+			)
+			.addSearch((search) => {
+				search
+					.setPlaceholder(
+						'E.g. weekly-notes or periodic-notes/weekly',
+					)
+					.setValue(this.plugin.settings.fileLocation);
 
+				// Validate and save on blur
+				search.inputEl.addEventListener('blur', async () => {
+					const value = search.inputEl.value;
+					this.plugin.settings.fileLocation = value;
+					const normalized = normalizeFolderPath(value);
+					const invalidPath = !isValidPath(normalized);
+
+					if (invalidPath) {
+						if (search.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								search.inputEl.parentElement,
+								'setting-filepath-error',
+								'Please enter a valid folder path.',
+							);
+						}
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-filepath-error',
+						);
+						if (existingError) {
+							existingError.remove();
+						}
+
+						// Update input to show normalized path
+						search.inputEl.value = normalized;
+						this.plugin.settings.fileLocation = normalized;
+
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save fileLocation setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
+
+				// Attaches custom suggestions
+				new FolderSuggest(this.app, search.inputEl);
+			});
+
+		// Setting for weekly note file naming pattern.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
+		new Setting(containerEl)
+			.setName(
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
+			)
+			.setDesc(
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
+					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
+			)
+			.addText((text) => {
+				text.inputEl.type = 'text';
+				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
+				text.inputEl.disabled = this.isOverriddenByOtherPlugin();
+				text.setValue(this.plugin.settings.fileNamePattern || '');
+
+				// Validate and save on blur
+				text.inputEl.addEventListener('blur', async () => {
+					const value = text.inputEl.value;
+					const invalidPattern = !isValidFileNamePattern(
+						value.trim(),
+					);
+
+					if (invalidPattern) {
+						if (text.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								text.inputEl.parentElement,
+								'setting-filename-error',
+								'Please enter a valid file naming pattern.',
+							);
+						}
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-filename-error',
+						);
+						if (existingError) {
+							existingError.remove();
+						}
+						this.plugin.settings.fileNamePattern = value;
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save fileNamePattern setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
+			});
+
+		// Setting for the first day of the week.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
+		new Setting(containerEl)
+			.setName(
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}First day of the week`,
+			)
+			.setDesc(
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
+					: 'Select the day that weekly notes start on.',
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('monday', 'Monday')
+					.addOption('tuesday', 'Tuesday')
+					.addOption('wednesday', 'Wednesday')
+					.addOption('thursday', 'Thursday')
+					.addOption('friday', 'Friday')
+					.addOption('saturday', 'Saturday')
+					.addOption('sunday', 'Sunday')
+					.setDisabled(this.isOverriddenByOtherPlugin())
+					.setValue(this.plugin.settings.weekStartDay || 'monday')
+					.onChange(async (value) => {
+						this.plugin.settings.weekStartDay = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+					}),
+			);
+
+		// Setting for the weekly note template file.
+		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
+		new Setting(containerEl)
+			.setName(
+				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note template`,
+			)
+			.setDesc(
+				this.isOverriddenByOtherPlugin()
+					? 'Using settings from another plugin.'
+					: 'Optional template file for new weekly notes. Leave blank for no template.',
+			)
+			.addSearch((search) => {
+				search
+					.setPlaceholder('E.g. templates/weekly-note.md')
+					.setValue(this.plugin.settings.templatePath);
+
+				// Validate and save on blur
+				search.inputEl.addEventListener('blur', async () => {
+					const value = search.inputEl.value;
+					const invalidPattern = !isValidFileName(value);
+
+					if (invalidPattern) {
+						if (search.inputEl.parentElement) {
+							this.createErrorMessageElement(
+								search.inputEl.parentElement,
+								'setting-templatePath-error',
+								'Please enter a valid template file.',
+							);
+						}
+						return;
+					} else {
+						const existingError = document.getElementById(
+							'setting-templatePath-error',
+						);
+						if (existingError) {
+							existingError.remove();
+						}
+						this.plugin.settings.templatePath = value.trim();
+						try {
+							await this.plugin.saveSettings();
+							this.plugin.refreshLifeCalendarView();
+						} catch (error) {
+							console.error(
+								'Failed to save templatePath setting:',
+								error instanceof Error ? error.message : error,
+							);
+						}
+					}
+				});
+
+				// Attaches custom suggestions
+				new FileSuggest(this.app, search.inputEl);
+			});
+	}
+	/**
+	 * Adds the confirmation setting for creating weekly notes to the settings UI.
+	 * Allows users to toggle whether they want a confirmation modal before creating new notes.
+	 * @param containerEl - The HTML element to append the setting to
+	 */
+	addConfirmationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName('Confirm before creating weekly note')
-			.setDesc(
-				'Require confirmation before creating a new weekly note. Requires periodic notes plugin to be installed.',
-			)
+			.setDesc('Require confirmation before creating a new weekly note.')
 			.addToggle((toggle) =>
 				toggle
 					.setValue(
-						this.plugin.weeklyPeriodicNotesPluginExists() &&
-							this.plugin.settings
-								.confirmBeforeCreatingWeeklyNote,
+						this.plugin.settings.confirmBeforeCreatingWeeklyNote,
 					)
 					.onChange(async (value) => {
 						this.plugin.settings.confirmBeforeCreatingWeeklyNote =
 							value;
 						await this.plugin.saveSettings();
 						this.plugin.refreshLifeCalendarView();
-					})
-					.setDisabled(
-						!this.plugin.weeklyPeriodicNotesPluginExists(),
-					),
+					}),
 			);
+	}
+
+	/**
+	 * Renders the settings UI with all configuration options.
+	 * Clears the container and builds all settings sections in order.
+	 * Caches plugin state at the start to avoid repeated lookups during render.
+	 */
+	display(): void {
+		const { containerEl } = this;
+
+		// Compute cache once before rendering to avoid repeated plugin lookups
+		this.computeSettingsCache();
+
+		containerEl.empty();
+
+		this.addBirthdateSetting(containerEl);
+		this.addLifespanSetting(containerEl);
+		this.addCalendarModeSetting(containerEl);
+		this.addViewLocationSetting(containerEl);
+		this.addPluginIntegrationSettings(containerEl);
+		this.addWeeklyNoteSettings(containerEl);
+		this.addConfirmationSetting(containerEl);
+
+		// Clear cache after rendering to free memory
+		this.clearSettingsCache();
 	}
 }

@@ -3,6 +3,8 @@
  * Centralizes all layout and configuration values used across calendar implementations
  */
 
+import type { LifeCalendarSettings } from './types';
+
 export const CALENDAR_LAYOUT = {
 	YEAR_GROUP_SIZE: 10,
 } as const;
@@ -23,3 +25,22 @@ export const CALENDAR_VALIDATION = {
 		DAY: 1,
 	},
 } as const;
+
+/**
+ * Default plugin settings.
+ */
+export const DEFAULT_SETTINGS: LifeCalendarSettings = {
+	birthdate: '2000-01-01',
+	projectedLifespan: '80',
+	calendarMode: 'basic',
+	viewLocation: 'main',
+	confirmBeforeCreatingWeeklyNote: true,
+	syncWithWeeklyNotes: false,
+	syncWithJournalNotes: false,
+	fileNamePattern: 'gggg-[W]ww',
+	fileLocation: '',
+	weekStartDay: 'monday',
+	templatePath: '',
+};
+
+export const VIEW_TYPE_LIFE_CALENDAR = 'life-in-weeks-calendar';

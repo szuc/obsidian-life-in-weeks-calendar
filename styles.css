@@ -173,6 +173,12 @@
 	text-align: left;
 }
 
+.lwc__error-message--setting {
+	color: var(--text-error);
+	font-size: var(--font-smallest);
+	margin: 0;
+}
+
 /* A less than elegant solution to no-css-in-js rules */
 .lwc__week[data-offset='0'] {
 	grid-column: 0;

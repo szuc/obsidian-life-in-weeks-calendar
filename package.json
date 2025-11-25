@@ -1,7 +1,7 @@
 {
 	"name": "life-in-weeks-calendar",
-	"version": "1.0.7",
-	"description": "Displays your life in weeks with integration with Daily Notes and Periodic Notes plugins.",
+	"version": "1.0.8",
+	"description": "Displays your life in weeks with weekly notes integration.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -22,16 +22,16 @@
 		"@eslint/compat": "^1.4.1",
 		"@eslint/eslintrc": "^3.3.1",
 		"@types/moment": "^2.11.29",
-		"@types/node": "^24.10.0",
-		"@typescript-eslint/eslint-plugin": "^8.41.0",
-		"@typescript-eslint/parser": "^8.41.0",
+		"@types/node": "^24.10.1",
+		"@typescript-eslint/eslint-plugin": "^8.47.0",
+		"@typescript-eslint/parser": "^8.47.0",
 		"builtin-modules": "^5.0.0",
 		"esbuild": "^0.25.12",
 		"esbuild-svelte": "^0.9.3",
 		"eslint": "^9.39.1",
 		"eslint-plugin-svelte": "^3.13.0",
 		"globals": "^16.5.0",
-		"obsidian": "^1.10.2-1",
+		"obsidian": "^1.10.3",
 		"prettier": "^3.6.2",
 		"svelte-preprocess": "^6.0.3",
 		"tslib": "^2.8.1",
@@ -40,8 +40,7 @@
 	"dependencies": {
 		"@eslint/js": "^9.39.1",
 		"date-fns": "^4.1.0",
-		"obsidian-daily-notes-interface": "^0.9.4",
-		"svelte": "^5.43.4",
+		"svelte": "^5.43.14",
 		"svelte-eslint-parser": "^1.4.0"
 	}
 }

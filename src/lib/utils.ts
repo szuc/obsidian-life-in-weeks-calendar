@@ -1,9 +1,25 @@
 import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
+import { moment, normalizePath } from 'obsidian';
 
-/** Determines if a week is in the past, present, or future. */
-const TODAY = new Date();
+/** Global reference to the current date. Mutated by updateToday */
+let TODAY = new Date();
+
+/**
+ * Updates the current date reference used by setWeekStatus.
+ * Call this before rendering to ensure accurate date comparisons.
+ */
+export const updateToday = () => {
+	TODAY = new Date();
+};
+
+/**
+ * Determines if a week is in the past, present, or future.
+ * @param weekStartDate - The start date of the week to check
+ * @param validatedWeekStartsOn - The day of the week that weeks start on
+ * @returns 'past', 'present', or 'future'
+ */
 export const setWeekStatus = (
 	weekStartDate: Date,
 	validatedWeekStartsOn: WeekStartsOn,
@@ -72,17 +88,17 @@ export function dateToYYYYMMDD(date: Date): string {
 }
 
 /**
- * Periodic note plugin records are keyed by date strings in the format:
+ * Based off of Periodic note plugin records which are keyed by date strings in the format:
  * "week-YYYY-MM-DDT00:00:00+00:00" where the date is the start of the week
  * and the timezone offset is included.
  * This function generates that key for a given date.
  * @param date - The date for which to generate the key.
  * @returns The formatted key string.
  */
-export function dateToDailyNoteFormatRecordKey(date: Date): string {
+export function dateToWeeklyNoteRecordKeyFormat(date: Date): string {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
 		throw new Error(
-			'dateToDailyNoteFormatRecordKey: date must be a valid Date object',
+			'dateToWeeklyNoteRecordKeyFormat: date must be a valid Date object',
 		);
 	}
 
@@ -127,35 +143,12 @@ export function isValidDate(d: Date): boolean {
 }
 
 /**
- * Corrects a bug where week start date might not match week start day depending on
- * the order of when the calendar sidebar is opened.
- * @param allWeeklyNotes - Weekly notes record from obsidian-daily-notes-interface
- * @param weekStartsOn - modified week start day from Calendar settings
- * @returns Weekly notes record with keys corrected to the week start day
+ * Corrects the date key string for allWeeklyNotes records.
+ * @param key - Custom date string used in allWeeklyNotes record
+ * @param weekStartsOn - Day of the week that weeks start on
+ * @returns Corrected key string
  */
-export function fixWeekStartDate(
-	allWeeklyNotes: Record<string, TFile> | undefined,
-	weekStartsOn: string | undefined,
-): Record<string, TFile> | undefined {
-	if (allWeeklyNotes === undefined) return;
-	if (weekStartsOn === undefined) return allWeeklyNotes;
-
-	const newAllWeeklyNotes: Record<string, TFile> = allWeeklyNotes;
-	// The keys on the objects might reflect the wrong day start
-	for (const key in allWeeklyNotes) {
-		const correctedKey = weeklyNoteKeyCorrection(key, weekStartsOn);
-		newAllWeeklyNotes[correctedKey] = allWeeklyNotes[key];
-	}
-	return newAllWeeklyNotes;
-}
-
-/**
- * Corrects the date key string for allWeeklyNotes records
- * @param key custom date string used in allWeeklyNotes record
- * @param weekStartsOn string of the day that a week starts on
- * @returns corrected key string
- */
-function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
+export function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 	// parse the wrong start date from the key.
 	const dateString = key.slice(5, 15);
 	const date = createLocalDateYYYYMMDD(dateString);
@@ -170,13 +163,13 @@ function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 	// (Trial and error led to this requirement)
 	const nextStartDay = nextDay(date, startDayIndex);
 	// convert it back into the expected format
-	return dateToDailyNoteFormatRecordKey(nextStartDay);
+	return dateToWeeklyNoteRecordKeyFormat(nextStartDay);
 }
 
 /**
- * Converts the string setting from Calendar for first day of the week to an index
- * @param weekStartsOn - Day of the week string, "default", or undefined
- * @returns index of the day or undefined
+ * Converts the string setting for first day of the week to an index.
+ * @param weekStartsOn - Day of the week string or undefined
+ * @returns Index of the day (0-6) or undefined
  */
 export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
 	switch (weekStartsOn?.toLocaleLowerCase()) {
@@ -197,4 +190,166 @@ export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
 		default:
 			return undefined;
 	}
+}
+
+/**
+ * Converts a day-of-the-week index (0-6) to its corresponding lowercase string representation.
+ * @param index - The day index, where 0 is Sunday, 1 is Monday, and so on. Can be undefined.
+ * @returns The lowercase name of the day (e.g., 'sunday', 'monday'), or an empty string if the index is invalid or undefined.
+ */
+export function weekStartsOnIndexToString(
+	index: number | undefined,
+): string | undefined {
+	switch (index) {
+		case 0:
+			return 'sunday';
+		case 1:
+			return 'monday';
+		case 2:
+			return 'tuesday';
+		case 3:
+			return 'wednesday';
+		case 4:
+			return 'thursday';
+		case 5:
+			return 'friday';
+		case 6:
+			return 'saturday';
+		default:
+			return undefined;
+	}
+}
+
+/**
+ * Converts an array of TFile objects into a Record with date-formatted keys.
+ * @param fileNamePattern - Moment.js format pattern for parsing file names
+ * @param weekStartDay - Day of the week that weeks start on
+ * @param files - Array of TFile objects to process
+ * @returns Record with date keys in the format `week-YYYY-MM-DDT00:00:00+HH:MM`
+ */
+export function createFilesRecord(
+	fileNamePattern: string,
+	weekStartDay: string,
+	files: TFile[],
+): Record<string, TFile> | undefined {
+	const record: Record<string, TFile> = {};
+	// For each file see if the filename converts to a moment date using the user defined filename pattern
+	files.forEach((file) => {
+		const momentObject = moment(file.basename, fileNamePattern, true);
+		if (momentObject.isValid()) {
+			const dateKey = momentObject.format(
+				`[week-]YYYY-MM-DDT00:00:00${momentObject.format('Z')}`,
+			);
+			// Correct for the week start day
+			const correctedKey = weeklyNoteKeyCorrection(dateKey, weekStartDay);
+			record[correctedKey] = file;
+		}
+	});
+	return record;
+}
+
+/**
+ * Validates that a lifespan value is a valid integer within the allowed range.
+ * @param value - The lifespan value to validate
+ * @param minLifespan - Minimum allowed lifespan
+ * @param maxLifespan - Maximum allowed lifespan
+ * @returns `true` if the value is a valid integer between minLifespan and maxLifespan, `false` otherwise
+ */
+export function isValidLifespan(
+	value: string,
+	minLifespan: number,
+	maxLifespan: number,
+): boolean {
+	const lifespan = Number(value);
+	return (
+		!isNaN(lifespan) &&
+		Number.isInteger(lifespan) &&
+		lifespan >= minLifespan &&
+		lifespan <= maxLifespan
+	);
+}
+
+/**
+ * Tests for filesystem characters that are unsafe across Windows, macOS, and Linux.
+ * @param value - The string to test for unsafe characters
+ * @returns `true` if the value contains unsafe filesystem characters, `false` otherwise
+ */
+export function containsUnsafeCharacters(value: string): boolean {
+	const unsafeCharacters = /[<>:"|?*\\]/;
+	return unsafeCharacters.test(value);
+}
+
+/**
+ * Validates that a file naming pattern contains only safe characters and has balanced brackets.
+ * @param pattern - The Moment.js date format pattern to validate
+ * @returns `true` if the pattern is valid (safe characters and balanced brackets), `false` otherwise
+ */
+export function isValidFileNamePattern(pattern: string): boolean {
+	// Empty pattern is valid (falls back to default)
+	if (pattern === '') return true;
+
+	// Check for filesystem-unsafe characters
+	if (containsUnsafeCharacters(pattern)) return false;
+
+	// Check for balanced square brackets
+	let bracketDepth = 0;
+	for (const char of pattern) {
+		if (char === '[') bracketDepth++;
+		if (char === ']') bracketDepth--;
+		if (bracketDepth < 0) return false; // Closing before opening
+	}
+	if (bracketDepth !== 0) return false; // Unmatched brackets
+
+	return true;
+}
+
+/**
+ * Validates that a path contains only safe characters and no relative path markers.
+ * @param path - The path to validate
+ * @returns `true` if the path is valid (safe characters, no relative paths), `false` otherwise
+ */
+export function isValidPath(path: string): boolean {
+	path = path.trim();
+	// Empty path is valid (vault root)
+	if (path === '') return true;
+
+	// Check for filesystem-unsafe characters (allow / for folder separators)
+	if (containsUnsafeCharacters(path)) return false;
+
+	try {
+		const normalized = normalizePath(path);
+		if (normalized === '') return false;
+
+		// Check for problematic path segments
+		const segments = normalized.split('/');
+		for (const segment of segments) {
+			if (segment.endsWith('.')) return false;
+			if (segment === '.' || segment === '..') return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Validates that a file path is valid and ends with '.md'.
+ * @param path - The file path to validate
+ * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
+ */
+export function isValidFileName(path: string): boolean {
+	if (path.trim() === '') return true;
+	return isValidPath(path) && path.endsWith('.md');
+}
+
+/**
+ * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
+ * @param path - The folder path to normalize
+ * @returns The normalized path without leading/trailing slashes
+ */
+export function normalizeFolderPath(path: string): string {
+	path = path.trim();
+	if (path === '') return '';
+	return normalizePath(path);
 }

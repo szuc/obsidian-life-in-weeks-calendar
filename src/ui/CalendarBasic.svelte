@@ -5,7 +5,7 @@
 	import { App, TFile } from 'obsidian';
 	import { openWeeklyNoteFunction } from 'src/lib/openWeeklyNote';
 	import {
-		dateToDailyNoteFormatRecordKey,
+		dateToWeeklyNoteRecordKeyFormat,
 		setWeekStatus,
 	} from '../lib/utils';
 
@@ -14,33 +14,37 @@
 		lifespan,
 		allWeeklyNotes,
 		modalFn,
-		syncWithWeeklyNotes,
 		weekStartsOn,
+		folderPath,
+		fileNamePattern,
+		templatePath,
 		app,
 	}: {
 		birthDate: Date;
 		lifespan: number;
 		allWeeklyNotes: Record<string, TFile> | undefined;
 		modalFn: ((message: string, cb: () => void) => void) | undefined;
-		syncWithWeeklyNotes: boolean;
-		weekStartsOn: string | undefined;
+		weekStartsOn: string;
+		folderPath: string;
+		fileNamePattern: string;
+		templatePath: string;
 		app: App;
 	} = $props();
 
 	const showDotFn = (weekStartDate: Date) =>
-		syncWithWeeklyNotes &&
-		!!allWeeklyNotes?.[dateToDailyNoteFormatRecordKey(weekStartDate)];
+		!!allWeeklyNotes?.[dateToWeeklyNoteRecordKeyFormat(weekStartDate)];
 
-	const onClickFn = syncWithWeeklyNotes
-		? (weekStartDate: Date) => {
-				openWeeklyNoteFunction(
-					app,
-					weekStartDate,
-					allWeeklyNotes,
-					modalFn,
-				);
-			}
-		: undefined;
+	const onClickFn = (weekStartDate: Date) => {
+		openWeeklyNoteFunction(
+			app,
+			weekStartDate,
+			allWeeklyNotes,
+			folderPath,
+			fileNamePattern,
+			templatePath,
+			modalFn,
+		);
+	};
 </script>
 
 <CalendarBase

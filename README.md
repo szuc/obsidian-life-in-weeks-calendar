@@ -1,4 +1,4 @@
-# Life in Weeks Calendar
+# Life in Weeks Calendar for Obsidian
 
 ## Overview
 
@@ -10,26 +10,38 @@ The _Life in Weeks Calendar_ is a visual tool designed to shift one's perspectiv
 
 At its heart, the life in weeks calendar is a "memento mori," a Latin phrase meaning "remember that you must die." This concept, with roots in Stoic philosophy, encourages individuals to live more intentionally by keeping their mortality at the forefront of their minds. The calendar is not meant to be a morbid or anxiety-inducing tool, but rather a catalyst for positive change.
 
-## Periodic Notes plugin integration
-
-While not required, this plugin's integrates with and is improved by installing the Periodic Notes plugin and activating the weekly notes feature. Weeks can display an indicator on weeks where you've created a weekly note. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
-
 ## Plugin Settings and Options
 
-**Birthdate:**  
+**Birth Date:**  
 Enter your birthday.
 
-**Lifespan:**  
+**Projected Lifespan:**  
 Enter the numbers of years you expect to live.
 
-**Calendar Mode:**  
-Choose how you'd like the calendar displayed, either "Basic" or "Yearly" (more details on each of these below).
+**Calendar View Mode:**  
+Choose how you'd like the calendar displayed, either "Standard" or "Decades" (more details on each of these below).
 
 **View Location:**  
 Sets which panel a new calendar will be opened in when you use the "Open Life in Weeks Calendar" ribbon button or command pallet option.
 
-**Weekly note integration:**  
-If you have Periodic Notes installed and the weekly notes feature enabled, Life in Weeks will integrate with your weekly notes. Weeks with corresponding weekly notes will be indicated with a dot. Clicking on a week will open that week's weekly note if it exists, or create a new one if it does not.
+**Periodic Notes Integration:**  
+Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
+
+**Weekly note folder location**
+Set the folder where your weekly notes will be stored. Select from existing folders.
+
+**Weekly note file naming pattern**
+Use [Moment.js date formatting](https://momentjs.com/docs/#/parsing/string-format/) patterns for file names. Common patterns include:
+
+- `gggg-[W]ww` names files with year and week number (e.g. 2025-W12).
+- `YYYY-MM-DD` names the file with the year, month, and first date of the week (e.g 2025-02-28).
+- `DD-MM-YYYY` names the file with the first date of the week, month, and year (e.g. 28-02-2025).
+
+**First day of the week**
+Set the first day of the week. Defaults to Monday.
+
+**Weekly note template**
+Choose a file to use as a template for your new weekly notes. Newly created notes will be prefilled with content from this file.
 
 ## Calendar Modes
 
@@ -47,7 +59,7 @@ This view corrects an over simplification in the basic view. Years actually have
 
 ## Credits
 
-Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [obsidian-daily-notes-interface](https://github.com/liamcain/obsidian-daily-notes-interface).
+Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [Journal](https://github.com/srg-kostyrko/obsidian-journal).
 
 ## Thank You 🙏
 
