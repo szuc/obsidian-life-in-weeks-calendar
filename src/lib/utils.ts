@@ -1,7 +1,7 @@
 import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
-import { moment, normalizePath } from 'obsidian';
+import { moment } from 'obsidian';
 
 /** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();
@@ -143,10 +143,11 @@ export function isValidDate(d: Date): boolean {
 }
 
 /**
- * Corrects the date key string for allWeeklyNotes records.
- * @param key - Custom date string used in allWeeklyNotes record
- * @param weekStartsOn - Day of the week that weeks start on
- * @returns Corrected key string
+ * Corrects the date key string for allWeeklyNotes records by adjusting the start date
+ * if it doesn't match the configured week start day.
+ * @param key - Custom date string in the format "week-YYYY-MM-DDT00:00:00+HH:MM"
+ * @param weekStartsOn - Day of the week that weeks start on (e.g., "Monday", "Sunday")
+ * @returns Corrected key string with the start date adjusted to the next occurrence of weekStartsOn
  */
 export function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 	// parse the wrong start date from the key.
@@ -167,9 +168,10 @@ export function weeklyNoteKeyCorrection(key: string, weekStartsOn: string) {
 }
 
 /**
- * Converts the string setting for first day of the week to an index.
- * @param weekStartsOn - Day of the week string or undefined
- * @returns Index of the day (0-6) or undefined
+ * Converts the string setting for first day of the week to a numeric index.
+ * Case-insensitive matching.
+ * @param weekStartsOn - Day of the week string (e.g., "Sunday", "Monday") or undefined
+ * @returns Index of the day where 0=Sunday, 1=Monday, ..., 6=Saturday, or undefined if invalid/not provided
  */
 export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
 	switch (weekStartsOn?.toLocaleLowerCase()) {
@@ -194,8 +196,8 @@ export function weekStartsOnStringToIndex(weekStartsOn?: string): WeekStartsOn {
 
 /**
  * Converts a day-of-the-week index (0-6) to its corresponding lowercase string representation.
- * @param index - The day index, where 0 is Sunday, 1 is Monday, and so on. Can be undefined.
- * @returns The lowercase name of the day (e.g., 'sunday', 'monday'), or an empty string if the index is invalid or undefined.
+ * @param index - The day index where 0=Sunday, 1=Monday, ..., 6=Saturday. Can be undefined.
+ * @returns The lowercase name of the day (e.g., 'sunday', 'monday'), or undefined if the index is invalid or undefined.
  */
 export function weekStartsOnIndexToString(
 	index: number | undefined,
@@ -222,20 +224,35 @@ export function weekStartsOnIndexToString(
 
 /**
  * Converts an array of TFile objects into a Record with date-formatted keys.
- * @param fileNamePattern - Moment.js format pattern for parsing file names
- * @param weekStartDay - Day of the week that weeks start on
+ * Handles both static Moment.js format patterns and dynamic patterns with {{date:FORMAT}} segments.
+ * Only includes files whose names can be parsed as valid dates using the provided pattern.
+ * @param fileNamePattern - Moment.js format pattern for parsing file names (e.g., "YYYY-WW" or "Weekly-{{date:GGGG-[W]WW}}")
+ * @param weekStartDay - Day of the week that weeks start on (e.g., "Monday", "Sunday")
  * @param files - Array of TFile objects to process
- * @returns Record with date keys in the format `week-YYYY-MM-DDT00:00:00+HH:MM`
+ * @returns Record with date keys in the format `week-YYYY-MM-DDT00:00:00+HH:MM`, corrected for week start day
  */
 export function createFilesRecord(
 	fileNamePattern: string,
 	weekStartDay: string,
 	files: TFile[],
 ): Record<string, TFile> | undefined {
+	console.debug('Creating files record', files);
 	const record: Record<string, TFile> = {};
 	// For each file see if the filename converts to a moment date using the user defined filename pattern
 	files.forEach((file) => {
-		const momentObject = moment(file.basename, fileNamePattern, true);
+		// filename pattern might be pure moment format or might contain dynamic segments
+		console.debug(
+			`Processing file ${file.path} with pattern ${fileNamePattern}`,
+		);
+		const momentFormat = isStringDynamic(fileNamePattern)
+			? extractMomentFormatFromPattern(fileNamePattern)
+			: fileNamePattern;
+		console.debug(
+			`Extracted moment format for file ${file.path}:`,
+			momentFormat,
+		);
+		const momentObject = moment(file.basename, momentFormat, true);
+		console.debug(`Parsed moment for file ${file.path}:`, momentObject);
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
 				`[week-]YYYY-MM-DDT00:00:00${momentObject.format('Z')}`,
@@ -245,6 +262,7 @@ export function createFilesRecord(
 			record[correctedKey] = file;
 		}
 	});
+	console.debug('Created files record', record);
 	return record;
 }
 
@@ -270,86 +288,200 @@ export function isValidLifespan(
 }
 
 /**
- * Tests for filesystem characters that are unsafe across Windows, macOS, and Linux.
- * @param value - The string to test for unsafe characters
- * @returns `true` if the value contains unsafe filesystem characters, `false` otherwise
- */
-export function containsUnsafeCharacters(value: string): boolean {
-	const unsafeCharacters = /[<>:"|?*\\]/;
-	return unsafeCharacters.test(value);
-}
-
-/**
- * Validates that a file naming pattern contains only safe characters and has balanced brackets.
- * @param pattern - The Moment.js date format pattern to validate
- * @returns `true` if the pattern is valid (safe characters and balanced brackets), `false` otherwise
- */
-export function isValidFileNamePattern(pattern: string): boolean {
-	// Empty pattern is valid (falls back to default)
-	if (pattern === '') return true;
-
-	// Check for filesystem-unsafe characters
-	if (containsUnsafeCharacters(pattern)) return false;
-
-	// Check for balanced square brackets
-	let bracketDepth = 0;
-	for (const char of pattern) {
-		if (char === '[') bracketDepth++;
-		if (char === ']') bracketDepth--;
-		if (bracketDepth < 0) return false; // Closing before opening
-	}
-	if (bracketDepth !== 0) return false; // Unmatched brackets
-
-	return true;
-}
-
-/**
- * Validates that a path contains only safe characters and no relative path markers.
- * @param path - The path to validate
- * @returns `true` if the path is valid (safe characters, no relative paths), `false` otherwise
- */
-export function isValidPath(path: string): boolean {
-	path = path.trim();
-	// Empty path is valid (vault root)
-	if (path === '') return true;
-
-	// Check for filesystem-unsafe characters (allow / for folder separators)
-	if (containsUnsafeCharacters(path)) return false;
-
-	try {
-		const normalized = normalizePath(path);
-		if (normalized === '') return false;
-
-		// Check for problematic path segments
-		const segments = normalized.split('/');
-		for (const segment of segments) {
-			if (segment.endsWith('.')) return false;
-			if (segment === '.' || segment === '..') return false;
-		}
-
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-/**
  * Validates that a file path is valid and ends with '.md'.
  * @param path - The file path to validate
  * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
  */
 export function isValidFileName(path: string): boolean {
-	if (path.trim() === '') return true;
-	return isValidPath(path) && path.endsWith('.md');
+	return path.trim() === '' || path.endsWith('.md');
 }
 
 /**
- * Normalizes a folder path by trimming whitespace and removing leading/trailing slashes.
- * @param path - The folder path to normalize
- * @returns The normalized path without leading/trailing slashes
+ * Gets the root folder path up to (but not including) the first dynamic segment.
+ * Useful for determining where to start searching for files in dynamic folder structures.
+ * @param folderPath - The folder path to analyze
+ * @returns The path up to the first dynamic segment, with trailing slashes removed.
+ *          If no dynamic segment exists, returns the entire path.
+ * @example
+ * getRootFolderOfFirstDynamicSegment("Journals/{{date}}/Notes")
+ * // returns "Journals"
+ * @example
+ * getRootFolderOfFirstDynamicSegment("Static/Path")
+ * // returns "Static/Path"
  */
-export function normalizeFolderPath(path: string): string {
-	path = path.trim();
-	if (path === '') return '';
-	return normalizePath(path);
+export function getRootFolderOfFirstDynamicSegment(folderPath: string): string {
+	const firstDynamicSegmentIndex = folderPath.indexOf('{{');
+	return firstDynamicSegmentIndex !== -1
+		? folderPath.substring(0, firstDynamicSegmentIndex).replace(
+				/\/+$/,
+				'', // Remove trailing slashes
+			)
+		: folderPath;
+}
+
+/**
+ * Replaces dynamic segments in folder paths with formatted date values.
+ * Dynamic segments must be valid Moment.js tokens in the format {{date:FORMAT}}.
+ *
+ * @param folderPath - The folder path containing dynamic segments to parse
+ * @param date - The date to use for replacing dynamic segments
+ * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'YYYY-MM-DD')
+ * @returns The folder path with all dynamic segments replaced with formatted date values
+ * @example
+ * parseDynamicFolderPath("Journals/{{date:YYYY}}/{{date:MM}}", new Date(2024, 2, 15))
+ * // returns "Journals/2024/03"
+ * @example
+ * parseDynamicFolderPath("Notes/{{date}}/daily", new Date(2024, 2, 15))
+ * // returns "Notes/2024-03-15/daily" (using defaultFormat)
+ */
+export function parseDynamicFolderPath(
+	folderPath: string,
+	date: Date,
+	defaultFormat: string = 'YYYY-MM-DD',
+): string {
+	if (!isStringDynamic(folderPath)) return folderPath;
+	const parsedDates = parseDynamicDatesInString(
+		folderPath,
+		date,
+		defaultFormat,
+	);
+	const parsedVariables = parseJournalsVariables(
+		parsedDates,
+		date,
+		defaultFormat,
+	);
+	return parsedVariables;
+}
+
+/**
+ * Checks if a string contains dynamic template variables.
+ *
+ * @param stringSegment - The string segment to check
+ * @returns `true` if the segment contains template variables ({{ }}), `false` otherwise
+ * @example
+ * isStringDynamic("{{date}}") // returns true
+ * isStringDynamic("journal") // returns false
+ */
+export function isStringDynamic(stringSegment: string): boolean {
+	return stringSegment.includes('{{') && stringSegment.includes('}}');
+}
+
+/**
+ * Extracts the Moment.js format pattern from a file name pattern containing dynamic segments.
+ * Converts patterns like "Weekly-{{date:GGGG-[W]WW}}" to "[Weekly-]GGGG-[W]WW" for use with moment parsing.
+ *
+ * @param fileNamePattern - The file name pattern to extract from (e.g., "Weekly-{{date:GGGG-[W]WW}}")
+ * @returns The extracted Moment.js format string with literal text wrapped in brackets
+ * @example
+ * extractMomentFormatFromPattern("{{date:DD-MM-YYYY}}")
+ * // returns "DD-MM-YYYY"
+ * @example
+ * extractMomentFormatFromPattern("Weekly-{{date:GGGG-[W]WW}}")
+ * // returns "[Weekly-]GGGG-[W]WW"
+ * @example
+ * extractMomentFormatFromPattern("YYYY-WW")
+ * // returns "[YYYY-WW]" (wraps literal text since no dynamic segment found)
+ */
+export function extractMomentFormatFromPattern(
+	fileNamePattern: string,
+): string {
+	// Extract the moment format from the {{date:FORMAT}} segment if present
+	const dynamicSegmentMatch = fileNamePattern.match(/\{\{date:([^}]+)\}\}/);
+
+	if (dynamicSegmentMatch) {
+		// Check if there's any literal text outside the {{date:FORMAT}} segment
+		const beforeSegment = fileNamePattern.substring(
+			0,
+			dynamicSegmentMatch.index,
+		);
+		const afterSegment = fileNamePattern.substring(
+			dynamicSegmentMatch.index! + dynamicSegmentMatch[0].length,
+		);
+
+		// Build the moment format: wrap literal parts in brackets, keep format as-is
+		const wrappedBefore = beforeSegment ? `[${beforeSegment}]` : '';
+		const wrappedAfter = afterSegment ? `[${afterSegment}]` : '';
+
+		return `${wrappedBefore}${dynamicSegmentMatch[1]}${wrappedAfter}`;
+	}
+
+	// No dynamic segment found - wrap the entire pattern in brackets as literal text
+	return `[${fileNamePattern}]`;
+}
+
+/**
+ * Replaces all date dynamic segments in a string with formatted date values.
+ * Dynamic segments can be {{date}} (uses default format) or {{date:FORMAT}} (uses specified Moment.js format).
+ * Supports multiple dynamic segments in one string and preserves literal text between them.
+ * @param dynamicString - The string containing dynamic date segments to parse
+ * @param date - The date to use for replacing dynamic segments
+ * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'YYYY-MM-DD')
+ * @returns The string with all {{date}} and {{date:FORMAT}} segments replaced with formatted date values
+ * @example
+ * parseDynamicDatesInString("{{date:YYYY}}", new Date(2024, 2, 15))
+ * // returns "2024"
+ * @example
+ * parseDynamicDatesInString("{{date}}", new Date(2024, 2, 15))
+ * // returns "2024-03-15" (using defaultFormat)
+ * @example
+ * parseDynamicDatesInString("Notes-{{date:GGGG-[W]WW}}", new Date(2024, 2, 15))
+ * // returns "Notes-2024-W11"
+ * @example
+ * parseDynamicDatesInString("Month-{{date:MM}}-Week-{{date:WW}}", new Date(2024, 2, 15))
+ * // returns "Month-03-Week-11"
+ */
+export function parseDynamicDatesInString(
+	dynamicString: string,
+	date: Date,
+	defaultFormat: string = 'YYYY-MM-DD',
+): string {
+	// Matches {{date}} or {{date:FORMAT}} with optional whitespace
+	// The 'g' flag enables global matching for multiple segments in one string
+	const dynamicSegmentRegex = /{{\s*date(?::([^}]+))?\s*}}/g;
+
+	// Replace all dynamic segments while preserving literal text between them
+	return dynamicString.replace(dynamicSegmentRegex, (_, format) => {
+		const momentFormat = format || defaultFormat;
+		return moment(date).format(momentFormat);
+	});
+}
+
+/**
+ * Replaces Journals plugin variables in a string with formatted date values.
+ * Provides compatibility with the Obsidian Journals plugin's dynamic variable syntax.
+ * @param text - A string containing 0 or more Journals plugin dynamic variables
+ * @param date - The date to use for calculating week boundaries and formatting
+ * @param defaultFormat - The Moment.js format to use for date replacements (defaults to 'YYYY-MM-DD')
+ * @returns The string with all Journals variables replaced with formatted date values
+ *
+ * Supported variables:
+ * - {{start_date}} - First day of the week (formatted using defaultFormat)
+ * - {{end_date}} - Last day of the week (formatted using defaultFormat)
+ * - {{index}} - Week number of the year (1-52/53)
+ * - {{current_date}} - The current date (formatted using defaultFormat)
+ */
+export function parseJournalsVariables(
+	text: string,
+	date: Date,
+	defaultFormat: string = 'YYYY-MM-DD',
+) {
+	let result = text;
+
+	const startOfWeek = moment(date).startOf('week');
+	const endOfWeek = moment(date).endOf('week');
+
+	result = result.replace(/{{\s*start_date\s*}}/g, () =>
+		startOfWeek.format(defaultFormat),
+	);
+	result = result.replace(/{{\s*end_date\s*}}/g, () =>
+		endOfWeek.format(defaultFormat),
+	);
+	result = result.replace(/{{\s*index\s*}}/g, () =>
+		String(startOfWeek.week()),
+	);
+	result = result.replace(/{{\s*current_date\s*}}/g, () =>
+		moment(date).format(defaultFormat),
+	);
+
+	return result;
 }

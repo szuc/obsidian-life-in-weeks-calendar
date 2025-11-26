@@ -184,17 +184,43 @@ export default class LifeCalendarPlugin extends Plugin {
 
 		const weekStartDay: number | undefined =
 			journalsPlugin.calendarSettings?.dow;
-		const fileNamePattern: string | undefined = weeksSettings.dateFormat;
+		const fileNamePattern: string | undefined =
+			weeksSettings.config?.value?.nameTemplate;
 		const folderPath: string | undefined =
 			weeksSettings.config?.value?.folder;
 		const templatePath: string | undefined =
 			weeksSettings.config?.value?.templates?.[0];
+		const dateFormat = weeksSettings.config?.value?.dateFormat;
+
+		// If the folder path contains {{journal_name}} the replace that with weekSettings.name
+		// There are other template variables but this is the only one we can resolve here
+		const resolvedFolderPath = folderPath
+			? folderPath.replace(
+					'{{journal_name}}',
+					weeksSettings.name || 'Weekly',
+				)
+			: '';
+
+		// Journals plugin has a default date format option. We can convert
+		// {{date}} to {{date:FORMAT}} in folderPath and fileNamePattern now rather than
+		// passing the default through the entire codebase.
+		const dateFormatToken = dateFormat ? `:${dateFormat}` : '';
+		const fileNamePatternWithDateFormat = fileNamePattern
+			? fileNamePattern.replace('{{date}}', `{{date${dateFormatToken}}}`)
+			: '';
+		const folderPathWithDateFormat = resolvedFolderPath
+			? resolvedFolderPath.replace(
+					'{{date}}',
+					`{{date${dateFormatToken}}}`,
+				)
+			: '';
 
 		return {
 			weekStartDay: weekStartsOnIndexToString(weekStartDay) || '',
-			fileNamePattern: fileNamePattern || '',
-			folderPath: folderPath || '',
+			fileNamePattern: fileNamePatternWithDateFormat || '',
+			folderPath: folderPathWithDateFormat || '',
 			templatePath: templatePath || '',
+			dateFormat: dateFormat || '',
 		};
 	}
 
@@ -212,7 +238,7 @@ export default class LifeCalendarPlugin extends Plugin {
    not enabled.
    */
 	periodicNotesPluginWeeklySettings():
-		| Omit<IntegrationSettings, 'weekStartDay'>
+		| Omit<IntegrationSettings, 'weekStartDay' | 'dateFormat'>
 		| undefined {
 		const periodicNotesSettings =
 			// @ts-ignore

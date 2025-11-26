@@ -1,9 +1,12 @@
-import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
 import LifeCalendar from 'src/ui/LifeCalendar.svelte';
 import { mount, type ComponentProps } from 'svelte';
 import type LifeCalendarPlugin from 'main';
 import { CreateFileModal } from 'src/createFileModal';
-import { createFilesRecord } from './lib/utils';
+import {
+	createFilesRecord,
+	getRootFolderOfFirstDynamicSegment,
+} from './lib/utils';
 import {
 	DEFAULT_SETTINGS,
 	VIEW_TYPE_LIFE_CALENDAR,
@@ -78,14 +81,14 @@ export class LifeCalendarView extends ItemView {
 		const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
 
 		// Check if folder exists and is actually a folder (TFolder)
-		if (!folder || folder instanceof TFile) {
+		if (folder === undefined || folder instanceof TFile) {
 			return [];
 		}
 
 		return this.app.vault.getFiles().filter((file) => {
 			// Handle root folder case
 			if (normalizedPath === '') return true;
-			return file.path.startsWith(normalizedPath + '/');
+			return file.path.startsWith(normalizePath(normalizedPath + '/'));
 		});
 	}
 
@@ -102,7 +105,10 @@ export class LifeCalendarView extends ItemView {
 		fileNamePattern: string,
 		weekStartDay: string,
 	): Record<string, TFile> | undefined {
-		const files = this.getAllFilesInFolder(folderPath);
+		// Correct for any dynamic segments in the folder path
+		const correctedFolderPath =
+			getRootFolderOfFirstDynamicSegment(folderPath);
+		const files = this.getAllFilesInFolder(correctedFolderPath);
 		return createFilesRecord(fileNamePattern, weekStartDay, files);
 	}
 

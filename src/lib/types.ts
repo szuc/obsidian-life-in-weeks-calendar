@@ -44,4 +44,5 @@ export interface IntegrationSettings {
 	fileNamePattern: string;
 	templatePath: string;
 	weekStartDay: string;
+	dateFormat: string;
 }
