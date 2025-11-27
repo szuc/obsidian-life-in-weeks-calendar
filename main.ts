@@ -226,12 +226,13 @@ export default class LifeCalendarPlugin extends Plugin {
 	}
 
 	/**
-   * Retrieves weekly note settings from the 'Periodic Notes' plugin if it's installed and 
-  configured.
-   * This is used for integration to help locate weekly notes.
+   * Retrieves weekly note settings from the 'Periodic Notes' plugin if it's installed 
+   * and configured. Gets the week start day from the Calendar plugin if available.
+   * (Both 'Periodic Notes' and 'Calendar' plugins are by the same author.)
    *
    * @returns An object with weekly settings if found, otherwise undefined.
    * The returned object contains:
+   * - `weekStartDay`: The configured start day of the week (e.g., 'sunday', 'monday').
    * - `fileNamePattern`: The date format pattern for weekly note file names.
    * - `folderPath`: The folder where weekly notes are stored.
    * - `templatePath`: The template file path for new weekly notes.
@@ -239,7 +240,7 @@ export default class LifeCalendarPlugin extends Plugin {
    not enabled.
    */
 	periodicNotesPluginWeeklySettings():
-		| Omit<IntegrationSettings, 'weekStartDay' | 'dateFormat'>
+		| Omit<IntegrationSettings, 'dateFormat'>
 		| undefined {
 		const periodicNotesSettings =
 			// @ts-ignore
@@ -254,6 +255,7 @@ export default class LifeCalendarPlugin extends Plugin {
 			return undefined;
 		}
 		return {
+			weekStartDay: this.getWeekStartsOnOptionFromCalendar() || '',
 			fileNamePattern: weeklySettings.format || '',
 			folderPath: weeklySettings.folder || '',
 			templatePath: weeklySettings.template || '',

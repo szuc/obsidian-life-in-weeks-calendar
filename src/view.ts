@@ -169,16 +169,11 @@ export class LifeCalendarView extends ItemView {
 	 * @returns The week start day as a string (e.g., 'monday', 'sunday')
 	 */
 	private getWeekStartsOnFromSettings() {
-		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
-		if (periodicNotesSettings) {
-			return (
-				this.plugin.getWeekStartsOnOptionFromCalendar() ??
-				DEFAULT_SETTINGS.weekStartDay
-			);
-		}
 		const journalSettings = this.getJournalsPluginSettings();
+		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
 		return (
 			journalSettings?.weekStartDay ??
+			periodicNotesSettings?.weekStartDay ??
 			this.plugin.settings.weekStartDay ??
 			DEFAULT_SETTINGS.weekStartDay
 		);
