@@ -174,6 +174,7 @@ export default class LifeCalendarPlugin extends Plugin {
 		}
 
 		const weeksSettings = journalsPlugin.journals?.find(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(j: any) => j?.type === 'week',
 		);
 

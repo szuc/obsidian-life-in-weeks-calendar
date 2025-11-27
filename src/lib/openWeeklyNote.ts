@@ -98,12 +98,12 @@ export const openWeeklyNoteFunction = async (
 	let filename = '';
 
 	// filenames might be pure moment formats, e.g., "YYYY-WW" or might contain dynamic segments
-	// like "Weekly-{{date:GGGG-[W]WW}}". We handle each differently.
+	// like "Weekly-{{date:gggg-[W]ww}}". We handle each differently.
 	if (isStringDynamic(fileNamePattern)) {
 		filename = parseDynamicDatesInString(
 			fileNamePattern,
 			date,
-			'GGGG-[W]WW',
+			DEFAULT_SETTINGS.fileNamePattern,
 		);
 	} else {
 		// Pure moment format - no dynamic segments
@@ -136,7 +136,6 @@ export const openWeeklyNoteFunction = async (
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
 				() => {
-					console.debug('Creating weekly note at', filePath);
 					app.vault
 						.create(filePath, templateContent)
 						.then(async (newNote) => {

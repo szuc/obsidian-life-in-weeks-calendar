@@ -75,13 +75,13 @@ describe('utils.ts', () => {
 
 		it('should throw error for invalid date', () => {
 			expect(() => setWeekStatus(new Date('invalid'), 1)).toThrow(
-				'setWeekStatus: weekStartDate must be a valid Date object'
+				'setWeekStatus: weekStartDate must be a valid Date object',
 			);
 		});
 
 		it('should throw error for null date', () => {
 			expect(() => setWeekStatus(null as any, 1)).toThrow(
-				'setWeekStatus: weekStartDate must be a valid Date object'
+				'setWeekStatus: weekStartDate must be a valid Date object',
 			);
 		});
 	});
@@ -96,19 +96,19 @@ describe('utils.ts', () => {
 
 		it('should throw error for invalid format', () => {
 			expect(() => createLocalDateYYYYMMDD('2024/03/15')).toThrow(
-				'createLocalDateYYYYMMDD: dateString must be in YYYY-MM-DD format'
+				'createLocalDateYYYYMMDD: dateString must be in YYYY-MM-DD format',
 			);
 		});
 
 		it('should throw error for empty string', () => {
 			expect(() => createLocalDateYYYYMMDD('')).toThrow(
-				'createLocalDateYYYYMMDD: dateString must be a non-empty string'
+				'createLocalDateYYYYMMDD: dateString must be a non-empty string',
 			);
 		});
 
 		it('should throw error for non-string input', () => {
 			expect(() => createLocalDateYYYYMMDD(null as any)).toThrow(
-				'createLocalDateYYYYMMDD: dateString must be a non-empty string'
+				'createLocalDateYYYYMMDD: dateString must be a non-empty string',
 			);
 		});
 	});
@@ -126,13 +126,13 @@ describe('utils.ts', () => {
 
 		it('should throw error for invalid date', () => {
 			expect(() => dateToYYYYMMDD(new Date('invalid'))).toThrow(
-				'dateToYYYYMMDD: date must be a valid Date object'
+				'dateToYYYYMMDD: date must be a valid Date object',
 			);
 		});
 
 		it('should throw error for null', () => {
 			expect(() => dateToYYYYMMDD(null as any)).toThrow(
-				'dateToYYYYMMDD: date must be a valid Date object'
+				'dateToYYYYMMDD: date must be a valid Date object',
 			);
 		});
 	});
@@ -145,8 +145,10 @@ describe('utils.ts', () => {
 		});
 
 		it('should throw error for invalid date', () => {
-			expect(() => dateToWeeklyNoteRecordKeyFormat(new Date('invalid'))).toThrow(
-				'dateToWeeklyNoteRecordKeyFormat: date must be a valid Date object'
+			expect(() =>
+				dateToWeeklyNoteRecordKeyFormat(new Date('invalid')),
+			).toThrow(
+				'dateToWeeklyNoteRecordKeyFormat: date must be a valid Date object',
 			);
 		});
 	});
@@ -275,10 +277,17 @@ describe('utils.ts', () => {
 
 		it('should handle dynamic file patterns', () => {
 			const files = [
-				{ path: 'folder/Weekly-2024-W11.md', basename: 'Weekly-2024-W11' },
+				{
+					path: 'folder/Weekly-2024-W11.md',
+					basename: 'Weekly-2024-W11',
+				},
 			] as TFile[];
 
-			const result = createFilesRecord('Weekly-{{date:GGGG-[W]WW}}', 'Monday', files);
+			const result = createFilesRecord(
+				'Weekly-{{date:gggg-[W]ww}}',
+				'Monday',
+				files,
+			);
 
 			expect(result).toBeDefined();
 		});
@@ -339,17 +348,22 @@ describe('utils.ts', () => {
 
 	describe('getRootFolderOfFirstDynamicSegment', () => {
 		it('should return path up to first dynamic segment', () => {
-			const result = getRootFolderOfFirstDynamicSegment('Journals/{{date}}/Notes');
+			const result = getRootFolderOfFirstDynamicSegment(
+				'Journals/{{date}}/Notes',
+			);
 			expect(result).toBe('Journals');
 		});
 
 		it('should return entire path if no dynamic segment', () => {
-			const result = getRootFolderOfFirstDynamicSegment('Static/Path/To/Folder');
+			const result = getRootFolderOfFirstDynamicSegment(
+				'Static/Path/To/Folder',
+			);
 			expect(result).toBe('Static/Path/To/Folder');
 		});
 
 		it('should remove trailing slashes', () => {
-			const result = getRootFolderOfFirstDynamicSegment('Journals/{{date}}');
+			const result =
+				getRootFolderOfFirstDynamicSegment('Journals/{{date}}');
 			expect(result).toBe('Journals');
 		});
 
@@ -359,7 +373,9 @@ describe('utils.ts', () => {
 		});
 
 		it('should handle multiple dynamic segments', () => {
-			const result = getRootFolderOfFirstDynamicSegment('Root/{{date}}/{{index}}');
+			const result = getRootFolderOfFirstDynamicSegment(
+				'Root/{{date}}/{{index}}',
+			);
 			expect(result).toBe('Root');
 		});
 	});
@@ -372,19 +388,26 @@ describe('utils.ts', () => {
 
 		it('should parse dynamic date segments', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseDynamicFolderPath('Journals/{{date:YYYY}}/{{date:MM}}', date);
+			const result = parseDynamicFolderPath(
+				'Journals/{{date:YYYY}}/{{date:MM}}',
+				date,
+			);
 			expect(result).toBe('Journals/2024/03');
 		});
 
 		it('should use default format for {{date}} without format', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseDynamicFolderPath('Notes/{{date}}', date);
-			expect(result).toBe('Notes/2024-03-15');
+			expect(result).toBe('Notes/2024-W11');
 		});
 
 		it('should handle custom default format', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseDynamicFolderPath('Notes/{{date}}', date, 'YYYY/MM');
+			const result = parseDynamicFolderPath(
+				'Notes/{{date}}',
+				date,
+				'YYYY/MM',
+			);
 			expect(result).toBe('Notes/2024/03');
 		});
 	});
@@ -407,17 +430,23 @@ describe('utils.ts', () => {
 
 	describe('extractMomentFormatFromPattern', () => {
 		it('should extract format from {{date:FORMAT}} pattern', () => {
-			const result = extractMomentFormatFromPattern('{{date:DD-MM-YYYY}}');
+			const result = extractMomentFormatFromPattern(
+				'{{date:DD-MM-YYYY}}',
+			);
 			expect(result).toBe('DD-MM-YYYY');
 		});
 
 		it('should wrap literal text before dynamic segment', () => {
-			const result = extractMomentFormatFromPattern('Weekly-{{date:GGGG-[W]WW}}');
-			expect(result).toBe('[Weekly-]GGGG-[W]WW');
+			const result = extractMomentFormatFromPattern(
+				'Weekly-{{date:gggg-[W]ww}}',
+			);
+			expect(result).toBe('[Weekly-]gggg-[W]ww');
 		});
 
 		it('should wrap literal text after dynamic segment', () => {
-			const result = extractMomentFormatFromPattern('{{date:YYYY-MM-DD}}-note');
+			const result = extractMomentFormatFromPattern(
+				'{{date:YYYY-MM-DD}}-note',
+			);
 			expect(result).toBe('YYYY-MM-DD[-note]');
 		});
 
@@ -427,7 +456,9 @@ describe('utils.ts', () => {
 		});
 
 		it('should handle both before and after literal text', () => {
-			const result = extractMomentFormatFromPattern('prefix-{{date:YYYY}}-suffix');
+			const result = extractMomentFormatFromPattern(
+				'prefix-{{date:YYYY}}-suffix',
+			);
 			expect(result).toBe('[prefix-]YYYY[-suffix]');
 		});
 	});
@@ -436,7 +467,7 @@ describe('utils.ts', () => {
 		it('should parse {{date}} with default format', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseDynamicDatesInString('{{date}}', date);
-			expect(result).toBe('2024-03-15');
+			expect(result).toBe('2024-W11');
 		});
 
 		it('should parse {{date:FORMAT}} with custom format', () => {
@@ -447,16 +478,20 @@ describe('utils.ts', () => {
 
 		it('should handle multiple dynamic segments', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseDynamicDatesInString('Month-{{date:MM}}-Week-{{date:WW}}', date);
+			const result = parseDynamicDatesInString(
+				'Month-{{date:MM}}-Week-{{date:WW}}',
+				date,
+			);
 			expect(result).toMatch(/Month-03-Week-\d+/);
 		});
 
 		it('should preserve literal text', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseDynamicDatesInString('Notes-{{date:GGGG-[W]WW}}', date);
-			// Mock moment implementation returns "2024-11W" instead of "2024-W11"
-			expect(result).toContain('Notes-2024');
-			expect(result).toContain('W');
+			const result = parseDynamicDatesInString(
+				'Notes-{{date:gggg-[W]ww}}',
+				date,
+			);
+			expect(result).toBe('Notes-2024-W11');
 		});
 
 		it('should handle whitespace in segments', () => {
@@ -488,7 +523,10 @@ describe('utils.ts', () => {
 
 		it('should replace {{current_date}} with current date', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseJournalsVariables('Date: {{current_date}}', date);
+			const result = parseJournalsVariables(
+				'Date: {{current_date}}',
+				date,
+			);
 			expect(result).toBe('Date: 2024-03-15');
 		});
 
@@ -496,9 +534,11 @@ describe('utils.ts', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseJournalsVariables(
 				'{{start_date}} to {{end_date}} - Week {{index}}',
-				date
+				date,
 			);
-			expect(result).toMatch(/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2} - Week \d+/);
+			expect(result).toMatch(
+				/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2} - Week \d+/,
+			);
 		});
 
 		it('should handle whitespace in variables', () => {
@@ -509,7 +549,11 @@ describe('utils.ts', () => {
 
 		it('should use custom format', () => {
 			const date = new Date(2024, 2, 15);
-			const result = parseJournalsVariables('{{start_date}}', date, 'YYYY/MM');
+			const result = parseJournalsVariables(
+				'{{start_date}}',
+				date,
+				'YYYY/MM',
+			);
 			expect(result).toMatch(/\d{4}\/\d{2}/);
 		});
 	});

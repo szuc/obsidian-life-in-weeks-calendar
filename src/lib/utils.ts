@@ -2,6 +2,7 @@ import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
 import { moment } from 'obsidian';
+import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();
@@ -226,7 +227,7 @@ export function weekStartsOnIndexToString(
  * Converts an array of TFile objects into a Record with date-formatted keys.
  * Handles both static Moment.js format patterns and dynamic patterns with {{date:FORMAT}} segments.
  * Only includes files whose names can be parsed as valid dates using the provided pattern.
- * @param fileNamePattern - Moment.js format pattern for parsing file names (e.g., "YYYY-WW" or "Weekly-{{date:GGGG-[W]WW}}")
+ * @param fileNamePattern - Moment.js format pattern for parsing file names (e.g., "YYYY-WW" or "Weekly-{{date:gggg-[W]ww}}")
  * @param weekStartDay - Day of the week that weeks start on (e.g., "Monday", "Sunday")
  * @param files - Array of TFile objects to process
  * @returns Record with date keys in the format `week-YYYY-MM-DDT00:00:00+HH:MM`, corrected for week start day
@@ -236,23 +237,15 @@ export function createFilesRecord(
 	weekStartDay: string,
 	files: TFile[],
 ): Record<string, TFile> | undefined {
-	console.debug('Creating files record', files);
 	const record: Record<string, TFile> = {};
 	// For each file see if the filename converts to a moment date using the user defined filename pattern
 	files.forEach((file) => {
 		// filename pattern might be pure moment format or might contain dynamic segments
-		console.debug(
-			`Processing file ${file.path} with pattern ${fileNamePattern}`,
-		);
 		const momentFormat = isStringDynamic(fileNamePattern)
 			? extractMomentFormatFromPattern(fileNamePattern)
 			: fileNamePattern;
-		console.debug(
-			`Extracted moment format for file ${file.path}:`,
-			momentFormat,
-		);
 		const momentObject = moment(file.basename, momentFormat, true);
-		console.debug(`Parsed moment for file ${file.path}:`, momentObject);
+
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
 				`[week-]YYYY-MM-DDT00:00:00${momentObject.format('Z')}`,
@@ -262,7 +255,6 @@ export function createFilesRecord(
 			record[correctedKey] = file;
 		}
 	});
-	console.debug('Created files record', record);
 	return record;
 }
 
@@ -325,7 +317,7 @@ export function getRootFolderOfFirstDynamicSegment(folderPath: string): string {
  *
  * @param folderPath - The folder path containing dynamic segments to parse
  * @param date - The date to use for replacing dynamic segments
- * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'YYYY-MM-DD')
+ * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'gggg-[W]ww')
  * @returns The folder path with all dynamic segments replaced with formatted date values
  * @example
  * parseDynamicFolderPath("Journals/{{date:YYYY}}/{{date:MM}}", new Date(2024, 2, 15))
@@ -337,7 +329,7 @@ export function getRootFolderOfFirstDynamicSegment(folderPath: string): string {
 export function parseDynamicFolderPath(
 	folderPath: string,
 	date: Date,
-	defaultFormat: string = 'YYYY-MM-DD',
+	defaultFormat: string = DEFAULT_SETTINGS.fileNamePattern,
 ): string {
 	if (!isStringDynamic(folderPath)) return folderPath;
 	const parsedDates = parseDynamicDatesInString(
@@ -368,16 +360,16 @@ export function isStringDynamic(stringSegment: string): boolean {
 
 /**
  * Extracts the Moment.js format pattern from a file name pattern containing dynamic segments.
- * Converts patterns like "Weekly-{{date:GGGG-[W]WW}}" to "[Weekly-]GGGG-[W]WW" for use with moment parsing.
+ * Converts patterns like "Weekly-{{date:gggg-[W]ww}}" to "[Weekly-]gggg-[W]ww" for use with moment parsing.
  *
- * @param fileNamePattern - The file name pattern to extract from (e.g., "Weekly-{{date:GGGG-[W]WW}}")
+ * @param fileNamePattern - The file name pattern to extract from (e.g., "Weekly-{{date:gggg-[W]ww}}")
  * @returns The extracted Moment.js format string with literal text wrapped in brackets
  * @example
  * extractMomentFormatFromPattern("{{date:DD-MM-YYYY}}")
  * // returns "DD-MM-YYYY"
  * @example
- * extractMomentFormatFromPattern("Weekly-{{date:GGGG-[W]WW}}")
- * // returns "[Weekly-]GGGG-[W]WW"
+ * extractMomentFormatFromPattern("Weekly-{{date:gggg-[W]ww}}")
+ * // returns "[Weekly-]gggg-[W]ww"
  * @example
  * extractMomentFormatFromPattern("YYYY-WW")
  * // returns "[YYYY-WW]" (wraps literal text since no dynamic segment found)
@@ -415,7 +407,7 @@ export function extractMomentFormatFromPattern(
  * Supports multiple dynamic segments in one string and preserves literal text between them.
  * @param dynamicString - The string containing dynamic date segments to parse
  * @param date - The date to use for replacing dynamic segments
- * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'YYYY-MM-DD')
+ * @param defaultFormat - The default Moment.js format to use if not specified in the segment (defaults to 'gggg-[W]ww')
  * @returns The string with all {{date}} and {{date:FORMAT}} segments replaced with formatted date values
  * @example
  * parseDynamicDatesInString("{{date:YYYY}}", new Date(2024, 2, 15))
@@ -424,7 +416,7 @@ export function extractMomentFormatFromPattern(
  * parseDynamicDatesInString("{{date}}", new Date(2024, 2, 15))
  * // returns "2024-03-15" (using defaultFormat)
  * @example
- * parseDynamicDatesInString("Notes-{{date:GGGG-[W]WW}}", new Date(2024, 2, 15))
+ * parseDynamicDatesInString("Notes-{{date:gggg-[W]ww}}", new Date(2024, 2, 15))
  * // returns "Notes-2024-W11"
  * @example
  * parseDynamicDatesInString("Month-{{date:MM}}-Week-{{date:WW}}", new Date(2024, 2, 15))
@@ -433,7 +425,7 @@ export function extractMomentFormatFromPattern(
 export function parseDynamicDatesInString(
 	dynamicString: string,
 	date: Date,
-	defaultFormat: string = 'YYYY-MM-DD',
+	defaultFormat: string = DEFAULT_SETTINGS.fileNamePattern,
 ): string {
 	// Matches {{date}} or {{date:FORMAT}} with optional whitespace
 	// The 'g' flag enables global matching for multiple segments in one string

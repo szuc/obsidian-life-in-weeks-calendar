@@ -1,6 +1,10 @@
+// @ts-nocheck
 // Manual mock for obsidian module
-const momentMock = (date, format, strict) => {
-	const jsDate = date instanceof Date ? date : date ? new Date(date) : new Date();
+// Note: This file intentionally uses CommonJS format.
+// Jest manual mocks in __mocks__ folders require CommonJS format by default.
+const momentMock = (date, _format, _strict) => {
+	const jsDate =
+		date instanceof Date ? date : date ? new Date(date) : new Date();
 	return {
 		format: (formatStr) => {
 			const year = jsDate.getFullYear();
@@ -19,9 +23,11 @@ const momentMock = (date, format, strict) => {
 				.replace(/Z/g, `${sign}${hours}:${minutes}`)
 				.replace(/\[week-\]/g, 'week-')
 				.replace(/\[Weekly-\]/g, 'Weekly-')
-				.replace(/\[W\]/g, 'W')
 				.replace(/GGGG/g, String(year))
-				.replace(/WW/g, '11');
+				.replace(/gggg/g, String(year))
+				.replace(/WW/g, '11')
+				.replace(/ww/g, '11')
+				.replace(/\[W\]/g, 'W');
 		},
 		isValid: () => !isNaN(jsDate.getTime()),
 		startOf: (unit) => {

@@ -10,7 +10,8 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"test": "jest"
+		"test": "jest",
+		"test:coverage": "jest --coverage"
 	},
 	"keywords": [
 		"obsidian",

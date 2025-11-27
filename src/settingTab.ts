@@ -297,10 +297,6 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 * @param containerEl - The HTML element to append the settings to
 	 */
 	addPluginIntegrationSettings(containerEl: HTMLElement): void {
-		console.debug(
-			'_cachedJournalPluginSettings',
-			this._cachedJournalPluginSettings,
-		);
 		const isUsingDynamicFolderPath =
 			this.syncWithJournalNotesIsEnabled() &&
 			isStringDynamic(
@@ -318,7 +314,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setName(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Disabled: Use journals plugin settings'
-					: !!this._cachedJournalPluginSettings
+					: this._cachedJournalPluginSettings
 						? 'Use journals plugin settings'
 						: 'Journals weekly notes not enabled ⚠️',
 			)
