@@ -449,7 +449,6 @@ export function parseDynamicDatesInString(
  * Supported variables:
  * - {{start_date}} - First day of the week (formatted using defaultFormat)
  * - {{end_date}} - Last day of the week (formatted using defaultFormat)
- * - {{index}} - Week number of the year (1-52/53)
  * - {{current_date}} - The current date (formatted using defaultFormat)
  */
 export function parseJournalsVariables(
@@ -467,9 +466,6 @@ export function parseJournalsVariables(
 	);
 	result = result.replace(/{{\s*end_date\s*}}/g, () =>
 		endOfWeek.format(defaultFormat),
-	);
-	result = result.replace(/{{\s*index\s*}}/g, () =>
-		String(startOfWeek.week()),
 	);
 	result = result.replace(/{{\s*current_date\s*}}/g, () =>
 		moment(date).format(defaultFormat),

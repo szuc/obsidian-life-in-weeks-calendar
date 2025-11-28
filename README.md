@@ -47,6 +47,7 @@ Use [Moment.js date formatting](https://momentjs.com/docs/#/parsing/string-forma
 - `DD-MM-YYYY` - First date of the week, month, and year (e.g., `28-02-2025`)
 
 You can also use variable naming format in conjunction with proper moment.js syntax:
+
 - Example: `year-{{date:YYYY}}-week-{{date:ww}}` will resolve to `year-2025-week-23.md`
 
 **First day of the week**
@@ -58,10 +59,14 @@ Choose a file to use as a template for your new weekly notes. Newly created note
 **Periodic Notes Integration:**  
 Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
 
+Note: If you're using the Periodic Notes settings integration and you change settings in the Periodic Notes plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
+
 **Journals Plugin Integration:**  
 Optionally, this plugin can integrate with the Journals plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, note templates, and first day of the week will come from the Journals' settings.
 
-Note: most of the date-based custom variables used by Journals for folder paths are supported. Specifically, you can use `{{journal_name}}`, `{{date}}`, `{{start_date}}`, `{{end_date}}`, `{{index}}`, `{{current_date}}` in your folder path or file names.
+Most of the date-based custom variables used by Journals for folder paths are supported. Specifically, you can use `{{journal_name}}`, `{{date}}`, `{{start_date}}`, `{{end_date}}`, `{{current_date}}` in your folder path or file names.
+
+Note: If you're using the Journals settings integration and you change settings in the Journals plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
 
 ## Calendar Modes
 

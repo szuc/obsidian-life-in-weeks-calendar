@@ -374,7 +374,7 @@ describe('utils.ts', () => {
 
 		it('should handle multiple dynamic segments', () => {
 			const result = getRootFolderOfFirstDynamicSegment(
-				'Root/{{date}}/{{index}}',
+				'Root/{{date}}/{{start_date}}',
 			);
 			expect(result).toBe('Root');
 		});
@@ -515,12 +515,6 @@ describe('utils.ts', () => {
 			expect(result).toMatch(/Week: \d{4}-\d{2}-\d{2}/);
 		});
 
-		it('should replace {{index}} with week number', () => {
-			const date = new Date(2024, 2, 15);
-			const result = parseJournalsVariables('Week {{index}}', date);
-			expect(result).toMatch(/Week \d+/);
-		});
-
 		it('should replace {{current_date}} with current date', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseJournalsVariables(
@@ -533,12 +527,10 @@ describe('utils.ts', () => {
 		it('should handle multiple variables', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseJournalsVariables(
-				'{{start_date}} to {{end_date}} - Week {{index}}',
+				'{{start_date}} to {{end_date}}',
 				date,
 			);
-			expect(result).toMatch(
-				/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2} - Week \d+/,
-			);
+			expect(result).toMatch(/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/);
 		});
 
 		it('should handle whitespace in variables', () => {
