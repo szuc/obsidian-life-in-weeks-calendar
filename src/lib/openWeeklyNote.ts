@@ -4,8 +4,14 @@ import {
 	TFile,
 	type WorkspaceLeaf,
 	moment,
+	normalizePath,
 } from 'obsidian';
-import { dateToWeeklyNoteRecordKeyFormat } from './utils';
+import {
+	dateToWeeklyNoteRecordKeyFormat,
+	isStringDynamic,
+	parseDynamicFolderPath,
+	parseDynamicDatesInString,
+} from './utils';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /**
@@ -89,16 +95,35 @@ export const openWeeklyNoteFunction = async (
 	}
 
 	const momentObject = moment(date);
-	const filename = momentObject.format(
-		fileNamePattern || DEFAULT_SETTINGS.fileNamePattern,
-	);
-	const filePath = folderPath
-		? `${folderPath}/${filename}.md`
-		: `${filename}.md`;
+	let filename = '';
 
-	if (folderPath) {
+	// filenames might be pure moment formats, e.g., "YYYY-WW" or might contain dynamic segments
+	// like "Weekly-{{date:gggg-[W]ww}}". We handle each differently.
+	if (isStringDynamic(fileNamePattern)) {
+		filename = parseDynamicDatesInString(
+			fileNamePattern,
+			date,
+			DEFAULT_SETTINGS.fileNamePattern,
+		);
+	} else {
+		// Pure moment format - no dynamic segments
+		filename = momentObject.format(
+			fileNamePattern || DEFAULT_SETTINGS.fileNamePattern,
+		);
+	}
+
+	// Paths might use dynamic segments like {{date}} which need to be resolved
+	const parsedFolderPath = parseDynamicFolderPath(folderPath, date);
+
+	const filePath = normalizePath(
+		parsedFolderPath
+			? `${parsedFolderPath}/${filename}.md`
+			: `${filename}.md`,
+	);
+
+	if (parsedFolderPath) {
 		// Ensure the folder exists. Creates it. Ignore errors if it already exists.
-		await app.vault.createFolder(folderPath).catch(() => {});
+		await app.vault.createFolder(parsedFolderPath).catch(() => {});
 	}
 
 	let weeklyNote: TFile | undefined =

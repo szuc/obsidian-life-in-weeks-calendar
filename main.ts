@@ -174,6 +174,7 @@ export default class LifeCalendarPlugin extends Plugin {
 		}
 
 		const weeksSettings = journalsPlugin.journals?.find(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(j: any) => j?.type === 'week',
 		);
 
@@ -184,27 +185,54 @@ export default class LifeCalendarPlugin extends Plugin {
 
 		const weekStartDay: number | undefined =
 			journalsPlugin.calendarSettings?.dow;
-		const fileNamePattern: string | undefined = weeksSettings.dateFormat;
+		const fileNamePattern: string | undefined =
+			weeksSettings.config?.value?.nameTemplate;
 		const folderPath: string | undefined =
 			weeksSettings.config?.value?.folder;
 		const templatePath: string | undefined =
 			weeksSettings.config?.value?.templates?.[0];
+		const dateFormat = weeksSettings.config?.value?.dateFormat;
+
+		// If the folder path contains {{journal_name}} the replace that with weekSettings.name
+		// There are other template variables but this is the only one we can resolve here
+		const resolvedFolderPath = folderPath
+			? folderPath.replace(
+					'{{journal_name}}',
+					weeksSettings.name || 'Weekly',
+				)
+			: '';
+
+		// Journals plugin has a default date format option. We can convert
+		// {{date}} to {{date:FORMAT}} in folderPath and fileNamePattern now rather than
+		// passing the default through the entire codebase.
+		const dateFormatToken = dateFormat.trim() ? `:${dateFormat}` : '';
+		const fileNamePatternWithDateFormat = fileNamePattern
+			? fileNamePattern.replace('{{date}}', `{{date${dateFormatToken}}}`)
+			: '';
+		const folderPathWithDateFormat = resolvedFolderPath
+			? resolvedFolderPath.replace(
+					'{{date}}',
+					`{{date${dateFormatToken}}}`,
+				)
+			: '';
 
 		return {
 			weekStartDay: weekStartsOnIndexToString(weekStartDay) || '',
-			fileNamePattern: fileNamePattern || '',
-			folderPath: folderPath || '',
+			fileNamePattern: fileNamePatternWithDateFormat || '',
+			folderPath: folderPathWithDateFormat || '',
 			templatePath: templatePath || '',
+			dateFormat: dateFormat || '',
 		};
 	}
 
 	/**
-   * Retrieves weekly note settings from the 'Periodic Notes' plugin if it's installed and 
-  configured.
-   * This is used for integration to help locate weekly notes.
+   * Retrieves weekly note settings from the 'Periodic Notes' plugin if it's installed 
+   * and configured. Gets the week start day from the Calendar plugin if available.
+   * (Both 'Periodic Notes' and 'Calendar' plugins are by the same author.)
    *
    * @returns An object with weekly settings if found, otherwise undefined.
    * The returned object contains:
+   * - `weekStartDay`: The configured start day of the week (e.g., 'sunday', 'monday').
    * - `fileNamePattern`: The date format pattern for weekly note file names.
    * - `folderPath`: The folder where weekly notes are stored.
    * - `templatePath`: The template file path for new weekly notes.
@@ -212,7 +240,7 @@ export default class LifeCalendarPlugin extends Plugin {
    not enabled.
    */
 	periodicNotesPluginWeeklySettings():
-		| Omit<IntegrationSettings, 'weekStartDay'>
+		| Omit<IntegrationSettings, 'dateFormat'>
 		| undefined {
 		const periodicNotesSettings =
 			// @ts-ignore
@@ -227,6 +255,7 @@ export default class LifeCalendarPlugin extends Plugin {
 			return undefined;
 		}
 		return {
+			weekStartDay: this.getWeekStartsOnOptionFromCalendar() || '',
 			fileNamePattern: weeklySettings.format || '',
 			folderPath: weeklySettings.folder || '',
 			templatePath: weeklySettings.template || '',

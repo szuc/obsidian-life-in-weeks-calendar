@@ -8,7 +8,7 @@ import svelteParser from 'svelte-eslint-parser';
 export default [
 	js.configs.recommended,
 	{
-		ignores: ['node_modules/', 'main.js'],
+		ignores: ['node_modules/', 'main.js', 'coverage/'],
 	},
 	{
 		files: ['**/*.ts', '**/*.js'],
@@ -64,6 +64,18 @@ export default [
 			globals: {
 				...globals.node,
 			},
+		},
+	},
+	{
+		files: ['**/*.test.ts', '**/*.spec.ts'],
+		languageOptions: {
+			globals: {
+				...globals.node,
+				...globals.jest,
+			},
+		},
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'off',
 		},
 	},
 ];

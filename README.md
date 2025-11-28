@@ -21,18 +21,34 @@ Enter the numbers of years you expect to live.
 **Calendar View Mode:**  
 Choose how you'd like the calendar displayed, either "Standard" or "Decades" (more details on each of these below).
 
-**View Location:**  
-Sets which panel a new calendar will be opened in when you use the "Open Life in Weeks Calendar" ribbon button or command pallet option.
+**View Location:**
+Sets which panel a new calendar will be opened in when you use the "Open Life in Weeks Calendar" ribbon button or command palette option.
 
 **Weekly note folder location**
+
 Set the folder where your weekly notes will be stored. Select from existing folders.
 
+- You can create sub-folders within your weekly notes folder using date-based variables in the form of `{{date:format}}`
+- Example: Setting your folder as `weekly-notes/{{date:YYYY}}` will organize your notes into yearly sub-folders
+
+**Important performance consideration:** It is strongly recommended to keep your weekly notes in a statically named subfolder rather than directly in your vault root or in a series of dynamically named folders. This improves scanning performance and reduces the number of files the plugin needs to check.
+
+- ❌ Don't use: `/` (the root folder) or `/{{date:YYYY}}` (parallel yearly folders)
+- ✓ Do use: `/weekly-notes` (a dedicated folder)
+
 **Weekly note file naming pattern**
+
+Weekly note filenames must resolve to uniquely identifiable weeks (e.g., contain the year and the week number, or contain the year, month, and week start day).
+
 Use [Moment.js date formatting](https://momentjs.com/docs/#/parsing/string-format/) patterns for file names. Common patterns include:
 
-- `gggg-[W]ww` names files with year and week number (e.g. 2025-W12).
-- `YYYY-MM-DD` names the file with the year, month, and first date of the week (e.g 2025-02-28).
-- `DD-MM-YYYY` names the file with the first date of the week, month, and year (e.g. 28-02-2025).
+- `gggg-[W]ww` - Year and week number (e.g., `2025-W12`)
+- `YYYY-MM-DD` - Year, month, and first date of the week (e.g., `2025-02-28`)
+- `DD-MM-YYYY` - First date of the week, month, and year (e.g., `28-02-2025`)
+
+You can also use variable naming format in conjunction with proper moment.js syntax:
+
+- Example: `year-{{date:YYYY}}-week-{{date:ww}}` will resolve to `year-2025-week-23.md`
 
 **First day of the week**
 Set the first day of the week. Defaults to Monday.
@@ -43,22 +59,28 @@ Choose a file to use as a template for your new weekly notes. Newly created note
 **Periodic Notes Integration:**  
 Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
 
+Note: If you're using the Periodic Notes settings integration and you change settings in the Periodic Notes plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
+
 **Journals Plugin Integration:**  
-Optionally, this plugin can integrate with the Journals plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Journals' settings.
+Optionally, this plugin can integrate with the Journals plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, note templates, and first day of the week will come from the Journals' settings.
+
+Most of the date-based custom variables used by Journals for folder paths are supported. Specifically, you can use `{{journal_name}}`, `{{date}}`, `{{start_date}}`, `{{end_date}}`, `{{current_date}}` in your folder path or file names.
+
+Note: If you're using the Journals settings integration and you change settings in the Journals plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
 
 ## Calendar Modes
 
 ### Standard View
 
-![Logo](./assets/life_in_weeks-basic.png)
+![standard view screenshot](./assets/life_in_weeks-basic.png)
 
-Displays your life in a grid with each cell representing a week in your life. Each week you've been alive is filled in. Each row is fifty weeks long representing a year in your life. This view mode is responsive and collapses to shorted row lengths in smaller screens or sidebar panels. This is the traditional view for a life in weeks style calendar.
+Displays your life in a grid with each cell representing a week in your life. Each week you've been alive is filled in. Each row is fifty weeks long representing a year in your life. This view mode is responsive and collapses to shorter row lengths in smaller screens or sidebar panels. This is the traditional view for a life in weeks style calendar.
 
 ### Decades View
 
-![Logo](./assets/life_in_weeks-yearly.png)
+![decades view screenshot](./assets/life_in_weeks-yearly.png)
 
-This view corrects an over simplification in the basic view. Years actually have fifty-two weeks and one day in a year, and depending on the year, will have either fifty-two or fifty-three week start dates. This view accounts for these variations and corrects varying year lengths. Each row accurately reflects a year, and decades of your life are grouped for easier visual parsing. Because row lengths are strictly accurate, this view is not responsive and is only practical for use in the main Obsidian view area.
+This view corrects an over simplification in the basic view. Years actually have fifty-two weeks and one day, and depending on the year, will have either fifty-two or fifty-three week start dates. This view accounts for these variations and corrects varying year lengths. Each row accurately reflects a year, and decades of your life are grouped for easier visual parsing. Because row lengths are strictly accurate, this view is not responsive and is only practical for use in the main Obsidian view area.
 
 ## Credits
 

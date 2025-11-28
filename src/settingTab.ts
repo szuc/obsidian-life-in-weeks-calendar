@@ -1,14 +1,12 @@
 import LifeCalendarPlugin from 'main';
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, normalizePath, PluginSettingTab, Setting } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
 import {
 	dateToYYYYMMDD,
 	isValidDate,
 	isValidLifespan,
-	isValidFileNamePattern,
-	isValidPath,
 	isValidFileName,
-	normalizeFolderPath,
+	isStringDynamic,
 } from 'src/lib/utils';
 import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 
@@ -151,6 +149,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addBirthdateSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Birth date')
 			.setDesc('Your date of birth')
 			.addText((text) => {
@@ -200,6 +199,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addLifespanSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Projected lifespan (years)')
 			.setDesc('How many years you expect to live (1 to 200)')
 			.addText((text) => {
@@ -252,6 +252,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addCalendarModeSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Calendar view mode')
 			.setDesc('Standard mode is better for sidebar or mobile views.')
 			.addDropdown((dropdown) =>
@@ -274,6 +275,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addViewLocationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('View location')
 			.setDesc(
 				'Close any existing views for location changes to take effect.',
@@ -299,21 +301,36 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 * @param containerEl - The HTML element to append the settings to
 	 */
 	addPluginIntegrationSettings(containerEl: HTMLElement): void {
+		const isUsingDynamicFolderPath =
+			this.syncWithJournalNotesIsEnabled() &&
+			isStringDynamic(
+				this._cachedJournalPluginSettings?.folderPath || '',
+			);
+		const isUsingDynamicFileNamePattern =
+			this.syncWithJournalNotesIsEnabled() &&
+			isStringDynamic(
+				this._cachedJournalPluginSettings?.fileNamePattern || '',
+			);
 		// Setting to sync with the Journals plugin.
 		// The name and description change if the Journals plugin is not detected.
 		// It is disabled if syncing with Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Disabled: Use journals plugin settings'
-					: !!this._cachedJournalPluginSettings
+					: this._cachedJournalPluginSettings
 						? 'Use journals plugin settings'
 						: 'Journals weekly notes not enabled ⚠️',
 			)
 			.setDesc(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Using periodic notes plugin settings.'
-					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
+					: isUsingDynamicFolderPath || isUsingDynamicFileNamePattern
+						? `⚠️ Warning: Your journals plugin weekly note folder or filename pattern contains dynamic segments. 
+						Some Journals custom variables are not supported e.g. {{note_name}}, {{title}}, {{time}}
+						— use at your own risk.`
+						: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -334,6 +351,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// The name and description change if the Periodic Notes plugin is not detected.
 		// It is disabled if syncing with Journals is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				this.syncWithJournalNotesIsEnabled()
 					? 'Disabled: Use periodic notes plugin settings'
@@ -371,58 +389,38 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for weekly note folder location.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note folder location`,
 			)
 			.setDesc(
 				this.isOverriddenByOtherPlugin()
 					? 'Using settings from another plugin.'
-					: 'Folder path where weekly notes are stored. Leave blank for root directory.',
+					: `Path to your weekly notes folder. Use forward slash / for vault root.
+					You can use dynamic segments in sub-folders in the format {{date:moment_syntax}}
+					e.g. weekly-notes/{{date:YYYY}}/{{date:MM}}.`,
 			)
 			.addSearch((search) => {
 				search
-					.setPlaceholder(
-						'E.g. weekly-notes or periodic-notes/weekly',
-					)
+					.setPlaceholder('E.g. weekly-notes or notes/weekly')
 					.setValue(this.plugin.settings.fileLocation);
 
-				// Validate and save on blur
+				// Normalize and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					this.plugin.settings.fileLocation = value;
-					const normalized = normalizeFolderPath(value);
-					const invalidPath = !isValidPath(normalized);
 
-					if (invalidPath) {
-						if (search.inputEl.parentElement) {
-							this.createErrorMessageElement(
-								search.inputEl.parentElement,
-								'setting-filepath-error',
-								'Please enter a valid folder path.',
-							);
-						}
-						return;
-					} else {
-						const existingError = document.getElementById(
-							'setting-filepath-error',
+					const normalized = normalizePath(value);
+					search.inputEl.value = normalized;
+					this.plugin.settings.fileLocation = normalized;
+
+					try {
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+					} catch (error) {
+						console.error(
+							'Failed to save fileLocation setting:',
+							error instanceof Error ? error.message : error,
 						);
-						if (existingError) {
-							existingError.remove();
-						}
-
-						// Update input to show normalized path
-						search.inputEl.value = normalized;
-						this.plugin.settings.fileLocation = normalized;
-
-						try {
-							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
-						} catch (error) {
-							console.error(
-								'Failed to save fileLocation setting:',
-								error instanceof Error ? error.message : error,
-							);
-						}
 					}
 				});
 
@@ -433,13 +431,15 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for weekly note file naming pattern.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
 			)
 			.setDesc(
 				this.isOverriddenByOtherPlugin()
 					? 'Using settings from another plugin.'
-					: 'Enter a moment.js date format or leave blank for default gggg-[W]ww.',
+					: `Enter a moment.js date format or leave blank for default gggg-[W]ww. 
+					Filenames must resolve to uniquely identifiable weeks.`,
 			)
 			.addText((text) => {
 				text.inputEl.type = 'text';
@@ -450,43 +450,25 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				text.inputEl.addEventListener('blur', async () => {
 					const value = text.inputEl.value;
-					const invalidPattern = !isValidFileNamePattern(
-						value.trim(),
-					);
-
-					if (invalidPattern) {
-						if (text.inputEl.parentElement) {
-							this.createErrorMessageElement(
-								text.inputEl.parentElement,
-								'setting-filename-error',
-								'Please enter a valid file naming pattern.',
-							);
-						}
-						return;
-					} else {
-						const existingError = document.getElementById(
-							'setting-filename-error',
+					const normalized = normalizePath(value);
+					this.plugin.settings.fileNamePattern = normalized;
+					try {
+						await this.plugin.saveSettings();
+						this.plugin.refreshLifeCalendarView();
+					} catch (error) {
+						console.error(
+							'Failed to save fileNamePattern setting:',
+							error instanceof Error ? error.message : error,
 						);
-						if (existingError) {
-							existingError.remove();
-						}
-						this.plugin.settings.fileNamePattern = value;
-						try {
-							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
-						} catch (error) {
-							console.error(
-								'Failed to save fileNamePattern setting:',
-								error instanceof Error ? error.message : error,
-							);
-						}
 					}
+					// }
 				});
 			});
 
 		// Setting for the first day of the week.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}First day of the week`,
 			)
@@ -516,6 +498,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for the weekly note template file.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note template`,
 			)
@@ -532,6 +515,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
+
 					const invalidPattern = !isValidFileName(value);
 
 					if (invalidPattern) {
@@ -574,6 +558,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addConfirmationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Confirm before creating weekly note')
 			.setDesc('Require confirmation before creating a new weekly note.')
 			.addToggle((toggle) =>

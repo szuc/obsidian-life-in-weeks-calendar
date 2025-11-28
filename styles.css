@@ -44,6 +44,15 @@
 }
 
 /*
+ * Settings page fixes
+*/
+.lwc__setting-item {
+	.setting-item-control {
+		flex: 1 0 auto;
+	}
+}
+
+/*
  * Component styles derived from custom variables
 */
 
