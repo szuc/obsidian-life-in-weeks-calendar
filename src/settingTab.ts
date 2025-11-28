@@ -149,6 +149,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addBirthdateSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Birth date')
 			.setDesc('Your date of birth')
 			.addText((text) => {
@@ -198,6 +199,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addLifespanSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Projected lifespan (years)')
 			.setDesc('How many years you expect to live (1 to 200)')
 			.addText((text) => {
@@ -250,6 +252,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addCalendarModeSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Calendar view mode')
 			.setDesc('Standard mode is better for sidebar or mobile views.')
 			.addDropdown((dropdown) =>
@@ -272,6 +275,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addViewLocationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('View location')
 			.setDesc(
 				'Close any existing views for location changes to take effect.',
@@ -311,6 +315,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// The name and description change if the Journals plugin is not detected.
 		// It is disabled if syncing with Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Disabled: Use journals plugin settings'
@@ -346,6 +351,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// The name and description change if the Periodic Notes plugin is not detected.
 		// It is disabled if syncing with Journals is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				this.syncWithJournalNotesIsEnabled()
 					? 'Disabled: Use periodic notes plugin settings'
@@ -383,6 +389,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for weekly note folder location.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note folder location`,
 			)
@@ -424,6 +431,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for weekly note file naming pattern.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note file naming pattern`,
 			)
@@ -460,6 +468,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for the first day of the week.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}First day of the week`,
 			)
@@ -489,6 +498,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		// Setting for the weekly note template file.
 		// This setting is disabled if syncing with Journals or Periodic Notes is enabled.
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName(
 				`${this.isOverriddenByOtherPlugin() ? 'Disabled: ' : ''}Weekly note template`,
 			)
@@ -505,10 +515,8 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 				// Validate and save on blur
 				search.inputEl.addEventListener('blur', async () => {
 					const value = search.inputEl.value;
-					const normalized = normalizePath(value);
-					search.inputEl.value = normalized;
 
-					const invalidPattern = !isValidFileName(normalized);
+					const invalidPattern = !isValidFileName(value);
 
 					if (invalidPattern) {
 						if (search.inputEl.parentElement) {
@@ -550,6 +558,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	addConfirmationSetting(containerEl: HTMLElement): void {
 		new Setting(containerEl)
+			.setClass('lwc__setting-item')
 			.setName('Confirm before creating weekly note')
 			.setDesc('Require confirmation before creating a new weekly note.')
 			.addToggle((toggle) =>

@@ -1,7 +1,7 @@
 import { isThisWeek, getDay, nextDay } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
-import { moment } from 'obsidian';
+import { moment, normalizePath } from 'obsidian';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /** Global reference to the current date. Mutated by updateToday */
@@ -282,10 +282,11 @@ export function isValidLifespan(
 /**
  * Validates that a file path is valid and ends with '.md'.
  * @param path - The file path to validate
- * @returns `true` if the file path is valid and ends with '.md', `false` otherwise
+ * @returns `true` if the file path is valid and ends with '.md' or is empty
  */
 export function isValidFileName(path: string): boolean {
-	return path.trim() === '' || path.endsWith('.md');
+	if (path.trim() === '') return true;
+	return normalizePath(path).endsWith('.md');
 }
 
 /**
@@ -372,7 +373,7 @@ export function isStringDynamic(stringSegment: string): boolean {
  * // returns "[Weekly-]gggg-[W]ww"
  * @example
  * extractMomentFormatFromPattern("YYYY-WW")
- * // returns "[YYYY-WW]" (wraps literal text since no dynamic segment found)
+ * // returns input "YYYY-WW" since no dynamic segment found
  */
 export function extractMomentFormatFromPattern(
 	fileNamePattern: string,
@@ -397,13 +398,14 @@ export function extractMomentFormatFromPattern(
 		return `${wrappedBefore}${dynamicSegmentMatch[1]}${wrappedAfter}`;
 	}
 
-	// No dynamic segment found - wrap the entire pattern in brackets as literal text
-	return `[${fileNamePattern}]`;
+	// No dynamic segment found
+	return fileNamePattern;
 }
 
 /**
  * Replaces all date dynamic segments in a string with formatted date values.
- * Dynamic segments can be {{date}} (uses default format) or {{date:FORMAT}} (uses specified Moment.js format).
+ * Dynamic segments can be {{date}} (uses default format), {{date:FORMAT}} (uses specified Moment.js format),
+ * or {{date:}} (empty/whitespace format, uses default format).
  * Supports multiple dynamic segments in one string and preserves literal text between them.
  * @param dynamicString - The string containing dynamic date segments to parse
  * @param date - The date to use for replacing dynamic segments
@@ -414,7 +416,10 @@ export function extractMomentFormatFromPattern(
  * // returns "2024"
  * @example
  * parseDynamicDatesInString("{{date}}", new Date(2024, 2, 15))
- * // returns "2024-03-15" (using defaultFormat)
+ * // returns "2024-W11" (using defaultFormat 'gggg-[W]ww')
+ * @example
+ * parseDynamicDatesInString("{{date:}}", new Date(2024, 2, 15))
+ * // returns "2024-W11" (empty format, corrected using defaultFormat)
  * @example
  * parseDynamicDatesInString("Notes-{{date:gggg-[W]ww}}", new Date(2024, 2, 15))
  * // returns "Notes-2024-W11"
@@ -427,13 +432,15 @@ export function parseDynamicDatesInString(
 	date: Date,
 	defaultFormat: string = DEFAULT_SETTINGS.fileNamePattern,
 ): string {
-	// Matches {{date}} or {{date:FORMAT}} with optional whitespace
+	// Matches {{date}} or {{date:FORMAT}} or {{date:}} with optional whitespace
 	// The 'g' flag enables global matching for multiple segments in one string
-	const dynamicSegmentRegex = /{{\s*date(?::([^}]+))?\s*}}/g;
+	// Changed [^}]+ to [^}]* to allow empty format after colon
+	const dynamicSegmentRegex = /{{\s*date(?::([^}]*))?\s*}}/g;
 
 	// Replace all dynamic segments while preserving literal text between them
 	return dynamicString.replace(dynamicSegmentRegex, (_, format) => {
-		const momentFormat = format || defaultFormat;
+		// Trim and use default if format is undefined, empty, or only whitespace
+		const momentFormat = format?.trim() || defaultFormat;
 		return moment(date).format(momentFormat).trim();
 	});
 }

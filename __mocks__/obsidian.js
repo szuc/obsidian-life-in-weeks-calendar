@@ -62,7 +62,24 @@ class TFile {
 	}
 }
 
+/**
+ * Mock implementation of Obsidian's normalizePath function.
+ * Normalizes a path by:
+ * - Converting backslashes to forward slashes
+ * - Removing duplicate slashes
+ * - Removing leading/trailing slashes
+ */
+const normalizePath = (path) => {
+	if (!path || typeof path !== 'string') return '';
+
+	return path
+		.replace(/\\/g, '/') // Convert backslashes to forward slashes
+		.replace(/\/+/g, '/') // Remove duplicate slashes
+		.replace(/^\/|\/$/g, ''); // Remove leading/trailing slashes
+};
+
 module.exports = {
 	moment: momentMock,
 	TFile: TFile,
+	normalizePath: normalizePath,
 };

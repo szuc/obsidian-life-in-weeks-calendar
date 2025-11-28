@@ -205,7 +205,7 @@ export default class LifeCalendarPlugin extends Plugin {
 		// Journals plugin has a default date format option. We can convert
 		// {{date}} to {{date:FORMAT}} in folderPath and fileNamePattern now rather than
 		// passing the default through the entire codebase.
-		const dateFormatToken = dateFormat ? `:${dateFormat}` : '';
+		const dateFormatToken = dateFormat.trim() ? `:${dateFormat}` : '';
 		const fileNamePatternWithDateFormat = fileNamePattern
 			? fileNamePattern.replace('{{date}}', `{{date${dateFormatToken}}}`)
 			: '';

@@ -446,7 +446,7 @@ describe('utils.ts', () => {
 
 		it('should wrap entire pattern if no dynamic segment', () => {
 			const result = extractMomentFormatFromPattern('YYYY-WW');
-			expect(result).toBe('[YYYY-WW]');
+			expect(result).toBe('YYYY-WW');
 		});
 
 		it('should handle both before and after literal text', () => {
@@ -493,6 +493,12 @@ describe('utils.ts', () => {
 			const result = parseDynamicDatesInString('{{ date:YYYY }}', date);
 			// Whitespace inside {{ }} is trimmed, only the format is extracted
 			expect(result).toBe('2024');
+		});
+
+		it('should correct missing format {{date:}} with default format', () => {
+			const date = new Date(2024, 2, 15);
+			const result = parseDynamicDatesInString('{{date:}}', date);
+			expect(result).toBe('2024-W11');
 		});
 	});
 
