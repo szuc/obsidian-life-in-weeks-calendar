@@ -1,14 +1,10 @@
-// Mock date-fns functions
+// Mock only time-dependent functions from date-fns
 jest.mock('date-fns', () => ({
+	...jest.requireActual('date-fns'),
 	isThisWeek: jest.fn(),
-	getDay: jest.fn(),
-	nextDay: jest.fn(),
 }));
 
-// Mock obsidian module (uses __mocks__/obsidian.js)
-jest.mock('obsidian');
-
-import { isThisWeek, getDay, nextDay } from 'date-fns';
+import { isThisWeek } from 'date-fns';
 import type { TFile } from 'obsidian';
 import {
 	updateToday,
@@ -29,11 +25,9 @@ import {
 	extractMomentFormatFromPattern,
 	parseDynamicDatesInString,
 	parseJournalsVariables,
-} from './utils';
+} from '../utils';
 
 const mockIsThisWeek = isThisWeek as jest.MockedFunction<typeof isThisWeek>;
-const mockGetDay = getDay as jest.MockedFunction<typeof getDay>;
-const mockNextDay = nextDay as jest.MockedFunction<typeof nextDay>;
 
 describe('utils.ts', () => {
 	beforeEach(() => {
@@ -141,7 +135,9 @@ describe('utils.ts', () => {
 		it('should format date with timezone offset', () => {
 			const date = new Date(2024, 2, 15); // March 15, 2024
 			const result = dateToWeeklyNoteRecordKeyFormat(date);
-			expect(result).toMatch(/^week-2024-03-15T00:00:00[+-]\d{2}:\d{2}$/);
+			// Should start with week-2024-03-15T00:00:00 and end with timezone offset
+			expect(result.startsWith('week-2024-03-15T00:00:00')).toBe(true);
+			expect(result).toMatch(/[+-]\d{2}:\d{2}$/);
 		});
 
 		it('should throw error for invalid date', () => {
@@ -169,28 +165,26 @@ describe('utils.ts', () => {
 
 	describe('weeklyNoteKeyCorrection', () => {
 		it('should return unchanged key when day matches weekStartsOn', () => {
-			mockGetDay.mockReturnValue(1); // Monday
-			const key = 'week-2024-03-15T00:00:00+00:00';
+			// March 18, 2024 is a Monday
+			const key = 'week-2024-03-18T00:00:00+00:00';
 			const result = weeklyNoteKeyCorrection(key, 'Monday');
 			expect(result).toBe(key);
 		});
 
 		it('should return unchanged key when weekStartsOn is undefined', () => {
-			mockGetDay.mockReturnValue(3);
 			const key = 'week-2024-03-15T00:00:00+00:00';
 			const result = weeklyNoteKeyCorrection(key, 'invalid');
 			expect(result).toBe(key);
 		});
 
 		it('should correct key when day does not match weekStartsOn', () => {
-			mockGetDay.mockReturnValue(3); // Wednesday
-			const nextMonday = new Date(2024, 2, 18);
-			mockNextDay.mockReturnValue(nextMonday);
-
+			// March 15, 2024 is a Friday, should correct to next Monday (March 18)
 			const key = 'week-2024-03-15T00:00:00+00:00';
 			const result = weeklyNoteKeyCorrection(key, 'Monday');
 
-			expect(result).toMatch(/^week-2024-03-18T00:00:00/);
+			// Should correct to Monday, March 18, 2024 with system timezone
+			expect(result.startsWith('week-2024-03-18T00:00:00')).toBe(true);
+			expect(result).toMatch(/[+-]\d{2}:\d{2}$/);
 		});
 	});
 
@@ -477,12 +471,12 @@ describe('utils.ts', () => {
 		});
 
 		it('should handle multiple dynamic segments', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 is week 11
 			const result = parseDynamicDatesInString(
 				'Month-{{date:MM}}-Week-{{date:WW}}',
 				date,
 			);
-			expect(result).toMatch(/Month-03-Week-\d+/);
+			expect(result).toBe('Month-03-Week-11');
 		});
 
 		it('should preserve literal text', () => {
@@ -497,22 +491,24 @@ describe('utils.ts', () => {
 		it('should handle whitespace in segments', () => {
 			const date = new Date(2024, 2, 15);
 			const result = parseDynamicDatesInString('{{ date:YYYY }}', date);
-			// Mock preserves whitespace in the result
-			expect(result).toContain('2024');
+			// Whitespace inside {{ }} is trimmed, only the format is extracted
+			expect(result).toBe('2024');
 		});
 	});
 
 	describe('parseJournalsVariables', () => {
 		it('should replace {{start_date}} with week start', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 (Friday)
 			const result = parseJournalsVariables('Week: {{start_date}}', date);
-			expect(result).toMatch(/Week: \d{4}-\d{2}-\d{2}/);
+			// Week starts on Sunday, March 10, 2024
+			expect(result).toBe('Week: 2024-03-10');
 		});
 
 		it('should replace {{end_date}} with week end', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 (Friday)
 			const result = parseJournalsVariables('Week: {{end_date}}', date);
-			expect(result).toMatch(/Week: \d{4}-\d{2}-\d{2}/);
+			// Week ends on Saturday, March 16, 2024
+			expect(result).toBe('Week: 2024-03-16');
 		});
 
 		it('should replace {{current_date}} with current date', () => {
@@ -525,28 +521,31 @@ describe('utils.ts', () => {
 		});
 
 		it('should handle multiple variables', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 (Friday)
 			const result = parseJournalsVariables(
 				'{{start_date}} to {{end_date}}',
 				date,
 			);
-			expect(result).toMatch(/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/);
+			// Sunday March 10 to Saturday March 16
+			expect(result).toBe('2024-03-10 to 2024-03-16');
 		});
 
 		it('should handle whitespace in variables', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 (Friday)
 			const result = parseJournalsVariables('{{ start_date }}', date);
-			expect(result).toMatch(/\d{4}-\d{2}-\d{2}/);
+			// Week starts on Sunday, March 10, 2024
+			expect(result).toBe('2024-03-10');
 		});
 
 		it('should use custom format', () => {
-			const date = new Date(2024, 2, 15);
+			const date = new Date(2024, 2, 15); // March 15, 2024 (Friday)
 			const result = parseJournalsVariables(
 				'{{start_date}}',
 				date,
 				'YYYY/MM',
 			);
-			expect(result).toMatch(/\d{4}\/\d{2}/);
+			// Week starts on Sunday, March 10, 2024 formatted as YYYY/MM
+			expect(result).toBe('2024/03');
 		});
 	});
 });

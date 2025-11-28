@@ -6,7 +6,7 @@
 		"module": "ESNext",
 		"target": "ES2020",
 		"allowJs": true,
-		
+
 		// Strict Type Checking Options
 		"strict": true,
 		"noImplicitAny": true,
@@ -17,22 +17,22 @@
 		"noImplicitReturns": true,
 		"noImplicitThis": true,
 		"alwaysStrict": true,
-		
+
 		// Additional Strict Checks
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"exactOptionalPropertyTypes": true,
 		"noImplicitOverride": true,
-		
+
 		// Module Resolution
 		"moduleResolution": "node",
 		"importHelpers": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
-		
+
 		// Library Support
 		"lib": ["DOM", "ES2020"],
-		
+
 		// Additional Quality Options
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,

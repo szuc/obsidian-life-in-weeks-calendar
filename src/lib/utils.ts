@@ -434,7 +434,7 @@ export function parseDynamicDatesInString(
 	// Replace all dynamic segments while preserving literal text between them
 	return dynamicString.replace(dynamicSegmentRegex, (_, format) => {
 		const momentFormat = format || defaultFormat;
-		return moment(date).format(momentFormat);
+		return moment(date).format(momentFormat).trim();
 	});
 }
 
@@ -462,13 +462,13 @@ export function parseJournalsVariables(
 	const endOfWeek = moment(date).endOf('week');
 
 	result = result.replace(/{{\s*start_date\s*}}/g, () =>
-		startOfWeek.format(defaultFormat),
+		startOfWeek.format(defaultFormat).trim(),
 	);
 	result = result.replace(/{{\s*end_date\s*}}/g, () =>
-		endOfWeek.format(defaultFormat),
+		endOfWeek.format(defaultFormat).trim(),
 	);
 	result = result.replace(/{{\s*current_date\s*}}/g, () =>
-		moment(date).format(defaultFormat),
+		moment(date).format(defaultFormat).trim(),
 	);
 
 	return result;
