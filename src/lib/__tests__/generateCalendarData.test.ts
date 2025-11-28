@@ -497,8 +497,8 @@ describe('generateCalendarData.ts', () => {
 			);
 
 			// First group should have approximately 10 years * 52 weeks = ~520 weeks
-			expect(result[0].length).toBeGreaterThanOrEqual(500);
-			expect(result[0].length).toBeLessThanOrEqual(540);
+			expect(result[0].length).toBeGreaterThanOrEqual(520);
+			expect(result[0].length).toBeLessThanOrEqual(524);
 		});
 
 		it('should handle exact multiple of YEAR_GROUP_SIZE', () => {
