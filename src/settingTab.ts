@@ -9,6 +9,12 @@ import {
 	isStringDynamic,
 } from 'src/lib/utils';
 import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
+import { refreshLifeCalendarView } from 'src/lib/viewManagement';
+import {
+	weeklyPeriodicNotesPluginExists,
+	journalPluginWeeklySettings,
+} from 'src/lib/pluginIntegration';
+import type { IntegrationSettings } from 'src/lib/types';
 
 /**
  * Settings tab for the Life Calendar plugin.
@@ -18,9 +24,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/** Cache for plugin state to avoid repeated lookups during settings render */
 	private _cachedWeeklyPeriodicNotesExists: boolean | undefined;
-	private _cachedJournalPluginSettings?: ReturnType<
-		typeof LifeCalendarPlugin.prototype.journalPluginWeeklySettings
-	>;
+	private _cachedJournalPluginSettings: IntegrationSettings | undefined;
 	private _cachedSyncWithWeeklyNotes: boolean | undefined;
 	private _cachedSyncWithJournalNotes: boolean | undefined;
 	private _cachedIsOverridden: boolean | undefined;
@@ -37,9 +41,9 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	private computeSettingsCache(): void {
 		// Cache plugin existence checks (these involve plugin lookups)
 		this._cachedWeeklyPeriodicNotesExists =
-			this.plugin.weeklyPeriodicNotesPluginExists();
+			weeklyPeriodicNotesPluginExists(this.app);
 		this._cachedJournalPluginSettings =
-			this.plugin.journalPluginWeeklySettings();
+			journalPluginWeeklySettings(this.app);
 
 		// Cache computed sync states
 		this._cachedSyncWithWeeklyNotes =
@@ -96,7 +100,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		}
 		// Fallback to computed value (e.g., if called outside display())
 		return (
-			this.plugin.weeklyPeriodicNotesPluginExists() &&
+			weeklyPeriodicNotesPluginExists(this.app) &&
 			this.plugin.settings.syncWithWeeklyNotes
 		);
 	}
@@ -113,7 +117,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		}
 		// Fallback to computed value (e.g., if called outside display())
 		return (
-			!!this.plugin.journalPluginWeeklySettings() &&
+			!!journalPluginWeeklySettings(this.app) &&
 			this.plugin.settings.syncWithJournalNotes
 		);
 	}
@@ -177,7 +181,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							this.plugin.settings.birthdate = value;
 							try {
 								await this.plugin.saveSettings();
-								this.plugin.refreshLifeCalendarView();
+								refreshLifeCalendarView(this.app);
 							} catch (error) {
 								console.error(
 									'Failed to save birthdate setting:',
@@ -233,7 +237,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.projectedLifespan = value;
 						try {
 							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
+							refreshLifeCalendarView(this.app);
 						} catch (error) {
 							console.error(
 								'Failed to save lifespan setting:',
@@ -263,7 +267,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.calendarMode = value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					}),
 			);
 	}
@@ -289,7 +293,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.viewLocation = value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					}),
 			);
 	}
@@ -338,7 +342,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithJournalNotes = value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 						this.display(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
@@ -370,7 +374,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 						this.display(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
@@ -415,7 +419,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 					try {
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					} catch (error) {
 						console.error(
 							'Failed to save fileLocation setting:',
@@ -454,7 +458,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					this.plugin.settings.fileNamePattern = normalized;
 					try {
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					} catch (error) {
 						console.error(
 							'Failed to save fileNamePattern setting:',
@@ -491,7 +495,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.weekStartDay = value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					}),
 			);
 
@@ -537,7 +541,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.templatePath = value.trim();
 						try {
 							await this.plugin.saveSettings();
-							this.plugin.refreshLifeCalendarView();
+							refreshLifeCalendarView(this.app);
 						} catch (error) {
 							console.error(
 								'Failed to save templatePath setting:',
@@ -570,7 +574,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.confirmBeforeCreatingWeeklyNote =
 							value;
 						await this.plugin.saveSettings();
-						this.plugin.refreshLifeCalendarView();
+						refreshLifeCalendarView(this.app);
 					}),
 			);
 	}
