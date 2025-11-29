@@ -33,8 +33,12 @@ Set the folder where your weekly notes will be stored. Select from existing fold
 
 **Important performance consideration:** It is strongly recommended to keep your weekly notes in a statically named subfolder rather than directly in your vault root or in a series of dynamically named folders. This improves scanning performance and reduces the number of files the plugin needs to check.
 
-- ❌ Don't use: `/` (the root folder) or `/{{date:YYYY}}` (parallel yearly folders)
-- ✓ Do use: `/weekly-notes` (a dedicated folder)
+- ❌ Don't use:
+    - `/` - The vault root as your weekly note folder
+    - `{{date:YYYY}}` - Parallel dynamic folders at the root level
+- ✓ Do use:
+    - `weekly-notes` - A dedicated folder
+    - `weekly-notes/{{date:YYYY}}` - A dedicated folder with parallel sub-folders
 
 **Weekly note file naming pattern**
 
