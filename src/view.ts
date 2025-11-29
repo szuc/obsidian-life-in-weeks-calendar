@@ -11,6 +11,11 @@ import {
 	DEFAULT_SETTINGS,
 	VIEW_TYPE_LIFE_CALENDAR,
 } from './lib/calendar-constants';
+import { refreshLifeCalendarView } from 'src/lib/viewManagement';
+import {
+	journalPluginWeeklySettings,
+	periodicNotesPluginWeeklySettings,
+} from 'src/lib/pluginIntegration';
 
 /**
  * View class for the Life Calendar plugin.
@@ -40,7 +45,7 @@ export class LifeCalendarView extends ItemView {
 	 * Event handler called when files are created or deleted in the vault.
 	 * Triggers a refresh of all Life Calendar views to update weekly note indicators.
 	 */
-	onFileChange = (): void => this.plugin.refreshLifeCalendarView();
+	onFileChange = (): void => refreshLifeCalendarView(this.app);
 
 	/**
 	 * Returns the unique view type identifier for this view.
@@ -147,7 +152,7 @@ export class LifeCalendarView extends ItemView {
 	 */
 	private getJournalsPluginSettings() {
 		return this.plugin.settings.syncWithJournalNotes
-			? this.plugin.journalPluginWeeklySettings()
+			? journalPluginWeeklySettings(this.app)
 			: undefined;
 	}
 
@@ -157,7 +162,7 @@ export class LifeCalendarView extends ItemView {
 	 */
 	private getPeriodicNotesPluginSettings() {
 		return this.plugin.settings.syncWithWeeklyNotes
-			? this.plugin.periodicNotesPluginWeeklySettings()
+			? periodicNotesPluginWeeklySettings(this.app)
 			: undefined;
 	}
 
