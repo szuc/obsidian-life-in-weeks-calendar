@@ -1,4 +1,4 @@
-import { isThisWeek, getDay, nextDay } from 'date-fns';
+import { isThisWeek, getDay, nextDay, type Day } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
 import { moment, normalizePath } from 'obsidian';
@@ -477,6 +477,89 @@ export function parseJournalsVariables(
 	result = result.replace(/{{\s*current_date\s*}}/g, () =>
 		moment(date).format(defaultFormat).trim(),
 	);
+
+	return result;
+}
+
+/**
+ * Replaces template variables in a string with contextual values.
+ * Provides compatibility with Obsidian's core Templates plugin syntax.
+ * @param text - A string containing 0 or more template variables
+ * @param date - The date context to use for date/time formatting
+ * @param filename - The filename (without extension) to use for {{title}}
+ * @returns The string with all template variables replaced with their values
+ *
+ * Supported variables:
+ * - {{date}} - Date formatted as YYYY-MM-DD (default format)
+ * - {{date:FORMAT}} - Date formatted using custom Moment.js format
+ * - {{time}} - Time formatted as HH:mm (default format)
+ * - {{time:FORMAT}} - Time formatted using custom Moment.js format
+ * - {{title}} - The filename without extension
+ * - {{monday:FORMAT}} - The Monday of the week. Format required
+ * - {{tuesday:FORMAT}} - The Tuesday of the week. Format required
+ * - {{wednesday:FORMAT}} - The Wednesday of the week. Format required
+ * - {{thursday:FORMAT}} - The Thursday of the week. Format required
+ * - {{friday:FORMAT}} - The Friday of the week. Format required
+ * - {{saturday:FORMAT}} - The Saturday of the week. Format required
+ * - {{sunday:FORMAT}} - The Sunday of the week. Format required
+ */
+export function parseTemplateVariables(
+	text: string,
+	date: Date,
+	filename: string,
+): string {
+	let result = text;
+
+	// Default formats matching Obsidian Templates plugin
+	const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
+	const DEFAULT_TIME_FORMAT = 'HH:mm';
+
+	// Create moment object once for reuse
+	const momentDate = moment(date);
+
+	// Replace {{date}} and {{date:FORMAT}} variables
+	const dateRegex = /{{\s*date(?::([^}]*))?\s*}}/g;
+	result = result.replace(dateRegex, (_, format) => {
+		const momentFormat = format?.trim() || DEFAULT_DATE_FORMAT;
+		return momentDate.format(momentFormat).trim();
+	});
+
+	// Replace {{time}} and {{time:FORMAT}} variables
+	const timeRegex = /{{\s*time(?::([^}]*))?\s*}}/g;
+	result = result.replace(timeRegex, (_, format) => {
+		const momentFormat = format?.trim() || DEFAULT_TIME_FORMAT;
+		return momentDate.format(momentFormat).trim();
+	});
+
+	// Replace {{title}} variable
+	const titleRegex = /{{\s*title\s*}}/g;
+	result = result.replace(titleRegex, () => filename);
+
+	// Replace the {{WEEKDAY:FORMAT}} variables
+	// Define weekdays and their corresponding day indices (0=Sunday, 1=Monday, etc.)
+	const weekdays = [
+		'sunday',
+		'monday',
+		'tuesday',
+		'wednesday',
+		'thursday',
+		'friday',
+		'saturday',
+	];
+
+	// Replace each weekday variable
+	weekdays.forEach((weekday, dayIndex) => {
+		const weekdayRegex = new RegExp(`{{\\s*${weekday}:([^}]+)\\s*}}`, 'g');
+		result = result.replace(weekdayRegex, (_, format) => {
+			// If the date is already the target weekday, use it
+			// Otherwise, find the next instance of that weekday
+			const weekdayDate =
+				getDay(date) === dayIndex
+					? date
+					: nextDay(date, dayIndex as Day);
+			return moment(weekdayDate).format(format.trim()).trim();
+		});
+	});
 
 	return result;
 }

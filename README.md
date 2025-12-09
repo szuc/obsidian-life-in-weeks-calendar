@@ -72,6 +72,30 @@ Most of the date-based custom variables used by Journals for folder paths are su
 
 Note: If you're using the Journals settings integration and you change settings in the Journals plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
 
+## Template Variables
+
+When creating weekly notes from templates, the plugin automatically replaces special variables with contextual values. This feature is compatible with Obsidian's core Templates plugin syntax.
+
+### Supported Variables
+
+- **`{{date}}`** - The week's start date in `YYYY-MM-DD` format (e.g., `2024-03-10`)
+- **`{{date:FORMAT}}`** - The week's start date with a custom [Moment.js format](https://momentjs.com/docs/#/displaying/format/) (e.g., `{{date:MMMM Do, YYYY}}` becomes `March 10th, 2024`)
+- **`{{time}}`** - The current time in `HH:mm` format (e.g., `14:30`)
+- **`{{time:FORMAT}}`** - The current time with a custom [Moment.js format](https://momentjs.com/docs/#/displaying/format/) (e.g., `{{time:h:mm A}}` becomes `2:30 PM`)
+- **`{{title}}`** - The filename without the `.md` extension (e.g., if the file is `2024-W11.md`, `{{title}}` becomes `2024-W11`)
+- **`{{WEEKDAY:FORMAT}}`** - The date of a weekday in a the note's week. Format is required. Example: `{{monday:dddd YYYY-MM-DD}}` might become `Monday 2025-12-08`
+
+## Templater
+
+Alternatively, you can use the templar plugin to automatically generate note data. You will want to make date values in the Templater templates be relative to the note's week rather than the current date. Example, to get the Monday of a given week's note, use `<% tp.date.weekday("dddd YYYY-MM-DD", 0, tp.file.title, "YYYY-[W]WW") %>` which also becomes `Monday 2025-12-08` in a note titled `2025-W49`.
+
+### Important Notes
+
+- Date and time variables use the **week's start date** (based on your configured week start day), not the current date
+- This allows weekly notes to reflect the actual week they represent
+- Variables support whitespace (e.g., `{{ date }}` works the same as `{{date}}`)
+- Custom formats use [Moment.js formatting tokens](https://momentjs.com/docs/#/displaying/format/)
+
 ## Calendar Modes
 
 ### Standard View

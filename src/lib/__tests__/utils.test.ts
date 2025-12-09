@@ -25,6 +25,7 @@ import {
 	extractMomentFormatFromPattern,
 	parseDynamicDatesInString,
 	parseJournalsVariables,
+	parseTemplateVariables,
 } from '../utils';
 
 const mockIsThisWeek = isThisWeek as jest.MockedFunction<typeof isThisWeek>;
@@ -552,6 +553,199 @@ describe('utils.ts', () => {
 			);
 			// Week starts on Sunday, March 10, 2024 formatted as YYYY/MM
 			expect(result).toBe('2024/03');
+		});
+	});
+
+	describe('parseTemplateVariables', () => {
+		const testDate = new Date(2024, 2, 15, 14, 30, 45); // March 15, 2024, 14:30:45
+		const testFilename = 'Weekly-Note-2024-W11';
+
+		it('should replace {{date}} with default format', () => {
+			const result = parseTemplateVariables(
+				'Date: {{date}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('Date: 2024-03-15');
+		});
+
+		it('should replace {{date:FORMAT}} with custom format', () => {
+			const result = parseTemplateVariables(
+				'Date: {{date:YYYY/MM/DD}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('Date: 2024/03/15');
+		});
+
+		it('should replace {{time}} with default format', () => {
+			const result = parseTemplateVariables(
+				'Time: {{time}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('Time: 14:30');
+		});
+
+		it('should replace {{time:FORMAT}} with custom format', () => {
+			const result = parseTemplateVariables(
+				'Time: {{time:HH:mm:ss}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('Time: 14:30:45');
+		});
+
+		it('should replace {{title}} with filename', () => {
+			const result = parseTemplateVariables(
+				'# {{title}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('# Weekly-Note-2024-W11');
+		});
+
+		it('should handle multiple variables', () => {
+			const result = parseTemplateVariables(
+				'# {{title}}\nDate: {{date}}\nTime: {{time}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe(
+				'# Weekly-Note-2024-W11\nDate: 2024-03-15\nTime: 14:30',
+			);
+		});
+
+		it('should handle variables with whitespace', () => {
+			const result = parseTemplateVariables(
+				'{{ date }} / {{ time }} / {{ title }}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('2024-03-15 / 14:30 / Weekly-Note-2024-W11');
+		});
+
+		it('should handle empty format as default', () => {
+			const result = parseTemplateVariables(
+				'{{date:}} and {{time:}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('2024-03-15 and 14:30');
+		});
+
+		it('should return text unchanged if no variables present', () => {
+			const text = 'Plain text with no variables';
+			const result = parseTemplateVariables(text, testDate, testFilename);
+			expect(result).toBe(text);
+		});
+
+		it('should handle complex Moment.js formats', () => {
+			const result = parseTemplateVariables(
+				'{{date:dddd, MMMM Do YYYY}} at {{time:h:mm A}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('Friday, March 15th 2024 at 2:30 PM');
+		});
+
+		it('should handle multiple occurrences of same variable', () => {
+			const result = parseTemplateVariables(
+				'{{date}} and {{date}} and {{date}}',
+				testDate,
+				testFilename,
+			);
+			expect(result).toBe('2024-03-15 and 2024-03-15 and 2024-03-15');
+		});
+
+		it('should handle empty string', () => {
+			const result = parseTemplateVariables('', testDate, testFilename);
+			expect(result).toBe('');
+		});
+
+		describe('weekday variables', () => {
+			// testDate is March 15, 2024 (Friday)
+			it('should replace {{friday:FORMAT}} when date is already Friday', () => {
+				const result = parseTemplateVariables(
+					'{{friday:YYYY-MM-DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('2024-03-15'); // Same date (Friday)
+			});
+
+			it('should replace {{monday:FORMAT}} with the next Monday', () => {
+				const result = parseTemplateVariables(
+					'{{monday:YYYY-MM-DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('2024-03-18'); // Next Monday (3 days later)
+			});
+
+			it('should replace {{saturday:FORMAT}} with the next Saturday', () => {
+				const result = parseTemplateVariables(
+					'{{saturday:YYYY-MM-DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('2024-03-16'); // Next Saturday (1 day later)
+			});
+
+			it('should replace {{sunday:FORMAT}} with the next Sunday', () => {
+				const result = parseTemplateVariables(
+					'{{sunday:YYYY-MM-DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('2024-03-17'); // Next Sunday (2 days later)
+			});
+
+			it('should handle multiple weekday variables', () => {
+				const result = parseTemplateVariables(
+					'Mon: {{monday:DD}}, Wed: {{wednesday:DD}}, Fri: {{friday:DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('Mon: 18, Wed: 20, Fri: 15');
+			});
+
+			it('should handle all weekday variables together', () => {
+				const result = parseTemplateVariables(
+					'{{sunday:DD}}-{{monday:DD}}-{{tuesday:DD}}-{{wednesday:DD}}-{{thursday:DD}}-{{friday:DD}}-{{saturday:DD}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('17-18-19-20-21-15-16');
+			});
+
+			it('should handle weekday variables with complex formats', () => {
+				const result = parseTemplateVariables(
+					'{{monday:dddd, MMMM Do}}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('Monday, March 18th');
+			});
+
+			it('should handle weekday variables with whitespace', () => {
+				const result = parseTemplateVariables(
+					'{{ monday:YYYY-MM-DD }}',
+					testDate,
+					testFilename,
+				);
+				expect(result).toBe('2024-03-18');
+			});
+
+			it('should work when week starts on Monday', () => {
+				const monday = new Date(2024, 2, 11); // March 11, 2024 (Monday)
+				const result = parseTemplateVariables(
+					'{{monday:YYYY-MM-DD}} to {{sunday:YYYY-MM-DD}}',
+					monday,
+					'test',
+				);
+				expect(result).toBe('2024-03-11 to 2024-03-17');
+			});
 		});
 	});
 });
