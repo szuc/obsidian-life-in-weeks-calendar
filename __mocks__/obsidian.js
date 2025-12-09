@@ -16,18 +16,82 @@ const momentMock = (date, _format, _strict) => {
 			const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
 			const minutes = String(absOffset % 60).padStart(2, '0');
 
-			return formatStr
-				.replace(/YYYY/g, String(year))
-				.replace(/MM/g, month)
-				.replace(/DD/g, day)
-				.replace(/Z/g, `${sign}${hours}:${minutes}`)
-				.replace(/\[week-\]/g, 'week-')
-				.replace(/\[Weekly-\]/g, 'Weekly-')
-				.replace(/GGGG/g, String(year))
-				.replace(/gggg/g, String(year))
-				.replace(/WW/g, '11')
-				.replace(/ww/g, '11')
-				.replace(/\[W\]/g, 'W');
+			// Time components
+			const hour24 = jsDate.getHours();
+			const hour12 = hour24 % 12 || 12;
+			const minute = String(jsDate.getMinutes()).padStart(2, '0');
+			const second = String(jsDate.getSeconds()).padStart(2, '0');
+			const ampm = hour24 < 12 ? 'AM' : 'PM';
+			const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][jsDate.getDay()];
+			const dayOfWeekShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][jsDate.getDay()];
+			const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+			const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+			const monthName = monthNames[jsDate.getMonth()];
+			const monthNameShort = monthNamesShort[jsDate.getMonth()];
+
+			// Ordinal suffix for day
+			const getOrdinal = (n) => {
+				const s = ['th', 'st', 'nd', 'rd'];
+				const v = n % 100;
+				return n + (s[(v - 20) % 10] || s[v] || s[0]);
+			};
+
+			// Token mapping - order matters: longer tokens first to avoid partial matches
+			const tokens = [
+				// Literal brackets first
+				{ pattern: /\[week-\]/g, value: 'week-' },
+				{ pattern: /\[Weekly-\]/g, value: 'Weekly-' },
+				{ pattern: /\[W\]/g, value: 'W' },
+				// Longer tokens before shorter
+				{ pattern: /MMMM/g, value: monthName },
+				{ pattern: /MMM/g, value: monthNameShort },
+				{ pattern: /dddd/g, value: dayOfWeek },
+				{ pattern: /ddd/g, value: dayOfWeekShort },
+				{ pattern: /YYYY/g, value: String(year) },
+				{ pattern: /GGGG/g, value: String(year) },
+				{ pattern: /gggg/g, value: String(year) },
+				{ pattern: /Do/g, value: getOrdinal(jsDate.getDate()) },
+				{ pattern: /DD/g, value: day },
+				{ pattern: /MM/g, value: month },
+				{ pattern: /HH/g, value: String(hour24).padStart(2, '0') },
+				{ pattern: /hh/g, value: String(hour12).padStart(2, '0') },
+				{ pattern: /mm/g, value: minute },
+				{ pattern: /ss/g, value: second },
+				{ pattern: /WW/g, value: '11' },
+				{ pattern: /ww/g, value: '11' },
+				{ pattern: /D/g, value: String(jsDate.getDate()) },
+				{ pattern: /M/g, value: String(jsDate.getMonth() + 1) },
+				{ pattern: /H/g, value: String(hour24) },
+				{ pattern: /h/g, value: String(hour12) },
+				{ pattern: /m/g, value: String(jsDate.getMinutes()) },
+				{ pattern: /s/g, value: String(jsDate.getSeconds()) },
+				{ pattern: /A/g, value: ampm },
+				{ pattern: /a/g, value: ampm.toLowerCase() },
+				{ pattern: /Z/g, value: `${sign}${hours}:${minutes}` }
+			];
+
+			// Use placeholders for atomic replacement
+			const placeholders = [];
+			let result = formatStr;
+
+			// Step 1: Replace all tokens with unique placeholders
+			tokens.forEach((token, index) => {
+				const placeholder = `\x00${index}\x00`; // Use null bytes as delimiters
+				result = result.replace(token.pattern, () => {
+					placeholders[index] = token.value;
+					return placeholder;
+				});
+			});
+
+			// Step 2: Replace placeholders with actual values
+			tokens.forEach((_, index) => {
+				if (placeholders[index] !== undefined) {
+					const placeholder = `\x00${index}\x00`;
+					result = result.replace(new RegExp(placeholder, 'g'), placeholders[index]);
+				}
+			});
+
+			return result;
 		},
 		isValid: () => !isNaN(jsDate.getTime()),
 		startOf: (unit) => {
