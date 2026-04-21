@@ -36,7 +36,7 @@ async function openFile(app: App, file: TFile) {
 	if (leaf) {
 		await app.workspace.revealLeaf(leaf);
 	} else {
-		const newLeaf = app.workspace.getLeaf(true);
+		const newLeaf = app.workspace.getLeaf();
 		await newLeaf.openFile(file, { active: true });
 	}
 }
