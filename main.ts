@@ -10,7 +10,7 @@ import { activateView } from 'src/lib/viewManagement';
 import { BirthdayManager } from 'src/lib/birthdayFeature';
 
 export default class LifeCalendarPlugin extends Plugin {
-	settings!: LifeCalendarSettings;
+	override settings!: LifeCalendarSettings;
 	private birthdayManager!: BirthdayManager;
 
 	override async onload() {

@@ -40,10 +40,12 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	private computeSettingsCache(): void {
 		// Cache plugin existence checks (these involve plugin lookups)
-		this._cachedWeeklyPeriodicNotesExists =
-			weeklyPeriodicNotesPluginExists(this.app);
-		this._cachedJournalPluginSettings =
-			journalPluginWeeklySettings(this.app);
+		this._cachedWeeklyPeriodicNotesExists = weeklyPeriodicNotesPluginExists(
+			this.app,
+		);
+		this._cachedJournalPluginSettings = journalPluginWeeklySettings(
+			this.app,
+		);
 
 		// Cache computed sync states
 		this._cachedSyncWithWeeklyNotes =
@@ -584,7 +586,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 * Clears the container and builds all settings sections in order.
 	 * Caches plugin state at the start to avoid repeated lookups during render.
 	 */
-	display(): void {
+	override display(): void {
 		const { containerEl } = this;
 
 		// Compute cache once before rendering to avoid repeated plugin lookups
