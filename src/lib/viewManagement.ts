@@ -37,7 +37,7 @@ export async function activateView(
 ): Promise<void> {
 	const { workspace } = app;
 
-	let leaf: WorkspaceLeaf | null = null;
+	let leaf: WorkspaceLeaf | null;
 	const leaves = workspace.getLeavesOfType(VIEW_TYPE_LIFE_CALENDAR);
 
 	if (leaves.length > 0) {
@@ -52,12 +52,12 @@ export async function activateView(
 				: preferredLocation === 'left'
 					? workspace.getLeftLeaf(false)
 					: workspace.getLeaf(false);
-		await leaf!.setViewState({
+		leaf && await leaf.setViewState({
 			type: VIEW_TYPE_LIFE_CALENDAR,
 			active: true,
 		});
 	}
 
 	// "Reveal" the leaf in case it is in a collapsed sidebar
-	await workspace.revealLeaf(leaf!);
+	leaf && await workspace.revealLeaf(leaf);
 }

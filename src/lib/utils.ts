@@ -2,6 +2,7 @@ import { isThisWeek, getDay, nextDay, type Day } from 'date-fns';
 import type { WeekStartsOn } from './types';
 import type { TFile } from 'obsidian';
 import { moment, normalizePath } from 'obsidian';
+import type { Moment } from 'moment';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /** Global reference to the current date. Mutated by updateToday */
@@ -244,7 +245,7 @@ export function createFilesRecord(
 		const momentFormat = isStringDynamic(fileNamePattern)
 			? extractMomentFormatFromPattern(fileNamePattern)
 			: fileNamePattern;
-		const momentObject = moment(file.basename, momentFormat, true);
+		const momentObject = (moment(file.basename, momentFormat, true) as unknown as Moment);
 
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
@@ -306,9 +307,9 @@ export function getRootFolderOfFirstDynamicSegment(folderPath: string): string {
 	const firstDynamicSegmentIndex = folderPath.indexOf('{{');
 	return firstDynamicSegmentIndex !== -1
 		? folderPath.substring(0, firstDynamicSegmentIndex).replace(
-				/\/+$/,
-				'', // Remove trailing slashes
-			)
+			/\/+$/,
+			'', // Remove trailing slashes
+		)
 		: folderPath;
 }
 
@@ -438,10 +439,10 @@ export function parseDynamicDatesInString(
 	const dynamicSegmentRegex = /{{\s*date(?::([^}]*))?\s*}}/g;
 
 	// Replace all dynamic segments while preserving literal text between them
-	return dynamicString.replace(dynamicSegmentRegex, (_, format) => {
+	return dynamicString.replace(dynamicSegmentRegex, (_: string, format?: string) => {
 		// Trim and use default if format is undefined, empty, or only whitespace
 		const momentFormat = format?.trim() || defaultFormat;
-		return moment(date).format(momentFormat).trim();
+		return (moment(date) as unknown as Moment).format(momentFormat).trim();
 	});
 }
 
@@ -465,17 +466,19 @@ export function parseJournalsVariables(
 ) {
 	let result = text;
 
-	const startOfWeek = moment(date).startOf('week');
-	const endOfWeek = moment(date).endOf('week');
+	const startOfWeek = (moment(date) as unknown as Moment).startOf('week');
+	const endOfWeek = (moment(date) as unknown as Moment).endOf('week');
 
-	result = result.replace(/{{\s*start_date\s*}}/g, () =>
+	result = result.replace(/{{\s*start_date\s*}}/g, (): string =>
 		startOfWeek.format(defaultFormat).trim(),
 	);
-	result = result.replace(/{{\s*end_date\s*}}/g, () =>
+	result = result.replace(/{{\s*end_date\s*}}/g, (): string =>
 		endOfWeek.format(defaultFormat).trim(),
 	);
-	result = result.replace(/{{\s*current_date\s*}}/g, () =>
-		moment(date).format(defaultFormat).trim(),
+	result = result.replace(/{{\s*current_date\s*}}/g, (): string =>
+		!defaultFormat || defaultFormat.trim() === '' ?
+			'' :
+			(moment(date) as unknown as Moment).format(defaultFormat).trim(),
 	);
 
 	return result;
@@ -515,18 +518,18 @@ export function parseTemplateVariables(
 	const DEFAULT_TIME_FORMAT = 'HH:mm';
 
 	// Create moment object once for reuse
-	const momentDate = moment(date);
+	const momentDate = (moment(date) as unknown as Moment);
 
 	// Replace {{date}} and {{date:FORMAT}} variables
 	const dateRegex = /{{\s*date(?::([^}]*))?\s*}}/g;
-	result = result.replace(dateRegex, (_, format) => {
+	result = result.replace(dateRegex, (_: string, format?: string) => {
 		const momentFormat = format?.trim() || DEFAULT_DATE_FORMAT;
 		return momentDate.format(momentFormat).trim();
 	});
 
 	// Replace {{time}} and {{time:FORMAT}} variables
 	const timeRegex = /{{\s*time(?::([^}]*))?\s*}}/g;
-	result = result.replace(timeRegex, (_, format) => {
+	result = result.replace(timeRegex, (_: string, format?: string) => {
 		const momentFormat = format?.trim() || DEFAULT_TIME_FORMAT;
 		return momentDate.format(momentFormat).trim();
 	});
@@ -550,14 +553,14 @@ export function parseTemplateVariables(
 	// Replace each weekday variable
 	weekdays.forEach((weekday, dayIndex) => {
 		const weekdayRegex = new RegExp(`{{\\s*${weekday}:([^}]+)\\s*}}`, 'g');
-		result = result.replace(weekdayRegex, (_, format) => {
+		result = result.replace(weekdayRegex, (_: string, format: string) => {
 			// If the date is already the target weekday, use it
 			// Otherwise, find the next instance of that weekday
 			const weekdayDate =
 				getDay(date) === dayIndex
 					? date
 					: nextDay(date, dayIndex as Day);
-			return moment(weekdayDate).format(format.trim()).trim();
+			return (moment(weekdayDate) as unknown as Moment).format(format.trim()).trim();
 		});
 	});
 

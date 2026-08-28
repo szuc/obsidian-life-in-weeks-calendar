@@ -1,4 +1,5 @@
 // Mock only time-dependent functions from date-fns
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- jest.requireActual returns any
 jest.mock('date-fns', () => ({
 	...jest.requireActual('date-fns'),
 	isThisWeek: jest.fn(),
@@ -75,7 +76,7 @@ describe('utils.ts', () => {
 		});
 
 		it('should throw error for null date', () => {
-			expect(() => setWeekStatus(null as any, 1)).toThrow(
+			expect(() => setWeekStatus(null as unknown as Date, 1)).toThrow(
 				'setWeekStatus: weekStartDate must be a valid Date object',
 			);
 		});
@@ -102,7 +103,7 @@ describe('utils.ts', () => {
 		});
 
 		it('should throw error for non-string input', () => {
-			expect(() => createLocalDateYYYYMMDD(null as any)).toThrow(
+			expect(() => createLocalDateYYYYMMDD(null as unknown as string)).toThrow(
 				'createLocalDateYYYYMMDD: dateString must be a non-empty string',
 			);
 		});
@@ -126,7 +127,7 @@ describe('utils.ts', () => {
 		});
 
 		it('should throw error for null', () => {
-			expect(() => dateToYYYYMMDD(null as any)).toThrow(
+			expect(() => dateToYYYYMMDD(null as unknown as Date)).toThrow(
 				'dateToYYYYMMDD: date must be a valid Date object',
 			);
 		});
@@ -160,7 +161,7 @@ describe('utils.ts', () => {
 		});
 
 		it('should return false for non-Date object', () => {
-			expect(isValidDate('2024-01-01' as any)).toBe(false);
+			expect(isValidDate('2024-01-01' as unknown as Date)).toBe(false);
 		});
 	});
 

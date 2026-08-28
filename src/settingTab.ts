@@ -349,7 +349,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					})
 					.setDisabled(
 						this.syncWithWeeklyNotesIsEnabled() ||
-							!this._cachedJournalPluginSettings,
+						!this._cachedJournalPluginSettings,
 					),
 			);
 
@@ -381,7 +381,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					})
 					.setDisabled(
 						this.syncWithJournalNotesIsEnabled() ||
-							!this._cachedWeeklyPeriodicNotesExists,
+						!this._cachedWeeklyPeriodicNotesExists,
 					),
 			);
 	}
@@ -408,11 +408,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			)
 			.addSearch((search) => {
 				search
-					.setPlaceholder('E.g. weekly-notes or notes/weekly')
+					.setPlaceholder('Example weekly-notes or notes/weekly')
 					.setValue(this.plugin.settings.fileLocation);
 
 				// Normalize and save on blur
-				search.inputEl.addEventListener('blur', async () => {
+				search.inputEl.addEventListener('blur', () => void (async () => {
 					const value = search.inputEl.value;
 
 					const normalized = normalizePath(value);
@@ -428,7 +428,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							error instanceof Error ? error.message : error,
 						);
 					}
-				});
+				})());
 
 				// Attaches custom suggestions
 				new FolderSuggest(this.app, search.inputEl);
@@ -449,12 +449,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			)
 			.addText((text) => {
 				text.inputEl.type = 'text';
-				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
+				const formatExample = 'gggg-[W]ww';
+				text.inputEl.placeholder = `Example ${formatExample}`;
 				text.inputEl.disabled = this.isOverriddenByOtherPlugin();
 				text.setValue(this.plugin.settings.fileNamePattern || '');
 
 				// Validate and save on blur
-				text.inputEl.addEventListener('blur', async () => {
+				text.inputEl.addEventListener('blur', () => void (async () => {
 					const value = text.inputEl.value;
 					const normalized = normalizePath(value);
 					this.plugin.settings.fileNamePattern = normalized;
@@ -467,8 +468,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							error instanceof Error ? error.message : error,
 						);
 					}
-					// }
-				});
+				})());
 			});
 
 		// Setting for the first day of the week.
@@ -519,7 +519,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.templatePath);
 
 				// Validate and save on blur
-				search.inputEl.addEventListener('blur', async () => {
+				search.inputEl.addEventListener('blur', () => void (async () => {
 					const value = search.inputEl.value;
 
 					const invalidPattern = !isValidFileName(value);
@@ -551,7 +551,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							);
 						}
 					}
-				});
+				})());
 
 				// Attaches custom suggestions
 				new FileSuggest(this.app, search.inputEl);

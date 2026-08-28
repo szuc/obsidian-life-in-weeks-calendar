@@ -10,14 +10,11 @@ export default [
 	js.configs.recommended,
 	...obsidianmd.configs.recommended,
 	{
-		ignores: ['node_modules/', 'main.js', 'coverage/'],
+		ignores: ['node_modules/', 'main.js', 'coverage/', '**/*.mjs'],
 	},
 	{
 		languageOptions: {
 			parserOptions: {
-				projectService: {
-					allowDefaultProject: ['eslint.config.*', '*.mjs', '*.js'],
-				},
 				extraFileExtensions: ['.svelte'],
 			},
 		},
@@ -27,12 +24,14 @@ export default [
 		},
 	},
 	{
-		files: ['**/*.ts', '**/*.js'],
+		files: ['**/*.ts', '**/*.js', '**/*.mjs'],
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: {
 				sourceType: 'module',
-				projectService: true,
+				projectService: {
+					allowDefaultProject: ['*.js', '*.mjs', '__mocks__/*.js', '*.config.js', '*.config.mjs'],
+				},
 			},
 			ecmaVersion: 2020,
 			globals: {

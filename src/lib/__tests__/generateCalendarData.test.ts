@@ -134,19 +134,19 @@ describe('generateCalendarData.ts', () => {
 
 		it('should throw error for non-Date birthDate', () => {
 			expect(() =>
-				generateCalendarData('not a date' as any, 80, 'TestComponent'),
+				generateCalendarData('not a date' as unknown as Date, 80, 'TestComponent'),
 			).toThrow('generateCalendarData: birthDate must be a Date object');
 		});
 
 		it('should throw error for null birthDate', () => {
 			expect(() =>
-				generateCalendarData(null as any, 80, 'TestComponent'),
+				generateCalendarData(null as unknown as Date, 80, 'TestComponent'),
 			).toThrow('generateCalendarData: birthDate must be a Date object');
 		});
 
 		it('should throw error for undefined birthDate', () => {
 			expect(() =>
-				generateCalendarData(undefined as any, 80, 'TestComponent'),
+				generateCalendarData(undefined as unknown as Date, 80, 'TestComponent'),
 			).toThrow('generateCalendarData: birthDate must be a Date object');
 		});
 
@@ -154,7 +154,7 @@ describe('generateCalendarData.ts', () => {
 			expect(() =>
 				generateCalendarData(
 					new Date(),
-					'eighty' as any,
+					'eighty' as unknown as number,
 					'TestComponent',
 				),
 			).toThrow('generateCalendarData: lifespan must be a number');
@@ -180,7 +180,7 @@ describe('generateCalendarData.ts', () => {
 
 		it('should throw error for non-string componentName', () => {
 			expect(() =>
-				generateCalendarData(new Date(), 80, 123 as any),
+				generateCalendarData(new Date(), 80, 123 as unknown as string),
 			).toThrow(
 				'generateCalendarData: componentName must be a non-empty string',
 			);
@@ -188,7 +188,7 @@ describe('generateCalendarData.ts', () => {
 
 		it('should throw error for null componentName', () => {
 			expect(() =>
-				generateCalendarData(new Date(), 80, null as any),
+				generateCalendarData(new Date(), 80, null as unknown as string),
 			).toThrow(
 				'generateCalendarData: componentName must be a non-empty string',
 			);
@@ -387,7 +387,7 @@ describe('generateCalendarData.ts', () => {
 			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
 			const result = createYearGroups(
-				null as any,
+				null as unknown as Date,
 				80,
 				new Date(1990, 0, 1),
 				1,

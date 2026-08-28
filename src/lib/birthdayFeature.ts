@@ -42,7 +42,7 @@ export class BirthdayManager {
 			birthDate.getMonth() === today.getMonth()
 		) {
 			this.statusBarItem = this.plugin.addStatusBarItem();
-			this.statusBarItem.createEl('span', { text: 'Happy birthday 🎂' });
+			this.statusBarItem.createSpan({ text: 'Happy birthday 🎂' });
 		}
 	}
 
