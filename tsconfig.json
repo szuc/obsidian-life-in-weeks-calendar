@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
+		"baseUrl": "./",
 		"inlineSourceMap": true,
 		"inlineSources": true,
 		"module": "ESNext",
@@ -37,7 +37,9 @@
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"declaration": false,
-		"declarationMap": false
+		"declarationMap": false,
+
+		"types": ["jest", "node"]
 	},
 	"include": ["**/*.ts", "**/*.svelte"],
 	"exclude": ["node_modules", "main.js"]
