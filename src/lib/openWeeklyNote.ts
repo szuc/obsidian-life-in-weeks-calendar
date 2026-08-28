@@ -54,9 +54,9 @@ async function openFile(app: App, file: TFile) {
 async function ensureFolderExists(app: App, folderPath: string) {
 	try {
 		await app.vault.createFolder(folderPath);
-	} catch (error: any) {
+	} catch (error: unknown) {
 		// Folder might already exist, ignore
-		if (!error.message?.includes('already exists')) {
+		if (!(error instanceof Error && error.message.includes('already exists'))) {
 			console.error('Error creating weekly notes folder:', error);
 		}
 	}
@@ -126,8 +126,8 @@ async function createWeeklyNote(
 		.then(async (newNote) => {
 			await openFile(app, newNote);
 		})
-		.catch(async (error) => {
-			if (error.message.includes('already exists')) {
+		.catch(async (error: unknown) => {
+			if (error instanceof Error && error.message.includes('already exists')) {
 				// Try to open the existing file
 				const existingFile = app.vault.getAbstractFileByPath(filePath);
 				if (existingFile instanceof TFile) {
@@ -165,7 +165,7 @@ export const openWeeklyNoteFunction = async (
 		);
 	}
 
-	const momentObject = moment(date);
+	const momentObject = moment(date) as unknown as import('moment').Moment;
 
 	// filenames might be pure moment formats, e.g., "YYYY-WW" or might contain dynamic segments
 	// like "Weekly-{{date:gggg-[W]ww}}". We handle each differently.
@@ -202,7 +202,7 @@ export const openWeeklyNoteFunction = async (
 			modalFn(
 				`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create a file named ${filename} now?`,
 				() => {
-					createWeeklyNote(
+					void createWeeklyNote(
 						app,
 						filePath,
 						parsedTemplateContent,

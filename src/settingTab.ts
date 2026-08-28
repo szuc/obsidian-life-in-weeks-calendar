@@ -1,5 +1,6 @@
 import LifeCalendarPlugin from 'main';
 import { App, normalizePath, PluginSettingTab, Setting } from 'obsidian';
+import type { SettingDefinitionItem } from 'obsidian';
 import { CALENDAR_VALIDATION } from 'src/lib/calendar-constants';
 import {
 	dateToYYYYMMDD,
@@ -345,11 +346,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.syncWithJournalNotes = value;
 						await this.plugin.saveSettings();
 						refreshLifeCalendarView(this.app);
-						this.display(); // Re-render settings to update disabled states on other settings
+						this.renderSettings(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
 						this.syncWithWeeklyNotesIsEnabled() ||
-							!this._cachedJournalPluginSettings,
+						!this._cachedJournalPluginSettings,
 					),
 			);
 
@@ -377,11 +378,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 						this.plugin.settings.syncWithWeeklyNotes = value;
 						await this.plugin.saveSettings();
 						refreshLifeCalendarView(this.app);
-						this.display(); // Re-render settings to update disabled states on other settings
+						this.renderSettings(); // Re-render settings to update disabled states on other settings
 					})
 					.setDisabled(
 						this.syncWithJournalNotesIsEnabled() ||
-							!this._cachedWeeklyPeriodicNotesExists,
+						!this._cachedWeeklyPeriodicNotesExists,
 					),
 			);
 	}
@@ -408,11 +409,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			)
 			.addSearch((search) => {
 				search
-					.setPlaceholder('E.g. weekly-notes or notes/weekly')
+					.setPlaceholder('Example weekly-notes or notes/weekly')
 					.setValue(this.plugin.settings.fileLocation);
 
 				// Normalize and save on blur
-				search.inputEl.addEventListener('blur', async () => {
+				search.inputEl.addEventListener('blur', () => void (async () => {
 					const value = search.inputEl.value;
 
 					const normalized = normalizePath(value);
@@ -428,7 +429,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							error instanceof Error ? error.message : error,
 						);
 					}
-				});
+				})());
 
 				// Attaches custom suggestions
 				new FolderSuggest(this.app, search.inputEl);
@@ -449,12 +450,13 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			)
 			.addText((text) => {
 				text.inputEl.type = 'text';
-				text.inputEl.placeholder = 'E.g. gggg-[W]ww';
+				const formatExample = 'gggg-[W]ww';
+				text.inputEl.placeholder = `Example ${formatExample}`;
 				text.inputEl.disabled = this.isOverriddenByOtherPlugin();
 				text.setValue(this.plugin.settings.fileNamePattern || '');
 
 				// Validate and save on blur
-				text.inputEl.addEventListener('blur', async () => {
+				text.inputEl.addEventListener('blur', () => void (async () => {
 					const value = text.inputEl.value;
 					const normalized = normalizePath(value);
 					this.plugin.settings.fileNamePattern = normalized;
@@ -467,8 +469,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							error instanceof Error ? error.message : error,
 						);
 					}
-					// }
-				});
+				})());
 			});
 
 		// Setting for the first day of the week.
@@ -519,7 +520,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.templatePath);
 
 				// Validate and save on blur
-				search.inputEl.addEventListener('blur', async () => {
+				search.inputEl.addEventListener('blur', () => void (async () => {
 					const value = search.inputEl.value;
 
 					const invalidPattern = !isValidFileName(value);
@@ -551,7 +552,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 							);
 						}
 					}
-				});
+				})());
 
 				// Attaches custom suggestions
 				new FileSuggest(this.app, search.inputEl);
@@ -582,11 +583,58 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
+	 * Exposes a subset of simple settings to Obsidian's declarative settings API (1.13.0+).
+	 * These settings will appear in Obsidian's global settings search.
+	 *
+	 * Only stateless settings with standard control types are declared here.
+	 * Complex settings with custom widgets, dynamic names/descriptions, or
+	 * inter-setting dependencies continue to be rendered imperatively in display().
+	 */
+	override getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: 'Calendar view mode',
+				desc: 'Standard mode is better for sidebar or mobile views.',
+				control: {
+					type: 'dropdown',
+					key: 'calendarMode',
+					options: {
+						basic: 'Standard',
+						yearly: 'Decades',
+					},
+				},
+			},
+			{
+				name: 'View location',
+				desc: 'Close any existing views for location changes to take effect.',
+				control: {
+					type: 'dropdown',
+					key: 'viewLocation',
+					options: {
+						main: 'Main',
+						left: 'Left sidebar',
+						right: 'Right sidebar',
+					},
+				},
+			},
+			{
+				name: 'Confirm before creating weekly note',
+				desc: 'Require confirmation before creating a new weekly note.',
+				control: {
+					type: 'toggle',
+					key: 'confirmBeforeCreatingWeeklyNote',
+				},
+			},
+		];
+	}
+
+	/**
 	 * Renders the settings UI with all configuration options.
 	 * Clears the container and builds all settings sections in order.
 	 * Caches plugin state at the start to avoid repeated lookups during render.
+	 * Called by display() and also internally when re-rendering after a toggle change.
 	 */
-	override display(): void {
+	private renderSettings(): void {
 		const { containerEl } = this;
 
 		// Compute cache once before rendering to avoid repeated plugin lookups
@@ -604,5 +652,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 		// Clear cache after rendering to free memory
 		this.clearSettingsCache();
+	}
+
+	/**
+	 * Entry point called by Obsidian to render the settings tab.
+	 * Delegates to renderSettings() to avoid recursive calls to the deprecated
+	 * public display() API within the class.
+	 */
+	override display(): void {
+		this.renderSettings();
 	}
 }

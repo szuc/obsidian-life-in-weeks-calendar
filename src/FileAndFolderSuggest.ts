@@ -29,7 +29,7 @@ abstract class FilesAndFoldersSuggest extends AbstractInputSuggest<string> {
 	}
 
 	renderSuggestion(item: string, el: HTMLElement): void {
-		el.createEl('div', { text: item });
+		el.createDiv({ text: item });
 	}
 
 	override selectSuggestion(item: string): void {

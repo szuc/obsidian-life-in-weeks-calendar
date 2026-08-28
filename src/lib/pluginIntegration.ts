@@ -8,13 +8,70 @@ import type { IntegrationSettings } from './types';
 import { weekStartsOnIndexToString } from './utils';
 
 /**
+ * WARNING: The following interfaces define the expected shape of 3rd-party plugin 
+ * settings (Calendar, Periodic Notes, Journals). 
+ * 
+ * These types are declared here to provide type safety and fix linting errors, but they 
+ * DO NOT guarantee runtime safety. If a 3rd-party plugin changes its internal state 
+ * or configuration structure, accessing these properties at runtime could still 
+ * result in unexpected behavior or `undefined` values.
+ * 
+ * Always use optional chaining (`?.`) and fallback values when accessing these 
+ * properties to prevent fatal runtime errors.
+ */
+interface CalendarPlugin {
+	options?: {
+		weekStart?: string;
+	};
+}
+
+interface PeriodicNotesPlugin {
+	settings?: {
+		weekly?: {
+			enabled?: boolean;
+			format?: string;
+			folder?: string;
+			template?: string;
+		};
+	};
+}
+
+interface JournalSettings {
+	type?: string;
+	name?: string;
+	config?: {
+		value?: {
+			nameTemplate?: string;
+			folder?: string;
+			templates?: string[];
+			dateFormat?: string;
+		};
+	};
+}
+
+interface JournalsPlugin {
+	journals?: JournalSettings[];
+	calendarSettings?: {
+		dow?: number;
+	};
+}
+
+interface AppWithPlugins extends App {
+	plugins: {
+		getPlugin(id: 'calendar'): CalendarPlugin | undefined;
+		getPlugin(id: 'periodic-notes'): PeriodicNotesPlugin | undefined;
+		getPlugin(id: 'journals'): JournalsPlugin | undefined;
+		getPlugin(id: string): unknown;
+	};
+}
+
+/**
  * Retrieves the week start day setting from the 'Calendar' plugin.
  * @param app - Obsidian App instance
  * @returns The week start day as a string (e.g., 'monday'), or undefined
  */
 export function getWeekStartsOnOptionFromCalendar(app: App): string | undefined {
-	// @ts-ignore
-	const calendarPlugin = app.plugins.getPlugin('calendar');
+	const calendarPlugin = (app as AppWithPlugins).plugins.getPlugin('calendar');
 	return calendarPlugin?.options?.weekStart;
 }
 
@@ -24,9 +81,8 @@ export function getWeekStartsOnOptionFromCalendar(app: App): string | undefined 
  * @returns true if plugin exists and weekly notes are enabled
  */
 export function weeklyPeriodicNotesPluginExists(app: App): boolean {
-	// @ts-ignore
-	const periodicNotes = app.plugins.getPlugin('periodic-notes');
-	return periodicNotes && periodicNotes.settings?.weekly?.enabled;
+	const periodicNotes = (app as AppWithPlugins).plugins.getPlugin('periodic-notes');
+	return !!periodicNotes?.settings?.weekly?.enabled;
 }
 
 /**
@@ -43,16 +99,14 @@ export function weeklyPeriodicNotesPluginExists(app: App): boolean {
  * Returns `undefined` if the 'Journals' plugin is not found or if no weekly settings are configured.
  */
 export function journalPluginWeeklySettings(app: App): IntegrationSettings | undefined {
-	// @ts-ignore
-	const journalsPlugin = app.plugins.getPlugin('journals');
+	const journalsPlugin = (app as AppWithPlugins).plugins.getPlugin('journals');
 
 	if (!journalsPlugin) {
 		return undefined;
 	}
 
 	const weeksSettings = journalsPlugin.journals?.find(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(j: any) => j?.type === 'week',
+		(j) => j?.type === 'week',
 	);
 
 	// Return undefined if no weekly journal configuration exists
@@ -82,7 +136,7 @@ export function journalPluginWeeklySettings(app: App): IntegrationSettings | und
 	// Journals plugin has a default date format option. We can convert
 	// {{date}} to {{date:FORMAT}} in folderPath and fileNamePattern now rather than
 	// passing the default through the entire codebase.
-	const dateFormatToken = dateFormat.trim() ? `:${dateFormat}` : '';
+	const dateFormatToken = dateFormat?.trim() ? `:${dateFormat}` : '';
 	const fileNamePatternWithDateFormat = fileNamePattern
 		? fileNamePattern.replace('{{date}}', `{{date${dateFormatToken}}}`)
 		: '';
@@ -120,9 +174,7 @@ export function journalPluginWeeklySettings(app: App): IntegrationSettings | und
 export function periodicNotesPluginWeeklySettings(
 	app: App
 ): Omit<IntegrationSettings, 'dateFormat'> | undefined {
-	const periodicNotesSettings =
-		// @ts-ignore
-		app.plugins.getPlugin('periodic-notes');
+	const periodicNotesSettings = (app as AppWithPlugins).plugins.getPlugin('periodic-notes');
 
 	if (!periodicNotesSettings) {
 		return undefined;

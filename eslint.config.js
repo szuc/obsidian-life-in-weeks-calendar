@@ -4,18 +4,34 @@ import tsParser from '@typescript-eslint/parser';
 import globals from 'globals';
 import sveltePlugin from 'eslint-plugin-svelte';
 import svelteParser from 'svelte-eslint-parser';
+import obsidianmd from 'eslint-plugin-obsidianmd';
 
 export default [
 	js.configs.recommended,
+	...obsidianmd.configs.recommended,
 	{
-		ignores: ['node_modules/', 'main.js', 'coverage/'],
+		ignores: ['node_modules/', 'main.js', 'coverage/', '**/*.mjs'],
 	},
 	{
-		files: ['**/*.ts', '**/*.js'],
+		languageOptions: {
+			parserOptions: {
+				extraFileExtensions: ['.svelte'],
+			},
+		},
+		rules: {
+			// example: turn off a rule from the recommended set
+			// 'obsidianmd/sample-names': 'off',
+		},
+	},
+	{
+		files: ['**/*.ts', '**/*.js', '**/*.mjs'],
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: {
 				sourceType: 'module',
+				projectService: {
+					allowDefaultProject: ['*.js', '*.mjs', '__mocks__/*.js', '*.config.js', '*.config.mjs'],
+				},
 			},
 			ecmaVersion: 2020,
 			globals: {

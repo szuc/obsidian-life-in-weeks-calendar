@@ -1,6 +1,6 @@
 import { ItemView, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
 import LifeCalendar from 'src/ui/LifeCalendar.svelte';
-import { mount, type ComponentProps } from 'svelte';
+import { mount, unmount, type ComponentProps } from 'svelte';
 import type LifeCalendarPlugin from 'main';
 import { CreateFileModal } from 'src/createFileModal';
 import {
@@ -298,8 +298,7 @@ export class LifeCalendarView extends ItemView {
 	 */
 	private cleanupComponent(): void {
 		if (this.lifeCalendar) {
-			// @ts-ignore - ignore Svelte internal method
-			this.lifeCalendar.$destroy?.();
+			void unmount(this.lifeCalendar);
 			this.lifeCalendar = undefined;
 		}
 		this.contentEl.empty();
