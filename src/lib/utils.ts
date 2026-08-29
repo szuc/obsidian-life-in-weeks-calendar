@@ -5,6 +5,9 @@ import { moment, normalizePath } from 'obsidian';
 import type { Moment } from 'moment';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
+/** Helper to invoke moment as callable function in TS 6 */
+const momentFn = moment as unknown as (input?: unknown, format?: string, strict?: boolean) => Moment;
+
 /** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();
 
@@ -245,7 +248,7 @@ export function createFilesRecord(
 		const momentFormat = isStringDynamic(fileNamePattern)
 			? extractMomentFormatFromPattern(fileNamePattern)
 			: fileNamePattern;
-		const momentObject = (moment(file.basename, momentFormat, true) as unknown as Moment);
+		const momentObject = momentFn(file.basename, momentFormat, true);
 
 		if (momentObject.isValid()) {
 			const dateKey = momentObject.format(
@@ -442,7 +445,7 @@ export function parseDynamicDatesInString(
 	return dynamicString.replace(dynamicSegmentRegex, (_: string, format?: string) => {
 		// Trim and use default if format is undefined, empty, or only whitespace
 		const momentFormat = format?.trim() || defaultFormat;
-		return (moment(date) as unknown as Moment).format(momentFormat).trim();
+		return momentFn(date).format(momentFormat).trim();
 	});
 }
 
@@ -466,8 +469,8 @@ export function parseJournalsVariables(
 ) {
 	let result = text;
 
-	const startOfWeek = (moment(date) as unknown as Moment).startOf('week');
-	const endOfWeek = (moment(date) as unknown as Moment).endOf('week');
+	const startOfWeek = momentFn(date).startOf('week');
+	const endOfWeek = momentFn(date).endOf('week');
 
 	result = result.replace(/{{\s*start_date\s*}}/g, (): string =>
 		startOfWeek.format(defaultFormat).trim(),
@@ -478,7 +481,7 @@ export function parseJournalsVariables(
 	result = result.replace(/{{\s*current_date\s*}}/g, (): string =>
 		!defaultFormat || defaultFormat.trim() === '' ?
 			'' :
-			(moment(date) as unknown as Moment).format(defaultFormat).trim(),
+			momentFn(date).format(defaultFormat).trim(),
 	);
 
 	return result;
@@ -518,7 +521,7 @@ export function parseTemplateVariables(
 	const DEFAULT_TIME_FORMAT = 'HH:mm';
 
 	// Create moment object once for reuse
-	const momentDate = (moment(date) as unknown as Moment);
+	const momentDate = momentFn(date);
 
 	// Replace {{date}} and {{date:FORMAT}} variables
 	const dateRegex = /{{\s*date(?::([^}]*))?\s*}}/g;
@@ -560,7 +563,7 @@ export function parseTemplateVariables(
 				getDay(date) === dayIndex
 					? date
 					: nextDay(date, dayIndex as Day);
-			return (moment(weekdayDate) as unknown as Moment).format(format.trim()).trim();
+			return momentFn(weekdayDate).format(format.trim()).trim();
 		});
 	});
 

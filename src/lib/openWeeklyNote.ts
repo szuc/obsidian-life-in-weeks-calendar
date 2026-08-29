@@ -165,7 +165,8 @@ export const openWeeklyNoteFunction = async (
 		);
 	}
 
-	const momentObject = moment(date) as unknown as import('moment').Moment;
+	const momentFn = moment as unknown as (input?: unknown, format?: string, strict?: boolean) => import('moment').Moment;
+	const momentObject = momentFn(date);
 
 	// filenames might be pure moment formats, e.g., "YYYY-WW" or might contain dynamic segments
 	// like "Weekly-{{date:gggg-[W]ww}}". We handle each differently.

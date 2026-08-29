@@ -583,49 +583,11 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Exposes a subset of simple settings to Obsidian's declarative settings API (1.13.0+).
-	 * These settings will appear in Obsidian's global settings search.
-	 *
-	 * Only stateless settings with standard control types are declared here.
-	 * Complex settings with custom widgets, dynamic names/descriptions, or
-	 * inter-setting dependencies continue to be rendered imperatively in display().
+	 * Returns empty array so Obsidian falls back to imperative rendering in display().
+	 * This ensures all custom settings and suggests render properly.
 	 */
 	override getSettingDefinitions(): SettingDefinitionItem[] {
-		return [
-			{
-				name: 'Calendar view mode',
-				desc: 'Standard mode is better for sidebar or mobile views.',
-				control: {
-					type: 'dropdown',
-					key: 'calendarMode',
-					options: {
-						basic: 'Standard',
-						yearly: 'Decades',
-					},
-				},
-			},
-			{
-				name: 'View location',
-				desc: 'Close any existing views for location changes to take effect.',
-				control: {
-					type: 'dropdown',
-					key: 'viewLocation',
-					options: {
-						main: 'Main',
-						left: 'Left sidebar',
-						right: 'Right sidebar',
-					},
-				},
-			},
-			{
-				name: 'Confirm before creating weekly note',
-				desc: 'Require confirmation before creating a new weekly note.',
-				control: {
-					type: 'toggle',
-					key: 'confirmBeforeCreatingWeeklyNote',
-				},
-			},
-		];
+		return [];
 	}
 
 	/**
