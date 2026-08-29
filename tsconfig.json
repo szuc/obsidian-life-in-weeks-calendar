@@ -7,7 +7,7 @@
 		"inlineSourceMap": true,
 		"inlineSources": true,
 		"module": "ESNext",
-		"target": "ES2020",
+		"target": "ES2021",
 		"allowJs": true,
 		// Strict Type Checking Options
 		"strict": true,
@@ -24,15 +24,18 @@
 		"noUnusedParameters": true,
 		"exactOptionalPropertyTypes": true,
 		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
 		// Module Resolution
 		"moduleResolution": "node",
 		"importHelpers": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
+		"allowSyntheticDefaultImports": true,
 		// Library Support
 		"lib": [
-			"DOM",
-			"ES2020"
+			"ES2021",
+			"DOM"
 		],
 		// Additional Quality Options
 		"forceConsistentCasingInFileNames": true,

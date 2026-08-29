@@ -73,6 +73,12 @@ export function createLocalDateYYYYMMDD(dateString: string): Date {
 	}
 
 	const [year, month, day] = dateString.split('-').map(Number);
+
+	if (year === undefined || month === undefined || day === undefined) {
+		throw new Error(
+			'createLocalDateYYYYMMDD: year, month, and day must be defined',
+		);
+	}
 	return new Date(year, month - 1, day);
 }
 

@@ -247,8 +247,8 @@ describe('generateCalendarData.ts', () => {
 			const result = generateCalendarData(birthDate, 1, 'TestComponent');
 
 			for (let i = 1; i < result.weeks.length; i++) {
-				expect(result.weeks[i].startDate.getTime()).toBeGreaterThan(
-					result.weeks[i - 1].startDate.getTime(),
+				expect(result.weeks[i]?.startDate.getTime()).toBeGreaterThan(
+					result.weeks[i - 1]?.startDate.getTime() ?? 0,
 				);
 			}
 		});
@@ -376,8 +376,8 @@ describe('generateCalendarData.ts', () => {
 
 			result.forEach((group) => {
 				for (let i = 1; i < group.length; i++) {
-					expect(group[i].startDate.getTime()).toBeGreaterThan(
-						group[i - 1].startDate.getTime(),
+					expect(group[i]?.startDate.getTime()).toBeGreaterThan(
+						group[i - 1]?.startDate.getTime() ?? 0,
 					);
 				}
 			});
@@ -450,7 +450,7 @@ describe('generateCalendarData.ts', () => {
 			);
 
 			expect(result.length).toBe(1);
-			expect(result[0].length).toBeGreaterThan(0);
+			expect(result[0]?.length).toBeGreaterThan(0);
 		});
 
 		it('should handle different weekStartsOn values', () => {
@@ -477,8 +477,8 @@ describe('generateCalendarData.ts', () => {
 				0,
 			);
 
-			expect(resultMonday[0][0].startDate.getDay()).toBe(1); // Monday
-			expect(resultSunday[0][0].startDate.getDay()).toBe(0); // Sunday
+			expect(resultMonday[0]?.[0]?.startDate.getDay()).toBe(1); // Monday
+			expect(resultSunday[0]?.[0]?.startDate.getDay()).toBe(0); // Sunday
 		});
 
 		it('should have each group cover approximately YEAR_GROUP_SIZE years', () => {
@@ -497,8 +497,8 @@ describe('generateCalendarData.ts', () => {
 			);
 
 			// First group should have approximately 10 years * 52 weeks = ~520 weeks
-			expect(result[0].length).toBeGreaterThanOrEqual(520);
-			expect(result[0].length).toBeLessThanOrEqual(524);
+			expect(result[0]?.length).toBeGreaterThanOrEqual(520);
+			expect(result[0]?.length).toBeLessThanOrEqual(524);
 		});
 
 		it('should handle exact multiple of YEAR_GROUP_SIZE', () => {

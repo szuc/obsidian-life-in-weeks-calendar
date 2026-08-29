@@ -37,7 +37,7 @@ export async function activateView(
 ): Promise<void> {
 	const { workspace } = app;
 
-	let leaf: WorkspaceLeaf | null;
+	let leaf: WorkspaceLeaf | null | undefined;
 	const leaves = workspace.getLeavesOfType(VIEW_TYPE_LIFE_CALENDAR);
 
 	if (leaves.length > 0) {
