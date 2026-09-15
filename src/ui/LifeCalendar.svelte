@@ -14,6 +14,7 @@
 		fileNamePattern,
 		allWeeklyNotes,
 		templatePath,
+		syncWithJournalNotes,
 		app,
 	}: {
 		birthdate: string;
@@ -25,6 +26,7 @@
 		folderPath: string;
 		fileNamePattern: string;
 		templatePath: string;
+		syncWithJournalNotes: boolean;
 		app: App;
 	} = $props();
 
@@ -54,6 +56,7 @@
 			{folderPath}
 			{fileNamePattern}
 			{templatePath}
+			{syncWithJournalNotes}
 			{app}
 		/>
 	{:else}
@@ -66,6 +69,7 @@
 			{folderPath}
 			{fileNamePattern}
 			{templatePath}
+			{syncWithJournalNotes}
 			{app}
 		/>
 	{/if}

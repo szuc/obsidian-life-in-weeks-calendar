@@ -7,15 +7,13 @@ import {
 	isValidDate,
 	isValidLifespan,
 	isValidFileName,
-	isStringDynamic,
 } from 'src/lib/utils';
 import { FolderSuggest, FileSuggest } from './FileAndFolderSuggest';
 import { refreshLifeCalendarView } from 'src/lib/viewManagement';
 import {
 	weeklyPeriodicNotesPluginExists,
-	journalPluginWeeklySettings,
+	journalsPluginExists,
 } from 'src/lib/pluginIntegration';
-import type { IntegrationSettings } from 'src/lib/types';
 
 /**
  * Settings tab for the Life Calendar plugin.
@@ -25,7 +23,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 
 	/** Cache for plugin state to avoid repeated lookups during settings render */
 	private _cachedWeeklyPeriodicNotesExists: boolean | undefined;
-	private _cachedJournalPluginSettings: IntegrationSettings | undefined;
+	private _cachedJournalsPluginExists: boolean | undefined;
 	private _cachedSyncWithWeeklyNotes: boolean | undefined;
 	private _cachedSyncWithJournalNotes: boolean | undefined;
 	private _cachedIsOverridden: boolean | undefined;
@@ -44,7 +42,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		this._cachedWeeklyPeriodicNotesExists = weeklyPeriodicNotesPluginExists(
 			this.app,
 		);
-		this._cachedJournalPluginSettings = journalPluginWeeklySettings(
+		this._cachedJournalsPluginExists = journalsPluginExists(
 			this.app,
 		);
 
@@ -53,7 +51,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			this._cachedWeeklyPeriodicNotesExists &&
 			this.plugin.settings.syncWithWeeklyNotes;
 		this._cachedSyncWithJournalNotes =
-			!!this._cachedJournalPluginSettings &&
+			this._cachedJournalsPluginExists &&
 			this.plugin.settings.syncWithJournalNotes;
 
 		// Cache the override state
@@ -67,7 +65,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 */
 	private clearSettingsCache(): void {
 		this._cachedWeeklyPeriodicNotesExists = undefined;
-		this._cachedJournalPluginSettings = undefined;
+		this._cachedJournalsPluginExists = undefined;
 		this._cachedSyncWithWeeklyNotes = undefined;
 		this._cachedSyncWithJournalNotes = undefined;
 		this._cachedIsOverridden = undefined;
@@ -120,7 +118,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 		}
 		// Fallback to computed value (e.g., if called outside display())
 		return (
-			!!journalPluginWeeklySettings(this.app) &&
+			journalsPluginExists(this.app) &&
 			this.plugin.settings.syncWithJournalNotes
 		);
 	}
@@ -308,16 +306,6 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 	 * @param containerEl - The HTML element to append the settings to
 	 */
 	addPluginIntegrationSettings(containerEl: HTMLElement): void {
-		const isUsingDynamicFolderPath =
-			this.syncWithJournalNotesIsEnabled() &&
-			isStringDynamic(
-				this._cachedJournalPluginSettings?.folderPath || '',
-			);
-		const isUsingDynamicFileNamePattern =
-			this.syncWithJournalNotesIsEnabled() &&
-			isStringDynamic(
-				this._cachedJournalPluginSettings?.fileNamePattern || '',
-			);
 		// Setting to sync with the Journals plugin.
 		// The name and description change if the Journals plugin is not detected.
 		// It is disabled if syncing with Periodic Notes is enabled.
@@ -326,18 +314,14 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 			.setName(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Disabled: Use journals plugin settings'
-					: this._cachedJournalPluginSettings
+					: this._cachedJournalsPluginExists
 						? 'Use journals plugin settings'
 						: 'Journals weekly notes not enabled ⚠️',
 			)
 			.setDesc(
 				this.syncWithWeeklyNotesIsEnabled()
 					? 'Using periodic notes plugin settings.'
-					: isUsingDynamicFolderPath || isUsingDynamicFileNamePattern
-						? `⚠️ Warning: Your journals plugin weekly note folder or filename pattern contains dynamic segments. 
-						Some Journals custom variables are not supported e.g. {{note_name}}, {{title}}, {{time}}
-						— use at your own risk.`
-						: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
+					: 'Optional: sync with journals plugin weekly note settings – filename, location, first day of week, templates.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -350,7 +334,7 @@ export class LifeCalendarSettingTab extends PluginSettingTab {
 					})
 					.setDisabled(
 						this.syncWithWeeklyNotesIsEnabled() ||
-						!this._cachedJournalPluginSettings,
+						!this._cachedJournalsPluginExists,
 					),
 			);
 

@@ -5,18 +5,18 @@
 
 import type { App } from 'obsidian';
 import type { IntegrationSettings } from './types';
-import { weekStartsOnIndexToString } from './utils';
+import { getJournalsApi } from 'obsidian-journals-api';
 
 /**
- * WARNING: The following interfaces define the expected shape of 3rd-party plugin 
- * settings (Calendar, Periodic Notes, Journals). 
- * 
- * These types are declared here to provide type safety and fix linting errors, but they 
- * DO NOT guarantee runtime safety. If a 3rd-party plugin changes its internal state 
- * or configuration structure, accessing these properties at runtime could still 
+ * WARNING: The following interfaces define the expected shape of 3rd-party plugin
+ * settings (Calendar, Periodic Notes, Journals).
+ *
+ * These types are declared here to provide type safety and fix linting errors, but they
+ * DO NOT guarantee runtime safety. If a 3rd-party plugin changes its internal state
+ * or configuration structure, accessing these properties at runtime could still
  * result in unexpected behavior or `undefined` values.
- * 
- * Always use optional chaining (`?.`) and fallback values when accessing these 
+ *
+ * Always use optional chaining (`?.`) and fallback values when accessing these
  * properties to prevent fatal runtime errors.
  */
 interface CalendarPlugin {
@@ -36,31 +36,10 @@ interface PeriodicNotesPlugin {
 	};
 }
 
-interface JournalSettings {
-	type?: string;
-	name?: string;
-	config?: {
-		value?: {
-			nameTemplate?: string;
-			folder?: string;
-			templates?: string[];
-			dateFormat?: string;
-		};
-	};
-}
-
-interface JournalsPlugin {
-	journals?: JournalSettings[];
-	calendarSettings?: {
-		dow?: number;
-	};
-}
-
 interface AppWithPlugins extends App {
 	plugins: {
 		getPlugin(id: 'calendar'): CalendarPlugin | undefined;
 		getPlugin(id: 'periodic-notes'): PeriodicNotesPlugin | undefined;
-		getPlugin(id: 'journals'): JournalsPlugin | undefined;
 		getPlugin(id: string): unknown;
 	};
 }
@@ -70,8 +49,12 @@ interface AppWithPlugins extends App {
  * @param app - Obsidian App instance
  * @returns The week start day as a string (e.g., 'monday'), or undefined
  */
-export function getWeekStartsOnOptionFromCalendar(app: App): string | undefined {
-	const calendarPlugin = (app as AppWithPlugins).plugins.getPlugin('calendar');
+export function getWeekStartsOnOptionFromCalendar(
+	app: App,
+): string | undefined {
+	const calendarPlugin = (app as AppWithPlugins).plugins.getPlugin(
+		'calendar',
+	);
 	return calendarPlugin?.options?.weekStart;
 }
 
@@ -81,79 +64,19 @@ export function getWeekStartsOnOptionFromCalendar(app: App): string | undefined 
  * @returns true if plugin exists and weekly notes are enabled
  */
 export function weeklyPeriodicNotesPluginExists(app: App): boolean {
-	const periodicNotes = (app as AppWithPlugins).plugins.getPlugin('periodic-notes');
+	const periodicNotes = (app as AppWithPlugins).plugins.getPlugin(
+		'periodic-notes',
+	);
 	return !!periodicNotes?.settings?.weekly?.enabled;
 }
 
 /**
- * Retrieves weekly note settings from the 'Journals' plugin if it's installed and configured.
- * This is used for integration to help locate weekly notes.
- *
+ * Checks if the 'Journals' plugin is installed and enabled, and exposes the API.
  * @param app - Obsidian App instance
- * @returns An object with weekly settings if found, otherwise undefined.
- * The returned object contains:
- * - `weekStartDay`: The configured start day of the week (e.g., 'sunday', 'monday').
- * - `fileNamePattern`: The date format pattern for weekly note file names.
- * - `folderPath`: The folder where weekly notes are stored.
- * - `templatePath`: The template file path for new weekly notes.
- * Returns `undefined` if the 'Journals' plugin is not found or if no weekly settings are configured.
+ * @returns true if plugin exists and exposes the API
  */
-export function journalPluginWeeklySettings(app: App): IntegrationSettings | undefined {
-	const journalsPlugin = (app as AppWithPlugins).plugins.getPlugin('journals');
-
-	if (!journalsPlugin) {
-		return undefined;
-	}
-
-	const weeksSettings = journalsPlugin.journals?.find(
-		(j) => j?.type === 'week',
-	);
-
-	// Return undefined if no weekly journal configuration exists
-	if (!weeksSettings) {
-		return undefined;
-	}
-
-	const weekStartDay: number | undefined =
-		journalsPlugin.calendarSettings?.dow;
-	const fileNamePattern: string | undefined =
-		weeksSettings.config?.value?.nameTemplate;
-	const folderPath: string | undefined =
-		weeksSettings.config?.value?.folder;
-	const templatePath: string | undefined =
-		weeksSettings.config?.value?.templates?.[0];
-	const dateFormat = weeksSettings.config?.value?.dateFormat;
-
-	// If the folder path contains {{journal_name}} the replace that with weekSettings.name
-	// There are other template variables but this is the only one we can resolve here
-	const resolvedFolderPath = folderPath
-		? folderPath.replace(
-				'{{journal_name}}',
-				weeksSettings.name || 'Weekly',
-			)
-		: '';
-
-	// Journals plugin has a default date format option. We can convert
-	// {{date}} to {{date:FORMAT}} in folderPath and fileNamePattern now rather than
-	// passing the default through the entire codebase.
-	const dateFormatToken = dateFormat?.trim() ? `:${dateFormat}` : '';
-	const fileNamePatternWithDateFormat = fileNamePattern
-		? fileNamePattern.replace('{{date}}', `{{date${dateFormatToken}}}`)
-		: '';
-	const folderPathWithDateFormat = resolvedFolderPath
-		? resolvedFolderPath.replace(
-				'{{date}}',
-				`{{date${dateFormatToken}}}`,
-			)
-		: '';
-
-	return {
-		weekStartDay: weekStartsOnIndexToString(weekStartDay) || '',
-		fileNamePattern: fileNamePatternWithDateFormat || '',
-		folderPath: folderPathWithDateFormat || '',
-		templatePath: templatePath || '',
-		dateFormat: dateFormat || '',
-	};
+export function journalsPluginExists(app: App): boolean {
+	return !!getJournalsApi(app);
 }
 
 /**
@@ -172,9 +95,11 @@ export function journalPluginWeeklySettings(app: App): IntegrationSettings | und
  * not enabled.
  */
 export function periodicNotesPluginWeeklySettings(
-	app: App
+	app: App,
 ): Omit<IntegrationSettings, 'dateFormat'> | undefined {
-	const periodicNotesSettings = (app as AppWithPlugins).plugins.getPlugin('periodic-notes');
+	const periodicNotesSettings = (app as AppWithPlugins).plugins.getPlugin(
+		'periodic-notes',
+	);
 
 	if (!periodicNotesSettings) {
 		return undefined;

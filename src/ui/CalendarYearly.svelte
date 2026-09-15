@@ -21,6 +21,7 @@
 		folderPath,
 		fileNamePattern,
 		templatePath,
+		syncWithJournalNotes,
 		app,
 	}: {
 		birthDate: Date;
@@ -31,6 +32,7 @@
 		folderPath: string;
 		fileNamePattern: string;
 		templatePath: string;
+		syncWithJournalNotes: boolean;
 		app: App;
 	} = $props();
 
@@ -49,6 +51,7 @@
 			fileNamePattern,
 			templatePath,
 			modalFn,
+			syncWithJournalNotes,
 		);
 	};
 </script>
