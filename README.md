@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plugin displays your entire life in a grid of weeks. It color-codes past, present, and future weeks and, more importantly, marks the weeks when you have created a weekly Obsidian note. It integrates with either the Periodic Notes plugin or the Journals plugin, or as a standalone plugin.
+This plugin displays your entire life in a grid of weeks. It color-codes past, present, and future weeks and, more importantly, marks the weeks when you have created a weekly Obsidian note. Use it as a standalone weekly journaling system, or to extend the functionality of either the Periodic Notes plugin or the Journals plugin.
 
 ## The Life in Weeks Concept
 
@@ -60,15 +60,17 @@ Set the first day of the week. Defaults to Monday.
 **Weekly note template**
 Choose a file to use as a template for your new weekly notes. Newly created notes will be prefilled with content from this file.
 
+### Integrations
+
+This is a fully-functioning, standalone journaling plugin — no additional plugins required. If you are coming from an existing journal system and simply want to explore a novel visualization method while staying within your platform, support for two third-party calendar note systems is provided:
+
 **Periodic Notes Integration:**  
-Optionally, this plugin can integrate with the Periodic Notes plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
+Optionally, this plugin can integrate with the [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) plugin. With the Periodic Notes plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, and note templates will come from the Periodic Notes' settings. If you have the standard Calendar plugin installed, Life in Weeks will sync with your selected week start day.
 
 Note: If you're using the Periodic Notes settings integration and you change settings in the Periodic Notes plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
 
 **Journals Plugin Integration:**  
-Optionally, this plugin can integrate with the Journals plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, note templates, and first day of the week will come from the Journals' settings.
-
-Most of the date-based custom variables used by Journals for folder paths are supported. Specifically, you can use `{{journal_name}}`, `{{date}}`, `{{start_date}}`, `{{end_date}}`, `{{current_date}}` in your folder path or file names.
+Optionally, this plugin can integrate with the [Journals](https://github.com/srg-kostyrko/obsidian-journal) plugin. With the Journals plugin installed and the weekly note feature enabled, settings for the folder path, file naming convention, note templates, and first day of the week will come from the Journals' settings.
 
 Note: If you're using the Journals settings integration and you change settings in the Journals plugin, you will have to close and reopen your Life in Weeks Calendar to see those changes reflected.
 
@@ -87,7 +89,7 @@ When creating weekly notes from templates, the plugin automatically replaces spe
 
 ## Templater
 
-Alternatively, you can use the templar plugin to automatically generate note data. You will want to make date values in the Templater templates be relative to the note's week rather than the current date. Example, to get the Monday of a given week's note, use `<% tp.date.weekday("dddd YYYY-MM-DD", 0, tp.file.title, "YYYY-[W]WW") %>` which also becomes `Monday 2025-12-08` in a note titled `2025-W49`.
+Alternatively, you can use the [Templater](https://github.com/SilentVoid13/Templater) plugin to automatically generate note data. You will want to make date values in the Templater templates be relative to the note's week rather than the current date. Example, to get the Monday of a given week's note, use `<% tp.date.weekday("dddd YYYY-MM-DD", 0, tp.file.title, "YYYY-[W]WW") %>` which also becomes `Monday 2025-12-08` in a note titled `2025-W49`.
 
 ### Important Notes
 
@@ -109,13 +111,3 @@ Displays your life in a grid with each cell representing a week in your life. Ea
 ![decades view screenshot](./assets/life_in_weeks-yearly.png)
 
 This view corrects an over simplification in the basic view. Years actually have fifty-two weeks and one day, and depending on the year, will have either fifty-two or fifty-three week start dates. This view accounts for these variations and corrects varying year lengths. Each row accurately reflects a year, and decades of your life are grouped for easier visual parsing. Because row lengths are strictly accurate, this view is not responsive and is only practical for use in the main Obsidian view area.
-
-## Credits
-
-Built on functionality from [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes), [Calendar](https://github.com/liamcain/obsidian-calendar-plugin/tree/master), and [Journal](https://github.com/srg-kostyrko/obsidian-journal).
-
-## Thank You 🙏
-
-If you like this plugin, a coffee is always appreciated!
-
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/szuc)
