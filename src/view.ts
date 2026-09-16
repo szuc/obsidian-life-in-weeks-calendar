@@ -246,7 +246,6 @@ export class LifeCalendarView extends ItemView {
 					record[dateToWeeklyNoteRecordKeyFormat(d)] = note.file;
 				}
 				allWeeklyNotes = record;
-				console.log('allWeeklyNotes', allWeeklyNotes);
 			}
 		} else {
 			const periodicNotesSettings = this.getPeriodicNotesPluginSettings();

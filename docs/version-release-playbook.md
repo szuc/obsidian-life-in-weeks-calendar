@@ -3,7 +3,7 @@
 ## 1. Verify the build
 
 ```bash
-npm test
+npm run test
 npm run lint
 ```
 
@@ -12,9 +12,9 @@ npm run lint
 Run `npm version` with your desired semver increment (`patch`, `minor`, `major`) or an explicit version number (e.g. `1.0.13`):
 
 ```bash
-npm version patch
-# Or: npm version minor
-# Or: npm version 1.0.13
+npm run version patch
+# Or: npm run version minor
+# Or: npm run version 1.0.13
 ```
 
 ### What happens behind the scenes:
