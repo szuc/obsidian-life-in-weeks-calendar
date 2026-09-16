@@ -45,6 +45,7 @@
 	},
 	"dependencies": {
 		"date-fns": "^4.4.0",
+		"obsidian-journals-api": "^1.2.0",
 		"svelte": "^5.56.10",
 		"svelte-eslint-parser": "^1.8.1"
 	}

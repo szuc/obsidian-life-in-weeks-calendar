@@ -6,6 +6,10 @@ import { CreateFileModal } from 'src/createFileModal';
 import {
 	createFilesRecord,
 	getRootFolderOfFirstDynamicSegment,
+	createLocalDateYYYYMMDD,
+	dateToWeeklyNoteRecordKeyFormat,
+	weekStartsOnIndexToString,
+	momentFn,
 } from './lib/utils';
 import {
 	DEFAULT_SETTINGS,
@@ -13,9 +17,10 @@ import {
 } from './lib/calendar-constants';
 import { refreshLifeCalendarView } from 'src/lib/viewManagement';
 import {
-	journalPluginWeeklySettings,
+	journalsPluginExists,
 	periodicNotesPluginWeeklySettings,
 } from 'src/lib/pluginIntegration';
+import { getJournalsApi } from 'obsidian-journals-api';
 
 /**
  * View class for the Life Calendar plugin.
@@ -30,6 +35,13 @@ export class LifeCalendarView extends ItemView {
 	/**
 	 * Creates a new Life Calendar view.
 	 * Registers event listeners to refresh the view when files are created or deleted.
+	 *
+	 * When the Journals plugin integration is active we also subscribe to its
+	 * `noteAdded` event. The vault `create` event fires before the Journals plugin
+	 * updates its internal index, so calling `existingNotes()` in that handler
+	 * returns stale data. The `noteAdded` event is emitted only after the index
+	 * has been updated, ensuring the refresh query sees the newly created note.
+	 *
 	 * @param leaf - The workspace leaf where this view will be displayed
 	 * @param plugin - The parent plugin instance
 	 */
@@ -39,6 +51,17 @@ export class LifeCalendarView extends ItemView {
 		// Refresh the view when a new file is created or deleted
 		this.registerEvent(this.app.vault.on('create', this.onFileChange));
 		this.registerEvent(this.app.vault.on('delete', this.onFileChange));
+
+		if (
+			this.plugin.settings.syncWithJournalNotes &&
+			journalsPluginExists(this.app)
+		) {
+			const journals = getJournalsApi(this.app);
+			if (journals) {
+				// Register the cleanup so the listener is removed on view unload
+				this.register(journals.on('noteAdded', this.onFileChange));
+			}
+		}
 	}
 
 	/**
@@ -68,9 +91,8 @@ export class LifeCalendarView extends ItemView {
 	 * Mounts the Svelte component to render the calendar.
 	 * @returns Promise that resolves when the view is ready
 	 */
-	override onOpen() {
-		this.mountComponent();
-		return Promise.resolve();
+	override onOpen(): Promise<void> {
+		return this.mountComponent();
 	}
 
 	/**
@@ -147,16 +169,6 @@ export class LifeCalendarView extends ItemView {
 	}
 
 	/**
-	 * Retrieves weekly note settings from the Journals plugin if sync is enabled.
-	 * @returns Journal plugin settings object or undefined if sync is disabled or plugin not found
-	 */
-	private getJournalsPluginSettings() {
-		return this.plugin.settings.syncWithJournalNotes
-			? journalPluginWeeklySettings(this.app)
-			: undefined;
-	}
-
-	/**
 	 * Retrieves weekly note settings from the Periodic Notes plugin if sync is enabled.
 	 * @returns Periodic Notes plugin settings object or undefined if sync is disabled or plugin not found
 	 */
@@ -164,72 +176,6 @@ export class LifeCalendarView extends ItemView {
 		return this.plugin.settings.syncWithWeeklyNotes
 			? periodicNotesPluginWeeklySettings(this.app)
 			: undefined;
-	}
-
-	/**
-	 * Determines the week start day based on plugin integrations or user settings.
-	 * Priority order:
-	 * If Periodic Notes enabled: Calendar settings > Default
-	 * Otherwise: Journals > Plugin settings > Default
-	 * @returns The week start day as a string (e.g., 'monday', 'sunday')
-	 */
-	private getWeekStartsOnFromSettings() {
-		const journalSettings = this.getJournalsPluginSettings();
-		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
-		return (
-			journalSettings?.weekStartDay ??
-			periodicNotesSettings?.weekStartDay ??
-			this.plugin.settings.weekStartDay ??
-			DEFAULT_SETTINGS.weekStartDay
-		);
-	}
-
-	/**
-	 * Determines the folder path for weekly notes based on plugin integrations or user settings.
-	 * Priority order: Journals > Periodic Notes > Plugin settings > Default (root)
-	 * @returns The folder path where weekly notes are stored
-	 */
-	private getFolderPath() {
-		const journalSettings = this.getJournalsPluginSettings();
-		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
-		return (
-			journalSettings?.folderPath ??
-			periodicNotesSettings?.folderPath ??
-			this.plugin.settings.fileLocation ??
-			DEFAULT_SETTINGS.fileLocation
-		);
-	}
-
-	/**
-	 * Determines the file naming pattern for weekly notes based on plugin integrations or user settings.
-	 * Priority order: Journals > Periodic Notes > Plugin settings > Default pattern
-	 * @returns The Moment.js format pattern for weekly note file names
-	 */
-	private getFileNamePattern() {
-		const journalSettings = this.getJournalsPluginSettings();
-		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
-		return (
-			journalSettings?.fileNamePattern ??
-			periodicNotesSettings?.fileNamePattern ??
-			this.plugin.settings.fileNamePattern ??
-			DEFAULT_SETTINGS.fileNamePattern
-		);
-	}
-
-	/**
-	 * Determines the template file path for new weekly notes based on plugin integrations or user settings.
-	 * Priority order: Journals > Periodic Notes > Plugin settings > Default (empty)
-	 * @returns The path to the template file, or empty string if no template is set
-	 */
-	private getTemplatePath() {
-		const journalSettings = this.getJournalsPluginSettings();
-		const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
-		return (
-			journalSettings?.templatePath ??
-			periodicNotesSettings?.templatePath ??
-			this.plugin.settings.templatePath ??
-			DEFAULT_SETTINGS.templatePath
-		);
 	}
 
 	/**
@@ -246,26 +192,77 @@ export class LifeCalendarView extends ItemView {
 			: undefined;
 	}
 
-	/**
-	 * Builds the props object to be passed into the Svelte LifeCalendar component
-	 * @returns Props object for LifeCalendar component
-	 */
-	private buildComponentProps(): ComponentProps<typeof LifeCalendar> {
+	private async buildComponentProps(): Promise<
+		ComponentProps<typeof LifeCalendar>
+	> {
 		const birthdate = this.getBirthdateFromSettings();
 		const projectedLifespan = this.getProjectedLifespanFromSettings();
 		const calendarMode = this.getCalendarModeFromSettings();
-		const weekStartsOn = this.getWeekStartsOnFromSettings();
-		const folderPath = this.getFolderPath();
-		const fileNamePattern = this.getFileNamePattern();
-		const templatePath = this.getTemplatePath();
 		const modalFn = this.getModalFunction();
 
-		// Get all weekly notes based on setting values
-		const allWeeklyNotes = this.getAllWeeklyNotesFromFolder(
-			folderPath,
-			fileNamePattern,
-			weekStartsOn,
-		);
+		let weekStartsOn =
+			this.plugin.settings.weekStartDay ?? DEFAULT_SETTINGS.weekStartDay;
+		let folderPath =
+			this.plugin.settings.fileLocation ?? DEFAULT_SETTINGS.fileLocation;
+		let fileNamePattern =
+			this.plugin.settings.fileNamePattern ??
+			DEFAULT_SETTINGS.fileNamePattern;
+		let templatePath =
+			this.plugin.settings.templatePath ?? DEFAULT_SETTINGS.templatePath;
+		let allWeeklyNotes: Record<string, TFile> | undefined = undefined;
+
+		const syncWithJournalNotes =
+			this.plugin.settings.syncWithJournalNotes &&
+			journalsPluginExists(this.app);
+
+		if (syncWithJournalNotes) {
+			const journals = getJournalsApi(this.app);
+			if (journals) {
+				const existing = await journals.existingNotes(
+					{ writeType: 'week' },
+					{
+						from: birthdate,
+						to: momentFn(birthdate, 'YYYY-MM-DD')
+							.add(projectedLifespan, 'years')
+							.format('YYYY-MM-DD'),
+					},
+				);
+
+				// Can't get the week start day directly from the Journals API, but if
+				// there are any existing weekly notes, we can infer the week start day
+				// from the start date of an existing note.
+				// If there are no existing weekly notes, then it largely has no effect
+				// so we just use the week start day from the plugin settings.
+				if (existing.length > 0 && existing[0]?.date) {
+					const m = momentFn(existing[0].date, 'YYYY-MM-DD');
+					const dayIndex = m.day();
+					weekStartsOn =
+						weekStartsOnIndexToString(dayIndex) || weekStartsOn;
+				}
+
+				const record: Record<string, TFile> = {};
+				for (const note of existing) {
+					const d = createLocalDateYYYYMMDD(note.date);
+					record[dateToWeeklyNoteRecordKeyFormat(d)] = note.file;
+				}
+				allWeeklyNotes = record;
+				console.log('allWeeklyNotes', allWeeklyNotes);
+			}
+		} else {
+			const periodicNotesSettings = this.getPeriodicNotesPluginSettings();
+			weekStartsOn = periodicNotesSettings?.weekStartDay ?? weekStartsOn;
+			folderPath = periodicNotesSettings?.folderPath ?? folderPath;
+			fileNamePattern =
+				periodicNotesSettings?.fileNamePattern ?? fileNamePattern;
+			templatePath = periodicNotesSettings?.templatePath ?? templatePath;
+
+			allWeeklyNotes = this.getAllWeeklyNotesFromFolder(
+				folderPath,
+				fileNamePattern,
+				weekStartsOn,
+			);
+		}
+
 		return {
 			birthdate,
 			projectedLifespan,
@@ -276,18 +273,15 @@ export class LifeCalendarView extends ItemView {
 			folderPath,
 			fileNamePattern,
 			templatePath,
+			syncWithJournalNotes,
 			app: this.app,
 		};
 	}
 
-	/**
-	 * Mounts the Svelte LifeCalendar component into the view's content element.
-	 * Builds the component props from current settings and passes them to the Svelte component.
-	 */
-	private mountComponent(): void {
+	private async mountComponent(): Promise<void> {
 		this.lifeCalendar = mount(LifeCalendar, {
 			target: this.contentEl,
-			props: this.buildComponentProps(),
+			props: await this.buildComponentProps(),
 		});
 	}
 
@@ -309,10 +303,10 @@ export class LifeCalendarView extends ItemView {
 	 * Called when settings change or when weekly notes are created/deleted.
 	 * This ensures the calendar reflects the latest state and configuration.
 	 */
-	refreshView(): void {
+	async refreshView(): Promise<void> {
 		// Cleanup properly before mounting new component
 		this.cleanupComponent();
-		this.mountComponent();
+		await this.mountComponent();
 	}
 
 	/**

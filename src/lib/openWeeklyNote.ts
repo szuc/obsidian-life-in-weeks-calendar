@@ -8,12 +8,14 @@ import {
 } from 'obsidian';
 import {
 	dateToWeeklyNoteRecordKeyFormat,
+	dateToYYYYMMDD,
 	isStringDynamic,
 	parseDynamicFolderPath,
 	parseDynamicDatesInString,
 	parseTemplateVariables,
 } from './utils';
 import { DEFAULT_SETTINGS } from './calendar-constants';
+import { getJournalsApi } from 'obsidian-journals-api';
 
 /**
  * Opens a file in the workspace, reusing an existing tab if the file is already open.
@@ -56,7 +58,9 @@ async function ensureFolderExists(app: App, folderPath: string) {
 		await app.vault.createFolder(folderPath);
 	} catch (error: unknown) {
 		// Folder might already exist, ignore
-		if (!(error instanceof Error && error.message.includes('already exists'))) {
+		if (!(
+			error instanceof Error && error.message.includes('already exists')
+		)) {
 			console.error('Error creating weekly notes folder:', error);
 		}
 	}
@@ -127,7 +131,10 @@ async function createWeeklyNote(
 			await openFile(app, newNote);
 		})
 		.catch(async (error: unknown) => {
-			if (error instanceof Error && error.message.includes('already exists')) {
+			if (
+				error instanceof Error &&
+				error.message.includes('already exists')
+			) {
 				// Try to open the existing file
 				const existingFile = app.vault.getAbstractFileByPath(filePath);
 				if (existingFile instanceof TFile) {
@@ -158,6 +165,7 @@ export const openWeeklyNoteFunction = async (
 	fileNamePattern: string,
 	templatePath: string,
 	modalFn?: (message: string, cb: () => void) => void,
+	syncWithJournalNotes?: boolean,
 ): Promise<void> => {
 	if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
 		throw new Error(
@@ -165,7 +173,39 @@ export const openWeeklyNoteFunction = async (
 		);
 	}
 
-	const momentFn = moment as unknown as (input?: unknown, format?: string, strict?: boolean) => import('moment').Moment;
+	if (syncWithJournalNotes) {
+		const journals = getJournalsApi(app);
+		if (journals) {
+			const dateInput = dateToYYYYMMDD(date);
+			const [note] = await journals.notesFor(
+				{ writeType: 'week' },
+				dateInput,
+			);
+			if ((!note || !note.file) && modalFn) {
+				modalFn(
+					`Weekly note for week starting ${date.toDateString()} does not exist. Do you want to create it now?`,
+					() => {
+						void journals.openNote(
+							{ writeType: 'week' },
+							dateInput,
+							{ confirm: false },
+						);
+					},
+				);
+			} else {
+				await journals.openNote({ writeType: 'week' }, dateInput, {
+					confirm: false,
+				});
+			}
+			return;
+		}
+	}
+
+	const momentFn = moment as unknown as (
+		input?: unknown,
+		format?: string,
+		strict?: boolean,
+	) => import('moment').Moment;
 	const momentObject = momentFn(date);
 
 	// filenames might be pure moment formats, e.g., "YYYY-WW" or might contain dynamic segments

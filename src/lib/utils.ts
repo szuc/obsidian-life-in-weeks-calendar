@@ -6,7 +6,7 @@ import type { Moment } from 'moment';
 import { DEFAULT_SETTINGS } from './calendar-constants';
 
 /** Helper to invoke moment as callable function in TS 6 */
-const momentFn = moment as unknown as (input?: unknown, format?: string, strict?: boolean) => Moment;
+export const momentFn = moment as unknown as (input?: unknown, format?: string, strict?: boolean) => Moment;
 
 /** Global reference to the current date. Mutated by updateToday */
 let TODAY = new Date();

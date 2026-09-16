@@ -19,7 +19,7 @@ export function refreshLifeCalendarView(app: App): void {
 	)) {
 		const view = leaf.view;
 		if (view instanceof LifeCalendarView) {
-			view.refreshView();
+			void view.refreshView();
 		}
 	}
 }
